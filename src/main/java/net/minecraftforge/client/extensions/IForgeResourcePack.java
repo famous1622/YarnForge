@@ -19,10 +19,8 @@
 
 package net.minecraftforge.client.extensions;
 
-public interface IForgeResourcePack
-{
-    default boolean isHidden()
-    {
-        return false;
-    }
+public interface IForgeResourcePack {
+	default boolean isHidden() {
+		return false;
+	}
 }

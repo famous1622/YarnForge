@@ -270,16 +270,52 @@ public class ModelLoaderRegistryTest
 
     */
 /**
-     * This block is intended to demonstrate how to change the visibility of a group(s)
-     * from within the block's class.
-     * By right clicking on this block the player increments an integer value in the tile entity
-     * for this block, which is then added to a list of strings and passed into the constructor
-     * for OBJState. NOTE: this trick only works if your groups are named '1', '2', '3', etc.,
-     * otherwise they must be added by name.
-     * Holding shift decrements the value in the tile entity.
-     * @author shadekiller666
-     *
-     *//*
+ * This block is intended to demonstrate how to change the visibility of a group(s)
+ * from within the block's class.
+ * By right clicking on this block the player increments an integer value in the tile entity
+ * for this block, which is then added to a list of strings and passed into the constructor
+ * for OBJState. NOTE: this trick only works if your groups are named '1', '2', '3', etc.,
+ * otherwise they must be added by name.
+ * Holding shift decrements the value in the tile entity.
+ *
+ * @author shadekiller666
+ * <p>
+ * <p>
+ * This block demonstrates how to utilize the vertex coloring feature
+ * of the OBJ loader. See 'vertex_coloring.obj' and 'vertex_coloring.mtl' in
+ * 'test/resources/assets/forgedebugmodelloaderregistry/models/block/', to properly
+ * utilize this feature an obj file must have 1 'usemtl' key before every vertex as shown,
+ * having less 'usemtl' lines than 'v' lines will result in the faces having that material's
+ * color instead of each vertex.
+ * @author shadekiller666
+ * <p>
+ * <p>
+ * This block demonstrates how to use IProperties and IUnlistedProperties together
+ * in the same ExtendedBlockState. Similar to pistons, this block will face the player
+ * when placed. Unlike pistons, however; this block's model is an eyeball, because
+ * the OBJ loader can load spheres.
+ * @author shadekiller666
+ * <p>
+ * <p>
+ * This block uses the same model as CustomModelBlock3 does, but
+ * this class allows the player to cycle the colors of each vertex to black
+ * and then back to the original color when right clicking on the block.
+ * @author shadekiller666
+ * <p>
+ * <p>
+ * This block is a debug block that faces the player when placed, like a piston.
+ * @author shadekiller666
+ * <p>
+ * <p>
+ * This block is a testing block that will be used to test the use
+ * of "custom" data defined in a forge blockstate json. WIP, ignore for now.
+ * @author shadekiller666
+ * <p>
+ * <p>
+ * This block uses the same model as CustomModelBlock4, but instead of facing the
+ * player when placed, this one ALWAYS faces the player. I know, creepy right?
+ * @author shadekiller666
+ *//*
 
     public static class OBJTesseractBlock extends Block
     {
@@ -438,15 +474,15 @@ public class ModelLoaderRegistryTest
 
     */
 /**
-     * This block demonstrates how to utilize the vertex coloring feature
-     * of the OBJ loader. See 'vertex_coloring.obj' and 'vertex_coloring.mtl' in
-     * 'test/resources/assets/forgedebugmodelloaderregistry/models/block/', to properly
-     * utilize this feature an obj file must have 1 'usemtl' key before every vertex as shown,
-     * having less 'usemtl' lines than 'v' lines will result in the faces having that material's
-     * color instead of each vertex.
-     * @author shadekiller666
-     *
-     *//*
+ * This block demonstrates how to utilize the vertex coloring feature
+ * of the OBJ loader. See 'vertex_coloring.obj' and 'vertex_coloring.mtl' in
+ * 'test/resources/assets/forgedebugmodelloaderregistry/models/block/', to properly
+ * utilize this feature an obj file must have 1 'usemtl' key before every vertex as shown,
+ * having less 'usemtl' lines than 'v' lines will result in the faces having that material's
+ * color instead of each vertex.
+ * @author shadekiller666
+ *
+ *//*
 
     public static class OBJVertexColoring1 extends Block
     {
@@ -479,13 +515,13 @@ public class ModelLoaderRegistryTest
 
     */
 /**
-     * This block demonstrates how to use IProperties and IUnlistedProperties together
-     * in the same ExtendedBlockState. Similar to pistons, this block will face the player
-     * when placed. Unlike pistons, however; this block's model is an eyeball, because
-     * the OBJ loader can load spheres.
-     * @author shadekiller666
-     *
-     *//*
+ * This block demonstrates how to use IProperties and IUnlistedProperties together
+ * in the same ExtendedBlockState. Similar to pistons, this block will face the player
+ * when placed. Unlike pistons, however; this block's model is an eyeball, because
+ * the OBJ loader can load spheres.
+ * @author shadekiller666
+ *
+ *//*
 
     public static class OBJDirectionEye extends Block
     {
@@ -532,12 +568,12 @@ public class ModelLoaderRegistryTest
 
     */
 /**
-     * This block uses the same model as CustomModelBlock3 does, but
-     * this class allows the player to cycle the colors of each vertex to black
-     * and then back to the original color when right clicking on the block.
-     * @author shadekiller666
-     *
-     *//*
+ * This block uses the same model as CustomModelBlock3 does, but
+ * this class allows the player to cycle the colors of each vertex to black
+ * and then back to the original color when right clicking on the block.
+ * @author shadekiller666
+ *
+ *//*
 
     public static class OBJVertexColoring2 extends Block
     {
@@ -645,10 +681,10 @@ public class ModelLoaderRegistryTest
 
     */
 /**
-     * This block is a debug block that faces the player when placed, like a piston.
-     * @author shadekiller666
-     *
-     *//*
+ * This block is a debug block that faces the player when placed, like a piston.
+ * @author shadekiller666
+ *
+ *//*
 
     public static class OBJDirectionBlock extends Block
     {
@@ -695,11 +731,11 @@ public class ModelLoaderRegistryTest
 
     */
 /**
-     * This block is a testing block that will be used to test the use
-     * of "custom" data defined in a forge blockstate json. WIP, ignore for now.
-     * @author shadekiller666
-     *
-     *//*
+ * This block is a testing block that will be used to test the use
+ * of "custom" data defined in a forge blockstate json. WIP, ignore for now.
+ * @author shadekiller666
+ *
+ *//*
 
     public static class OBJCustomDataBlock extends Block
     {
@@ -749,11 +785,11 @@ public class ModelLoaderRegistryTest
 
     */
 /**
-     * This block uses the same model as CustomModelBlock4, but instead of facing the
-     * player when placed, this one ALWAYS faces the player. I know, creepy right?
-     * @author shadekiller666
-     *
-     *//*
+ * This block uses the same model as CustomModelBlock4, but instead of facing the
+ * player when placed, this one ALWAYS faces the player. I know, creepy right?
+ * @author shadekiller666
+ *
+ *//*
 
     public static class OBJDynamicEye extends Block
     {

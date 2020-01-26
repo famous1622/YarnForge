@@ -25,6 +25,8 @@ import java.util.Random;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
+import net.minecraftforge.client.model.data.IModelData;
+
 import net.minecraft.block.BlockState;
 import net.minecraft.client.renderer.model.BakedQuad;
 import net.minecraft.client.renderer.model.IBakedModel;
@@ -33,39 +35,35 @@ import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.util.Direction;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.IEnviromentBlockReader;
-import net.minecraftforge.client.model.data.IModelData;
 
-public interface IForgeBakedModel
-{
-    default IBakedModel getBakedModel()
-    {
-        return (IBakedModel) this;
-    }
+public interface IForgeBakedModel {
+	default IBakedModel getBakedModel() {
+		return (IBakedModel) this;
+	}
 
-    @Nonnull
-    default List<BakedQuad> getQuads(@Nullable BlockState state, @Nullable Direction side, @Nonnull Random rand, @Nonnull IModelData extraData)
-    {
-        return getBakedModel().getQuads(state, side, rand);
-    }
+	@Nonnull
+	default List<BakedQuad> getQuads(@Nullable BlockState state, @Nullable Direction side, @Nonnull Random rand, @Nonnull IModelData extraData) {
+		return getBakedModel().getQuads(state, side, rand);
+	}
 
-    default boolean isAmbientOcclusion(BlockState state) { return getBakedModel().isAmbientOcclusion(); }
+	default boolean isAmbientOcclusion(BlockState state) {
+		return getBakedModel().isAmbientOcclusion();
+	}
 
-    /*
-     * Returns the pair of the model for the given perspective, and the matrix that
-     * should be applied to the GL state before rendering it (matrix may be null).
-     */
-    default org.apache.commons.lang3.tuple.Pair<? extends IBakedModel, javax.vecmath.Matrix4f> handlePerspective(ItemCameraTransforms.TransformType cameraTransformType)
-    {
-        return net.minecraftforge.client.ForgeHooksClient.handlePerspective(getBakedModel(), cameraTransformType);
-    }
+	/*
+	 * Returns the pair of the model for the given perspective, and the matrix that
+	 * should be applied to the GL state before rendering it (matrix may be null).
+	 */
+	default org.apache.commons.lang3.tuple.Pair<? extends IBakedModel, javax.vecmath.Matrix4f> handlePerspective(ItemCameraTransforms.TransformType cameraTransformType) {
+		return net.minecraftforge.client.ForgeHooksClient.handlePerspective(getBakedModel(), cameraTransformType);
+	}
 
-    default @Nonnull IModelData getModelData(@Nonnull IEnviromentBlockReader world, @Nonnull BlockPos pos, @Nonnull BlockState state, @Nonnull IModelData tileData)
-    {
-        return tileData;
-    }
+	default @Nonnull
+	IModelData getModelData(@Nonnull IEnviromentBlockReader world, @Nonnull BlockPos pos, @Nonnull BlockState state, @Nonnull IModelData tileData) {
+		return tileData;
+	}
 
-    default TextureAtlasSprite getParticleTexture(@Nonnull IModelData data)
-    {
-        return getBakedModel().getParticleTexture();
-    }
+	default TextureAtlasSprite getParticleTexture(@Nonnull IModelData data) {
+		return getBakedModel().getParticleTexture();
+	}
 }

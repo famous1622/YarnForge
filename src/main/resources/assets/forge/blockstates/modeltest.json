@@ -1,5 +1,7 @@
 {
-    "variants": {
-        "": { "model": "forge:modeltest" }
+  "variants": {
+    "": {
+      "model": "forge:modeltest"
     }
+  }
 }

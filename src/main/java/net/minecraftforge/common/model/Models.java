@@ -21,25 +21,20 @@ package net.minecraftforge.common.model;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Iterators;
 import com.google.common.collect.UnmodifiableIterator;
 
-public enum Models
-{
-    ;
+public enum Models {
+	;
 
-    public static IModelPart getHiddenModelPart(ImmutableList<String> path)
-    {
-        return new HiddenModelPart(path);
-    }
+	public static IModelPart getHiddenModelPart(ImmutableList<String> path) {
+		return new HiddenModelPart(path);
+	}
 
-    public static UnmodifiableIterator<String> getParts(IModelPart part)
-    {
-        if(part instanceof HiddenModelPart)
-        {
-            return ((HiddenModelPart) part).getPath().iterator();
-        }
-        ImmutableSet<String> ret = ImmutableSet.of();
-        return ret.iterator();
-    }
+	public static UnmodifiableIterator<String> getParts(IModelPart part) {
+		if (part instanceof HiddenModelPart) {
+			return ((HiddenModelPart) part).getPath().iterator();
+		}
+		ImmutableSet<String> ret = ImmutableSet.of();
+		return ret.iterator();
+	}
 }

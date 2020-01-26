@@ -22,8 +22,9 @@ package net.minecraftforge.event.entity.living;
 import net.minecraftforge.common.ForgeHooks;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.eventbus.api.Cancelable;
-import net.minecraft.util.DamageSource;
+
 import net.minecraft.entity.LivingEntity;
+import net.minecraft.util.DamageSource;
 
 /**
  * LivingDeathEvent is fired when an Entity dies. <br>
@@ -44,17 +45,15 @@ import net.minecraft.entity.LivingEntity;
  * This event is fired on the {@link MinecraftForge#EVENT_BUS}.
  **/
 @Cancelable
-public class LivingDeathEvent extends LivingEvent
-{
-    private final DamageSource source;
-    public LivingDeathEvent(LivingEntity entity, DamageSource source)
-    {
-        super(entity);
-        this.source = source;
-    }
+public class LivingDeathEvent extends LivingEvent {
+	private final DamageSource source;
 
-    public DamageSource getSource()
-    {
-        return source;
-    }
+	public LivingDeathEvent(LivingEntity entity, DamageSource source) {
+		super(entity);
+		this.source = source;
+	}
+
+	public DamageSource getSource() {
+		return source;
+	}
 }

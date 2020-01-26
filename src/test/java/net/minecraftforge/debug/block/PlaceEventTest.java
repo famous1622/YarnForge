@@ -19,19 +19,19 @@
 
 package net.minecraftforge.debug.block;
 
-import net.minecraft.block.Blocks;
 import net.minecraftforge.event.world.BlockEvent.EntityPlaceEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 
+import net.minecraft.block.Blocks;
+
 @Mod("block_place_event_test")
 @Mod.EventBusSubscriber
-public class PlaceEventTest
-{
-    @SubscribeEvent
-    public static void onBlockPlaced(EntityPlaceEvent event)
-    {
-        if (event.getPlacedBlock().getBlock() == Blocks.CHEST && event.getPlacedAgainst().getBlock() != Blocks.DIAMOND_BLOCK)
-            event.setCanceled(true);
-    }
+public class PlaceEventTest {
+	@SubscribeEvent
+	public static void onBlockPlaced(EntityPlaceEvent event) {
+		if (event.getPlacedBlock().getBlock() == Blocks.CHEST && event.getPlacedAgainst().getBlock() != Blocks.DIAMOND_BLOCK) {
+			event.setCanceled(true);
+		}
+	}
 }

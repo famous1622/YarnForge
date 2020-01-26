@@ -24,6 +24,5 @@ import net.minecraftforge.eventbus.api.Event;
 /**
  * Fired when the {@link net.minecraftforge.client.model.ModelLoader} is ready to receive registrations
  */
-public class ModelRegistryEvent extends Event
-{
+public class ModelRegistryEvent extends Event {
 }

@@ -23,197 +23,177 @@ import java.util.ArrayList;
 
 import net.minecraftforge.eventbus.api.Cancelable;
 import net.minecraftforge.eventbus.api.Event;
+
 import net.minecraft.client.MainWindow;
 import net.minecraft.client.gui.ClientBossInfo;
 
 @Cancelable
-public class RenderGameOverlayEvent extends Event
-{
-    public float getPartialTicks()
-    {
-        return partialTicks;
-    }
-    
-    public MainWindow getWindow()
-    {
-        return window;
-    }
+public class RenderGameOverlayEvent extends Event {
+	private final float partialTicks;
+	private final MainWindow window;
+	private final ElementType type;
 
-    public ElementType getType()
-    {
-        return type;
-    }
+	public RenderGameOverlayEvent(float partialTicks, MainWindow window) {
+		this.partialTicks = partialTicks;
+		this.window = window;
+		this.type = null;
+	}
 
-    public static enum ElementType
-    {
-        ALL,
-        HELMET,
-        PORTAL,
-        CROSSHAIRS,
-        BOSSHEALTH, // All boss bars
-        BOSSINFO,    // Individual boss bar
-        ARMOR,
-        HEALTH,
-        FOOD,
-        AIR,
-        HOTBAR,
-        EXPERIENCE,
-        TEXT,
-        HEALTHMOUNT,
-        JUMPBAR,
-        CHAT,
-        PLAYER_LIST,
-        DEBUG,
-        POTION_ICONS,
-        SUBTITLES,
-        FPS_GRAPH,
-        VIGNETTE
-    }
+	private RenderGameOverlayEvent(RenderGameOverlayEvent parent, ElementType type) {
+		this.partialTicks = parent.getPartialTicks();
+		this.window = parent.getWindow();
+		this.type = type;
+	}
 
-    private final float partialTicks;
-    private final MainWindow window;
-    private final ElementType type;
+	public float getPartialTicks() {
+		return partialTicks;
+	}
 
-    public RenderGameOverlayEvent(float partialTicks, MainWindow window)
-    {
-        this.partialTicks = partialTicks;
-        this.window = window;
-        this.type = null;
-    }
+	public MainWindow getWindow() {
+		return window;
+	}
 
-    private RenderGameOverlayEvent(RenderGameOverlayEvent parent, ElementType type)
-    {
-        this.partialTicks = parent.getPartialTicks();
-        this.window = parent.getWindow();
-        this.type = type;
-    }
+	public ElementType getType() {
+		return type;
+	}
 
-    public static class Pre extends RenderGameOverlayEvent
-    {
-        public Pre(RenderGameOverlayEvent parent, ElementType type)
-        {
-            super(parent, type);
-        }
-    }
+	public enum ElementType {
+		ALL,
+		HELMET,
+		PORTAL,
+		CROSSHAIRS,
+		BOSSHEALTH, // All boss bars
+		BOSSINFO,    // Individual boss bar
+		ARMOR,
+		HEALTH,
+		FOOD,
+		AIR,
+		HOTBAR,
+		EXPERIENCE,
+		TEXT,
+		HEALTHMOUNT,
+		JUMPBAR,
+		CHAT,
+		PLAYER_LIST,
+		DEBUG,
+		POTION_ICONS,
+		SUBTITLES,
+		FPS_GRAPH,
+		VIGNETTE
+	}
 
-    public static class Post extends RenderGameOverlayEvent
-    {
-        public Post(RenderGameOverlayEvent parent, ElementType type)
-        {
-            super(parent, type);
-        }
-        @Override public boolean isCancelable(){ return false; }
-    }
+	public static class Pre extends RenderGameOverlayEvent {
+		public Pre(RenderGameOverlayEvent parent, ElementType type) {
+			super(parent, type);
+		}
+	}
 
-    public static class BossInfo extends Pre
-    {
-        private final ClientBossInfo bossInfo;
-        private final int x;
-        private final int y;
-        private int increment;
-        public BossInfo(RenderGameOverlayEvent parent, ElementType type, ClientBossInfo bossInfo, int x, int y, int increment)
-        {
-            super(parent, type);
-            this.bossInfo = bossInfo;
-            this.x = x;
-            this.y = y;
-            this.increment = increment;
-        }
+	public static class Post extends RenderGameOverlayEvent {
+		public Post(RenderGameOverlayEvent parent, ElementType type) {
+			super(parent, type);
+		}
 
-        /**
-         * @return The {@link BossInfoClient} currently being rendered
-         */
-        public ClientBossInfo getBossInfo()
-        {
-            return bossInfo;
-        }
+		@Override
+		public boolean isCancelable() {
+			return false;
+		}
+	}
 
-        /**
-         * @return The current x position we are rendering at
-         */
-        public int getX()
-        {
-            return x;
-        }
+	public static class BossInfo extends Pre {
+		private final ClientBossInfo bossInfo;
+		private final int x;
+		private final int y;
+		private int increment;
 
-        /**
-         * @return The current y position we are rendering at
-         */
-        public int getY()
-        {
-            return y;
-        }
+		public BossInfo(RenderGameOverlayEvent parent, ElementType type, ClientBossInfo bossInfo, int x, int y, int increment) {
+			super(parent, type);
+			this.bossInfo = bossInfo;
+			this.x = x;
+			this.y = y;
+			this.increment = increment;
+		}
 
-        /**
-         * @return How much to move down before rendering the next bar
-         */
-        public int getIncrement()
-        {
-            return increment;
-        }
+		/**
+		 * @return The {@link BossInfoClient} currently being rendered
+		 */
+		public ClientBossInfo getBossInfo() {
+			return bossInfo;
+		}
 
-        /**
-         * Sets the amount to move down before rendering the next bar
-         * @param increment The increment to set
-         */
-        public void setIncrement(int increment)
-        {
-            this.increment = increment;
-        }
-    }
+		/**
+		 * @return The current x position we are rendering at
+		 */
+		public int getX() {
+			return x;
+		}
 
-    public static class Text extends Pre
-    {
-        private final ArrayList<String> left;
-        private final ArrayList<String> right;
-        public Text(RenderGameOverlayEvent parent, ArrayList<String> left, ArrayList<String> right)
-        {
-            super(parent, ElementType.TEXT);
-            this.left = left;
-            this.right = right;
-        }
+		/**
+		 * @return The current y position we are rendering at
+		 */
+		public int getY() {
+			return y;
+		}
 
-        public ArrayList<String> getLeft()
-        {
-            return left;
-        }
+		/**
+		 * @return How much to move down before rendering the next bar
+		 */
+		public int getIncrement() {
+			return increment;
+		}
 
-        public ArrayList<String> getRight()
-        {
-            return right;
-        }
-    }
+		/**
+		 * Sets the amount to move down before rendering the next bar
+		 *
+		 * @param increment The increment to set
+		 */
+		public void setIncrement(int increment) {
+			this.increment = increment;
+		}
+	}
 
-    public static class Chat extends Pre
-    {
-        private int posX;
-        private int posY;
+	public static class Text extends Pre {
+		private final ArrayList<String> left;
+		private final ArrayList<String> right;
 
-        public Chat(RenderGameOverlayEvent parent, int posX, int posY)
-        {
-            super(parent, ElementType.CHAT);
-            this.setPosX(posX);
-            this.setPosY(posY);
-        }
+		public Text(RenderGameOverlayEvent parent, ArrayList<String> left, ArrayList<String> right) {
+			super(parent, ElementType.TEXT);
+			this.left = left;
+			this.right = right;
+		}
 
-        public int getPosX()
-        {
-            return posX;
-        }
+		public ArrayList<String> getLeft() {
+			return left;
+		}
 
-        public void setPosX(int posX)
-        {
-            this.posX = posX;
-        }
+		public ArrayList<String> getRight() {
+			return right;
+		}
+	}
 
-        public int getPosY()
-        {
-            return posY;
-        }
+	public static class Chat extends Pre {
+		private int posX;
+		private int posY;
 
-        public void setPosY(int posY)
-        {
-            this.posY = posY;
-        }
-    }
+		public Chat(RenderGameOverlayEvent parent, int posX, int posY) {
+			super(parent, ElementType.CHAT);
+			this.setPosX(posX);
+			this.setPosY(posY);
+		}
+
+		public int getPosX() {
+			return posX;
+		}
+
+		public void setPosX(int posX) {
+			this.posX = posX;
+		}
+
+		public int getPosY() {
+			return posY;
+		}
+
+		public void setPosY(int posY) {
+			this.posY = posY;
+		}
+	}
 }

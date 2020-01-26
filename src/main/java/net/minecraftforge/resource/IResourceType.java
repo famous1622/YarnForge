@@ -22,6 +22,5 @@ package net.minecraftforge.resource;
 /**
  * Represents a generic type of reloadable resource. Used for resource reload filtering.
  */
-public interface IResourceType
-{
+public interface IResourceType {
 }

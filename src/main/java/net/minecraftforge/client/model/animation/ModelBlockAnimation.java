@@ -37,26 +37,6 @@ import javax.vecmath.Matrix4f;
 import javax.vecmath.Quat4f;
 import javax.vecmath.Vector3f;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
-import net.minecraft.client.renderer.model.BlockPart;
-import net.minecraft.resources.IResource;
-import net.minecraft.resources.IResourceManager;
-import net.minecraft.util.ResourceLocation;
-import net.minecraft.util.math.MathHelper;
-import net.minecraftforge.client.model.animation.ModelBlockAnimation.Parameter.Interpolation;
-import net.minecraftforge.client.model.animation.ModelBlockAnimation.Parameter.Type;
-import net.minecraftforge.client.model.animation.ModelBlockAnimation.Parameter.Variable;
-import net.minecraftforge.common.animation.Event;
-import net.minecraftforge.common.model.IModelState;
-import net.minecraftforge.common.model.TRSRTransformation;
-import net.minecraftforge.common.model.animation.IClip;
-import net.minecraftforge.common.model.animation.IJoint;
-import net.minecraftforge.common.model.animation.IJointClip;
-import net.minecraftforge.common.model.animation.JointClips;
-import net.minecraftforge.common.util.JsonUtils;
-
 import com.google.common.collect.ImmutableCollection;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -68,521 +48,456 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonParseException;
 import com.google.gson.annotations.SerializedName;
+import net.minecraftforge.client.model.animation.ModelBlockAnimation.Parameter.Interpolation;
+import net.minecraftforge.client.model.animation.ModelBlockAnimation.Parameter.Type;
+import net.minecraftforge.client.model.animation.ModelBlockAnimation.Parameter.Variable;
+import net.minecraftforge.common.animation.Event;
+import net.minecraftforge.common.model.IModelState;
+import net.minecraftforge.common.model.TRSRTransformation;
+import net.minecraftforge.common.model.animation.IClip;
+import net.minecraftforge.common.model.animation.IJoint;
+import net.minecraftforge.common.model.animation.IJointClip;
+import net.minecraftforge.common.model.animation.JointClips;
+import net.minecraftforge.common.util.JsonUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
-public class ModelBlockAnimation
-{
-    private static final Logger LOGGER = LogManager.getLogger();
+import net.minecraft.client.renderer.model.BlockPart;
+import net.minecraft.resources.IResource;
+import net.minecraft.resources.IResourceManager;
+import net.minecraft.util.ResourceLocation;
+import net.minecraft.util.math.MathHelper;
 
-    private final ImmutableMap<String, ImmutableMap<String, float[]>> joints;
-    private final ImmutableMap<String, MBClip> clips;
-    private transient ImmutableMultimap<Integer, MBJointWeight> jointIndexMap;
+public class ModelBlockAnimation {
+	private static final Logger LOGGER = LogManager.getLogger();
+	private static final Gson mbaGson = new GsonBuilder()
+			.registerTypeAdapter(ImmutableList.class, JsonUtils.ImmutableListTypeAdapter.INSTANCE)
+			.registerTypeAdapter(ImmutableMap.class, JsonUtils.ImmutableMapTypeAdapter.INSTANCE)
+			.setPrettyPrinting()
+			.enableComplexMapKeySerialization()
+			.disableHtmlEscaping()
+			.create();
+	private static final ModelBlockAnimation defaultModelBlockAnimation = new ModelBlockAnimation(ImmutableMap.of(), ImmutableMap.of());
+	private final ImmutableMap<String, ImmutableMap<String, float[]>> joints;
+	private final ImmutableMap<String, MBClip> clips;
+	private transient ImmutableMultimap<Integer, MBJointWeight> jointIndexMap;
 
-    public ModelBlockAnimation(ImmutableMap<String, ImmutableMap<String, float[]>> joints, ImmutableMap<String, MBClip> clips)
-    {
-        this.joints = joints;
-        this.clips = clips;
-    }
+	public ModelBlockAnimation(ImmutableMap<String, ImmutableMap<String, float[]>> joints, ImmutableMap<String, MBClip> clips) {
+		this.joints = joints;
+		this.clips = clips;
+	}
 
-    public ImmutableMap<String, ? extends IClip> getClips()
-    {
-        return clips;
-    }
+	/**
+	 * Load armature associated with a vanilla model.
+	 */
+	public static ModelBlockAnimation loadVanillaAnimation(IResourceManager manager, ResourceLocation armatureLocation) {
+		try {
+			try (IResource resource = manager.getResource(armatureLocation)) {
+				ModelBlockAnimation mba = mbaGson.fromJson(new InputStreamReader(resource.getInputStream(), StandardCharsets.UTF_8), ModelBlockAnimation.class);
+				//String json = mbaGson.toJson(mba);
+				return mba;
+			} catch (FileNotFoundException e) {
+				// this is normal. FIXME: error reporting?
+				return defaultModelBlockAnimation;
+			}
+		} catch (IOException | JsonParseException e) {
+			LOGGER.error("Exception loading vanilla model animation {}, skipping", armatureLocation, e);
+			return defaultModelBlockAnimation;
+		}
+	}
 
-    public ImmutableCollection<MBJointWeight> getJoint(int i)
-    {
-        if(jointIndexMap == null)
-        {
-            ImmutableMultimap.Builder<Integer, MBJointWeight> builder = ImmutableMultimap.builder();
-            for(Map.Entry<String, ImmutableMap<String, float[]>> info : joints.entrySet())
-            {
-                ImmutableMap.Builder<Integer, float[]> weightBuilder = ImmutableMap.builder();
-                for(Map.Entry<String, float[]> e : info.getValue().entrySet())
-                {
-                    weightBuilder.put(Integer.parseInt(e.getKey()), e.getValue());
-                }
-                ImmutableMap<Integer, float[]> weightMap = weightBuilder.build();
-                for(Map.Entry<Integer, float[]> e : weightMap.entrySet())
-                {
-                    builder.put(e.getKey(), new MBJointWeight(info.getKey(), weightMap));
-                }
-            }
-            jointIndexMap = builder.build();
-        }
-        return jointIndexMap.get(i);
-    }
+	public ImmutableMap<String, ? extends IClip> getClips() {
+		return clips;
+	}
 
-    protected static class MBVariableClip
-    {
-        private final Variable variable;
-        @SuppressWarnings("unused")
-        private final Type type;
-        private final Interpolation interpolation;
-        private final float[] samples;
+	public ImmutableCollection<MBJointWeight> getJoint(int i) {
+		if (jointIndexMap == null) {
+			ImmutableMultimap.Builder<Integer, MBJointWeight> builder = ImmutableMultimap.builder();
+			for (Map.Entry<String, ImmutableMap<String, float[]>> info : joints.entrySet()) {
+				ImmutableMap.Builder<Integer, float[]> weightBuilder = ImmutableMap.builder();
+				for (Map.Entry<String, float[]> e : info.getValue().entrySet()) {
+					weightBuilder.put(Integer.parseInt(e.getKey()), e.getValue());
+				}
+				ImmutableMap<Integer, float[]> weightMap = weightBuilder.build();
+				for (Map.Entry<Integer, float[]> e : weightMap.entrySet()) {
+					builder.put(e.getKey(), new MBJointWeight(info.getKey(), weightMap));
+				}
+			}
+			jointIndexMap = builder.build();
+		}
+		return jointIndexMap.get(i);
+	}
 
-        public MBVariableClip(Variable variable, Type type, Interpolation interpolation, float[] samples)
-        {
-            this.variable = variable;
-            this.type = type;
-            this.interpolation = interpolation;
-            this.samples = samples;
-        }
-    }
+	@Nullable
+	public TRSRTransformation getPartTransform(IModelState state, BlockPart part, int i) {
+		ImmutableCollection<MBJointWeight> infos = getJoint(i);
+		if (!infos.isEmpty()) {
+			Matrix4f m = new Matrix4f(), tmp;
+			float weight = 0;
+			for (MBJointWeight info : infos) {
+				if (info.getWeights().containsKey(i)) {
+					ModelBlockAnimation.MBJoint joint = new ModelBlockAnimation.MBJoint(info.getName());
+					Optional<TRSRTransformation> trOp = state.apply(Optional.of(joint));
+					if (trOp.isPresent() && !trOp.get().isIdentity()) {
+						float w = info.getWeights().get(i)[0];
+						tmp = trOp.get().getMatrixVec();
+						tmp.mul(w);
+						m.add(tmp);
+						weight += w;
+					}
+				}
+			}
+			if (weight > 1e-5) {
+				m.mul(1f / weight);
+				return new TRSRTransformation(m);
+			}
+		}
+		return null;
+	}
 
-    protected static class MBClip implements IClip
-    {
-        private final boolean loop;
-        @SerializedName("joint_clips")
-        private final ImmutableMap<String, ImmutableList<MBVariableClip>> jointClipsFlat;
-        private transient ImmutableMap<String, MBJointClip> jointClips;
-        @SerializedName("events")
-        private final ImmutableMap<String, String> eventsRaw;
-        private transient TreeMap<Float, Event> events;
+	protected static class MBVariableClip {
+		private final Variable variable;
+		@SuppressWarnings("unused")
+		private final Type type;
+		private final Interpolation interpolation;
+		private final float[] samples;
 
-        public MBClip(boolean loop, ImmutableMap<String, ImmutableList<MBVariableClip>> clips, ImmutableMap<String, String> events)
-        {
-            this.loop = loop;
-            this.jointClipsFlat = clips;
-            this.eventsRaw = events;
-        }
+		public MBVariableClip(Variable variable, Type type, Interpolation interpolation, float[] samples) {
+			this.variable = variable;
+			this.type = type;
+			this.interpolation = interpolation;
+			this.samples = samples;
+		}
+	}
 
-        private void initialize()
-        {
-            if(jointClips == null)
-            {
-                ImmutableMap.Builder<String, MBJointClip> builder = ImmutableMap.builder();
-                for (Map.Entry<String, ImmutableList<MBVariableClip>> e : jointClipsFlat.entrySet())
-                {
-                    builder.put(e.getKey(), new MBJointClip(loop, e.getValue()));
-                }
-                jointClips = builder.build();
-                events = Maps.newTreeMap();
-                if (!eventsRaw.isEmpty())
-                {
-                    TreeMap<Float, String> times = Maps.newTreeMap();
-                    for (String time : eventsRaw.keySet())
-                    {
-                        times.put(Float.parseFloat(time), time);
-                    }
-                    float lastTime = Float.POSITIVE_INFINITY;
-                    if (loop)
-                    {
-                        lastTime = times.firstKey();
-                    }
-                    for (Map.Entry<Float, String> entry : times.descendingMap().entrySet())
-                    {
-                        float time = entry.getKey();
-                        float offset = lastTime - time;
-                        if (loop)
-                        {
-                            offset = 1 - (1 - offset) % 1;
-                        }
-                        events.put(time, new Event(eventsRaw.get(entry.getValue()), offset));
-                    }
-                }
-            }
-        }
+	protected static class MBClip implements IClip {
+		private final boolean loop;
+		@SerializedName("joint_clips")
+		private final ImmutableMap<String, ImmutableList<MBVariableClip>> jointClipsFlat;
+		@SerializedName("events")
+		private final ImmutableMap<String, String> eventsRaw;
+		private transient ImmutableMap<String, MBJointClip> jointClips;
+		private transient TreeMap<Float, Event> events;
 
-        @Override
-        public IJointClip apply(IJoint joint)
-        {
-            initialize();
-            if(joint instanceof MBJoint)
-            {
-                MBJoint mbJoint = (MBJoint)joint;
-                //MBJointInfo = jointInfos.
-                MBJointClip clip = jointClips.get(mbJoint.getName());
-                if(clip != null) return clip;
-            }
-            return JointClips.IdentityJointClip.INSTANCE;
-        }
+		public MBClip(boolean loop, ImmutableMap<String, ImmutableList<MBVariableClip>> clips, ImmutableMap<String, String> events) {
+			this.loop = loop;
+			this.jointClipsFlat = clips;
+			this.eventsRaw = events;
+		}
 
-        @Override
-        public Iterable<Event> pastEvents(final float lastPollTime, final float time)
-        {
-            initialize();
-            return new Iterable<Event>()
-            {
-                @Override
-                public Iterator<Event> iterator()
-                {
-                    return new UnmodifiableIterator<Event>()
-                    {
-                        private Float curKey;
-                        private Event firstEvent;
-                        private float stopTime;
-                        {
-                            if(lastPollTime >= time)
-                            {
-                                curKey = null;
-                            }
-                            else
-                            {
-                                float fractTime = time - (float)Math.floor(time);
-                                float fractLastTime = lastPollTime - (float)Math.floor(lastPollTime);
-                                // swap if not in order
-                                if(fractLastTime > fractTime)
-                                {
-                                    float tmp = fractTime;
-                                    fractTime = fractLastTime;
-                                    fractLastTime = tmp;
-                                }
-                                // need to wrap around, swap again
-                                if(fractTime - fractLastTime > .5f)
-                                {
-                                    float tmp = fractTime;
-                                    fractTime = fractLastTime;
-                                    fractLastTime = tmp;
-                                }
+		private void initialize() {
+			if (jointClips == null) {
+				ImmutableMap.Builder<String, MBJointClip> builder = ImmutableMap.builder();
+				for (Map.Entry<String, ImmutableList<MBVariableClip>> e : jointClipsFlat.entrySet()) {
+					builder.put(e.getKey(), new MBJointClip(loop, e.getValue()));
+				}
+				jointClips = builder.build();
+				events = Maps.newTreeMap();
+				if (!eventsRaw.isEmpty()) {
+					TreeMap<Float, String> times = Maps.newTreeMap();
+					for (String time : eventsRaw.keySet()) {
+						times.put(Float.parseFloat(time), time);
+					}
+					float lastTime = Float.POSITIVE_INFINITY;
+					if (loop) {
+						lastTime = times.firstKey();
+					}
+					for (Map.Entry<Float, String> entry : times.descendingMap().entrySet()) {
+						float time = entry.getKey();
+						float offset = lastTime - time;
+						if (loop) {
+							offset = 1 - (1 - offset) % 1;
+						}
+						events.put(time, new Event(eventsRaw.get(entry.getValue()), offset));
+					}
+				}
+			}
+		}
 
-                                stopTime = fractLastTime;
+		@Override
+		public IJointClip apply(IJoint joint) {
+			initialize();
+			if (joint instanceof MBJoint) {
+				MBJoint mbJoint = (MBJoint) joint;
+				//MBJointInfo = jointInfos.
+				MBJointClip clip = jointClips.get(mbJoint.getName());
+				if (clip != null) return clip;
+			}
+			return JointClips.IdentityJointClip.INSTANCE;
+		}
 
-                                curKey = events.floorKey(fractTime);
-                                if(curKey == null && loop && !events.isEmpty())
-                                {
-                                    curKey = events.lastKey();
-                                }
-                                if(curKey != null)
-                                {
-                                    float checkCurTime = curKey;
-                                    float checkStopTime = stopTime;
-                                    if(checkCurTime >= fractTime) checkCurTime--;
-                                    if(checkStopTime >= fractTime) checkStopTime--;
-                                    float offset = fractTime - checkCurTime;
-                                    Event event = events.get(curKey);
-                                    if(checkCurTime < checkStopTime)
-                                    {
-                                        curKey = null;
-                                    }
-                                    else if(offset != event.offset())
-                                    {
-                                        firstEvent = new Event(event.event(), offset);
-                                    }
-                                }
-                            }
-                        }
+		@Override
+		public Iterable<Event> pastEvents(final float lastPollTime, final float time) {
+			initialize();
+			return new Iterable<Event>() {
+				@Override
+				public Iterator<Event> iterator() {
+					return new UnmodifiableIterator<Event>() {
+						private Float curKey;
+						private Event firstEvent;
+						private float stopTime;
 
-                        @Override
-                        public boolean hasNext()
-                        {
-                            return curKey != null;
-                        }
+						{
+							if (lastPollTime >= time) {
+								curKey = null;
+							} else {
+								float fractTime = time - (float) Math.floor(time);
+								float fractLastTime = lastPollTime - (float) Math.floor(lastPollTime);
+								// swap if not in order
+								if (fractLastTime > fractTime) {
+									float tmp = fractTime;
+									fractTime = fractLastTime;
+									fractLastTime = tmp;
+								}
+								// need to wrap around, swap again
+								if (fractTime - fractLastTime > .5f) {
+									float tmp = fractTime;
+									fractTime = fractLastTime;
+									fractLastTime = tmp;
+								}
 
-                        @Override
-                        public Event next()
-                        {
-                            if(curKey == null)
-                            {
-                                throw new NoSuchElementException();
-                            }
-                            Event event;
-                            if(firstEvent == null)
-                            {
-                                event = events.get(curKey);
-                            }
-                            else
-                            {
-                                event = firstEvent;
-                                firstEvent = null;
-                            }
-                            curKey = events.lowerKey(curKey);
-                            if(curKey == null && loop)
-                            {
-                                curKey = events.lastKey();
-                            }
-                            if(curKey != null)
-                            {
-                                float checkStopTime = stopTime;
-                                while(curKey + events.get(curKey).offset() < checkStopTime) checkStopTime--;
-                                while(curKey + events.get(curKey).offset() >= checkStopTime + 1) checkStopTime++;
-                                if(curKey <= checkStopTime)
-                                {
-                                    curKey = null;
-                                }
-                            }
-                            return event;
-                        }
-                    };
-                }
-            };
-        }
+								stopTime = fractLastTime;
 
-        protected static class MBJointClip implements IJointClip
-        {
-            private final boolean loop;
-            private final ImmutableList<MBVariableClip> variables;
+								curKey = events.floorKey(fractTime);
+								if (curKey == null && loop && !events.isEmpty()) {
+									curKey = events.lastKey();
+								}
+								if (curKey != null) {
+									float checkCurTime = curKey;
+									float checkStopTime = stopTime;
+									if (checkCurTime >= fractTime) checkCurTime--;
+									if (checkStopTime >= fractTime) checkStopTime--;
+									float offset = fractTime - checkCurTime;
+									Event event = events.get(curKey);
+									if (checkCurTime < checkStopTime) {
+										curKey = null;
+									} else if (offset != event.offset()) {
+										firstEvent = new Event(event.event(), offset);
+									}
+								}
+							}
+						}
 
-            public MBJointClip(boolean loop, ImmutableList<MBVariableClip> variables)
-            {
-                this.loop = loop;
-                this.variables = variables;
-                EnumSet<Variable> hadVar = Sets.newEnumSet(Collections.<Variable>emptyList(), Variable.class);
-                for(MBVariableClip var : variables)
-                {
-                    if(hadVar.contains(var.variable))
-                    {
-                        throw new IllegalArgumentException("duplicate variable: " + var);
-                    }
-                    hadVar.add(var.variable);
-                }
-            }
+						@Override
+						public boolean hasNext() {
+							return curKey != null;
+						}
 
-            @Override
-            public TRSRTransformation apply(float time)
-            {
-                time -= Math.floor(time);
-                Vector3f translation = new Vector3f(0, 0, 0);
-                Vector3f scale = new Vector3f(1, 1, 1);
-                Vector3f origin = new Vector3f(0, 0, 0);
-                AxisAngle4f rotation = new AxisAngle4f(0, 0, 0, 0);
-                for(MBVariableClip var : variables)
-                {
-                    int length = loop ? var.samples.length : (var.samples.length - 1);
-                    float timeScaled = time * length;
-                    int s1 = MathHelper.clamp((int)Math.round(Math.floor(timeScaled)), 0, length - 1);
-                    float progress = timeScaled - s1;
-                    int s2 = s1 + 1;
-                    if(s2 == length && loop) s2 = 0;
-                    float value = 0;
-                    switch(var.interpolation)
-                    {
-                        case LINEAR:
-                            if(var.variable == Variable.ANGLE)
-                            {
-                                float v1 = var.samples[s1];
-                                float v2 = var.samples[s2];
-                                float diff = ((v2 - v1) % 360 + 540) % 360 - 180;
-                                value = v1 + diff * progress;
-                            }
-                            else
-                            {
-                                value = var.samples[s1] * (1 - progress) + var.samples[s2] * progress;
-                            }
-                            break;
-                        case NEAREST:
-                            value = var.samples[progress < .5f ? s1 : s2];
-                            break;
-                    }
-                    switch(var.variable)
-                    {
-                        case X:
-                            translation.x = value;
-                            break;
-                        case Y:
-                            translation.y = value;
-                            break;
-                        case Z:
-                            translation.z = value;
-                            break;
-                        case XROT:
-                            rotation.x = value;
-                            break;
-                        case YROT:
-                            rotation.y = value;
-                            break;
-                        case ZROT:
-                            rotation.z = value;
-                            break;
-                        case ANGLE:
-                            rotation.angle = (float)Math.toRadians(value);
-                            break;
-                        case SCALE:
-                            scale.x = scale.y = scale.z = value;
-                            break;
-                        case XS:
-                            scale.x = value;
-                            break;
-                        case YS:
-                            scale.y = value;
-                            break;
-                        case ZS:
-                            scale.z = value;
-                            break;
-                        case XORIGIN:
-                            origin.x = value - 0.5F;
-                            break;
-                        case YORIGIN:
-                            origin.y = value - 0.5F;
-                            break;
-                        case ZORIGIN:
-                            origin.z = value - 0.5F;
-                            break;
-                    }
-                }
-                Quat4f rot = new Quat4f();
-                rot.set(rotation);
-                TRSRTransformation base = new TRSRTransformation(translation, rot, scale, null);
-                Vector3f negOrigin = new Vector3f(origin);
-                negOrigin.negate();
-                base = new TRSRTransformation(origin, null, null, null).compose(base).compose(new TRSRTransformation(negOrigin, null, null, null));
-                return TRSRTransformation.blockCenterToCorner(base);
-            }
-        }
-    }
+						@Override
+						public Event next() {
+							if (curKey == null) {
+								throw new NoSuchElementException();
+							}
+							Event event;
+							if (firstEvent == null) {
+								event = events.get(curKey);
+							} else {
+								event = firstEvent;
+								firstEvent = null;
+							}
+							curKey = events.lowerKey(curKey);
+							if (curKey == null && loop) {
+								curKey = events.lastKey();
+							}
+							if (curKey != null) {
+								float checkStopTime = stopTime;
+								while (curKey + events.get(curKey).offset() < checkStopTime) checkStopTime--;
+								while (curKey + events.get(curKey).offset() >= checkStopTime + 1) checkStopTime++;
+								if (curKey <= checkStopTime) {
+									curKey = null;
+								}
+							}
+							return event;
+						}
+					};
+				}
+			};
+		}
 
-    protected static class MBJoint implements IJoint
-    {
-        private final String name;
+		protected static class MBJointClip implements IJointClip {
+			private final boolean loop;
+			private final ImmutableList<MBVariableClip> variables;
 
-        public MBJoint(String name)
-        {
-            this.name = name;
-        }
+			public MBJointClip(boolean loop, ImmutableList<MBVariableClip> variables) {
+				this.loop = loop;
+				this.variables = variables;
+				EnumSet<Variable> hadVar = Sets.newEnumSet(Collections.emptyList(), Variable.class);
+				for (MBVariableClip var : variables) {
+					if (hadVar.contains(var.variable)) {
+						throw new IllegalArgumentException("duplicate variable: " + var);
+					}
+					hadVar.add(var.variable);
+				}
+			}
 
-        @Override
-        public TRSRTransformation getInvBindPose()
-        {
-            return TRSRTransformation.identity();
-        }
+			@Override
+			public TRSRTransformation apply(float time) {
+				time -= Math.floor(time);
+				Vector3f translation = new Vector3f(0, 0, 0);
+				Vector3f scale = new Vector3f(1, 1, 1);
+				Vector3f origin = new Vector3f(0, 0, 0);
+				AxisAngle4f rotation = new AxisAngle4f(0, 0, 0, 0);
+				for (MBVariableClip var : variables) {
+					int length = loop ? var.samples.length : (var.samples.length - 1);
+					float timeScaled = time * length;
+					int s1 = MathHelper.clamp((int) Math.round(Math.floor(timeScaled)), 0, length - 1);
+					float progress = timeScaled - s1;
+					int s2 = s1 + 1;
+					if (s2 == length && loop) s2 = 0;
+					float value = 0;
+					switch (var.interpolation) {
+					case LINEAR:
+						if (var.variable == Variable.ANGLE) {
+							float v1 = var.samples[s1];
+							float v2 = var.samples[s2];
+							float diff = ((v2 - v1) % 360 + 540) % 360 - 180;
+							value = v1 + diff * progress;
+						} else {
+							value = var.samples[s1] * (1 - progress) + var.samples[s2] * progress;
+						}
+						break;
+					case NEAREST:
+						value = var.samples[progress < .5f ? s1 : s2];
+						break;
+					}
+					switch (var.variable) {
+					case X:
+						translation.x = value;
+						break;
+					case Y:
+						translation.y = value;
+						break;
+					case Z:
+						translation.z = value;
+						break;
+					case XROT:
+						rotation.x = value;
+						break;
+					case YROT:
+						rotation.y = value;
+						break;
+					case ZROT:
+						rotation.z = value;
+						break;
+					case ANGLE:
+						rotation.angle = (float) Math.toRadians(value);
+						break;
+					case SCALE:
+						scale.x = scale.y = scale.z = value;
+						break;
+					case XS:
+						scale.x = value;
+						break;
+					case YS:
+						scale.y = value;
+						break;
+					case ZS:
+						scale.z = value;
+						break;
+					case XORIGIN:
+						origin.x = value - 0.5F;
+						break;
+					case YORIGIN:
+						origin.y = value - 0.5F;
+						break;
+					case ZORIGIN:
+						origin.z = value - 0.5F;
+						break;
+					}
+				}
+				Quat4f rot = new Quat4f();
+				rot.set(rotation);
+				TRSRTransformation base = new TRSRTransformation(translation, rot, scale, null);
+				Vector3f negOrigin = new Vector3f(origin);
+				negOrigin.negate();
+				base = new TRSRTransformation(origin, null, null, null).compose(base).compose(new TRSRTransformation(negOrigin, null, null, null));
+				return TRSRTransformation.blockCenterToCorner(base);
+			}
+		}
+	}
 
-        @Override
-        public Optional<? extends IJoint> getParent()
-        {
-            return Optional.empty();
-        }
+	protected static class MBJoint implements IJoint {
+		private final String name;
 
-        public String getName()
-        {
-            return name;
-        }
-    }
+		public MBJoint(String name) {
+			this.name = name;
+		}
 
-    protected static class MBJointWeight
-    {
-        private final String name;
-        private final ImmutableMap<Integer, float[]> weights;
+		@Override
+		public TRSRTransformation getInvBindPose() {
+			return TRSRTransformation.identity();
+		}
 
-        public MBJointWeight(String name, ImmutableMap<Integer, float[]> weights)
-        {
-            this.name = name;
-            this.weights = weights;
-        }
+		@Override
+		public Optional<? extends IJoint> getParent() {
+			return Optional.empty();
+		}
 
-        public String getName()
-        {
-            return name;
-        }
+		public String getName() {
+			return name;
+		}
+	}
 
-        public ImmutableMap<Integer, float[]> getWeights()
-        {
-            return weights;
-        }
-    }
+	protected static class MBJointWeight {
+		private final String name;
+		private final ImmutableMap<Integer, float[]> weights;
 
-    protected static class Parameter
-    {
-        public static enum Variable
-        {
-            @SerializedName("offset_x")
-            X,
-            @SerializedName("offset_y")
-            Y,
-            @SerializedName("offset_z")
-            Z,
-            @SerializedName("axis_x")
-            XROT,
-            @SerializedName("axis_y")
-            YROT,
-            @SerializedName("axis_z")
-            ZROT,
-            @SerializedName("angle")
-            ANGLE,
-            @SerializedName("scale")
-            SCALE,
-            @SerializedName("scale_x")
-            XS,
-            @SerializedName("scale_y")
-            YS,
-            @SerializedName("scale_z")
-            ZS,
-            @SerializedName("origin_x")
-            XORIGIN,
-            @SerializedName("origin_y")
-            YORIGIN,
-            @SerializedName("origin_z")
-            ZORIGIN;
-        }
+		public MBJointWeight(String name, ImmutableMap<Integer, float[]> weights) {
+			this.name = name;
+			this.weights = weights;
+		}
 
-        public static enum Type
-        {
-            @SerializedName("uniform")
-            UNIFORM;
-        }
+		public String getName() {
+			return name;
+		}
 
-        public static enum Interpolation
-        {
-            @SerializedName("linear")
-            LINEAR,
-            @SerializedName("nearest")
-            NEAREST;
-        }
-    }
+		public ImmutableMap<Integer, float[]> getWeights() {
+			return weights;
+		}
+	}
 
-    @Nullable
-    public TRSRTransformation getPartTransform(IModelState state, BlockPart part, int i)
-    {
-        ImmutableCollection<MBJointWeight> infos = getJoint(i);
-        if(!infos.isEmpty())
-        {
-            Matrix4f m = new Matrix4f(), tmp;
-            float weight = 0;
-            for(MBJointWeight info : infos)
-            {
-                if(info.getWeights().containsKey(i))
-                {
-                    ModelBlockAnimation.MBJoint joint = new ModelBlockAnimation.MBJoint(info.getName());
-                    Optional<TRSRTransformation> trOp = state.apply(Optional.of(joint));
-                    if(trOp.isPresent() && !trOp.get().isIdentity())
-                    {
-                        float w = info.getWeights().get(i)[0];
-                        tmp = trOp.get().getMatrixVec();
-                        tmp.mul(w);
-                        m.add(tmp);
-                        weight += w;
-                    }
-                }
-            }
-            if(weight > 1e-5)
-            {
-                m.mul(1f / weight);
-                return new TRSRTransformation(m);
-            }
-        }
-        return null;
-    }
+	protected static class Parameter {
+		public enum Variable {
+			@SerializedName("offset_x")
+			X,
+			@SerializedName("offset_y")
+			Y,
+			@SerializedName("offset_z")
+			Z,
+			@SerializedName("axis_x")
+			XROT,
+			@SerializedName("axis_y")
+			YROT,
+			@SerializedName("axis_z")
+			ZROT,
+			@SerializedName("angle")
+			ANGLE,
+			@SerializedName("scale")
+			SCALE,
+			@SerializedName("scale_x")
+			XS,
+			@SerializedName("scale_y")
+			YS,
+			@SerializedName("scale_z")
+			ZS,
+			@SerializedName("origin_x")
+			XORIGIN,
+			@SerializedName("origin_y")
+			YORIGIN,
+			@SerializedName("origin_z")
+			ZORIGIN
+		}
 
-    /**
-     * Load armature associated with a vanilla model.
-     */
-    public static ModelBlockAnimation loadVanillaAnimation(IResourceManager manager, ResourceLocation armatureLocation)
-    {
-        try
-        {
-            try (IResource resource = manager.getResource(armatureLocation))
-            {
-                ModelBlockAnimation mba = mbaGson.fromJson(new InputStreamReader(resource.getInputStream(), StandardCharsets.UTF_8), ModelBlockAnimation.class);
-                //String json = mbaGson.toJson(mba);
-                return mba;
-            }
-            catch(FileNotFoundException e)
-            {
-                // this is normal. FIXME: error reporting?
-                return defaultModelBlockAnimation;
-            }
-        }
-        catch(IOException | JsonParseException e)
-        {
-            LOGGER.error("Exception loading vanilla model animation {}, skipping", armatureLocation, e);
-            return defaultModelBlockAnimation;
-        }
-    }
+		public enum Type {
+			@SerializedName("uniform")
+			UNIFORM
+		}
 
-    private static final Gson mbaGson = new GsonBuilder()
-        .registerTypeAdapter(ImmutableList.class, JsonUtils.ImmutableListTypeAdapter.INSTANCE)
-        .registerTypeAdapter(ImmutableMap.class, JsonUtils.ImmutableMapTypeAdapter.INSTANCE)
-        .setPrettyPrinting()
-        .enableComplexMapKeySerialization()
-        .disableHtmlEscaping()
-        .create();
-
-    private static final ModelBlockAnimation defaultModelBlockAnimation = new ModelBlockAnimation(ImmutableMap.<String, ImmutableMap<String, float[]>>of(), ImmutableMap.<String, ModelBlockAnimation.MBClip>of());
+		public enum Interpolation {
+			@SerializedName("linear")
+			LINEAR,
+			@SerializedName("nearest")
+			NEAREST
+		}
+	}
 }

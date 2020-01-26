@@ -19,10 +19,10 @@
 
 package net.minecraftforge.event.entity.player;
 
+import net.minecraftforge.common.MinecraftForge;
+
 import net.minecraft.advancements.Advancement;
 import net.minecraft.entity.player.PlayerEntity;
-import net.minecraftforge.common.MinecraftForge;
-import net.minecraftforge.eventbus.api.Cancelable;
 
 /**
  * This event is fired when a player gets an advancement.
@@ -33,18 +33,15 @@ import net.minecraftforge.eventbus.api.Cancelable;
  * <br>
  * This event is fired on the {@link MinecraftForge#EVENT_BUS}.
  */
-public class AdvancementEvent extends PlayerEvent
-{
-    private final Advancement advancement;
+public class AdvancementEvent extends PlayerEvent {
+	private final Advancement advancement;
 
-    public AdvancementEvent(PlayerEntity player, Advancement advancement)
-    {
-        super(player);
-        this.advancement = advancement;
-    }
+	public AdvancementEvent(PlayerEntity player, Advancement advancement) {
+		super(player);
+		this.advancement = advancement;
+	}
 
-    public Advancement getAdvancement()
-    {
-        return advancement;
-    }
+	public Advancement getAdvancement() {
+		return advancement;
+	}
 }

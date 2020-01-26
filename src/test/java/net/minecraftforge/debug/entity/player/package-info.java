@@ -22,4 +22,5 @@
 package net.minecraftforge.debug.entity.player;
 
 import javax.annotation.ParametersAreNonnullByDefault;
+
 import mcp.MethodsReturnNonnullByDefault;

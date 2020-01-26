@@ -28,42 +28,41 @@ import com.google.gson.JsonObject;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.crafting.Ingredient.IItemList;
 
-public class StackList implements IItemList
-{
-    private Collection<ItemStack> items;
-    public StackList(Collection<ItemStack> items)
-    {
-        this.items = Collections.unmodifiableCollection(items);
-    }
+public class StackList implements IItemList {
+	private Collection<ItemStack> items;
 
-    @Override
-    public Collection<ItemStack> getStacks()
-    {
-        return items;
-    }
+	public StackList(Collection<ItemStack> items) {
+		this.items = Collections.unmodifiableCollection(items);
+	}
 
-    @Override
-    public JsonObject serialize()
-    {
-        if (items.size() == 1)
-            return toJson(items.iterator().next());
+	@Override
+	public Collection<ItemStack> getStacks() {
+		return items;
+	}
 
-        JsonObject ret = new JsonObject();
-        JsonArray array = new JsonArray();
-        items.forEach(stack -> array.add(toJson(stack)));
-        ret.add("items", array);
-        return ret;
-    }
+	@Override
+	public JsonObject serialize() {
+		if (items.size() == 1) {
+			return toJson(items.iterator().next());
+		}
 
-    private JsonObject toJson(ItemStack stack)
-    {
-        JsonObject ret = new JsonObject();
-        ret.addProperty("item", stack.getItem().getRegistryName().toString());
-        if (stack.getCount() != 1)
-            ret.addProperty("count", stack.getCount());
-        if (stack.getTag() != null)
-            ret.addProperty("nbt", stack.getTag().toString()); //TODO: Better serialization?
-        return ret;
-    }
+		JsonObject ret = new JsonObject();
+		JsonArray array = new JsonArray();
+		items.forEach(stack -> array.add(toJson(stack)));
+		ret.add("items", array);
+		return ret;
+	}
+
+	private JsonObject toJson(ItemStack stack) {
+		JsonObject ret = new JsonObject();
+		ret.addProperty("item", stack.getItem().getRegistryName().toString());
+		if (stack.getCount() != 1) {
+			ret.addProperty("count", stack.getCount());
+		}
+		if (stack.getTag() != null) {
+			ret.addProperty("nbt", stack.getTag().toString()); //TODO: Better serialization?
+		}
+		return ret;
+	}
 
 }

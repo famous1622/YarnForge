@@ -30,6 +30,7 @@ import java.util.Set;
 import java.util.function.Consumer;
 
 import com.google.gson.JsonObject;
+import net.minecraftforge.common.Tags;
 
 import net.minecraft.block.Blocks;
 import net.minecraft.data.DataGenerator;
@@ -43,148 +44,131 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
 import net.minecraft.item.crafting.Ingredient;
 import net.minecraft.item.crafting.Ingredient.IItemList;
-import net.minecraft.item.crafting.Ingredient.TagList;
 import net.minecraft.item.crafting.Ingredient.SingleItemList;
+import net.minecraft.item.crafting.Ingredient.TagList;
 import net.minecraft.tags.Tag;
 import net.minecraft.util.IItemProvider;
 import net.minecraft.util.ResourceLocation;
-import net.minecraftforge.common.Tags;
 
-public class ForgeRecipeProvider extends RecipeProvider
-{
-    private Map<Item, Tag<Item>> replacements = new HashMap<>();
-    private Set<ResourceLocation> excludes = new HashSet<>();
+public class ForgeRecipeProvider extends RecipeProvider {
+	private Map<Item, Tag<Item>> replacements = new HashMap<>();
+	private Set<ResourceLocation> excludes = new HashSet<>();
 
-    public ForgeRecipeProvider(DataGenerator generatorIn)
-    {
-        super(generatorIn);
-    }
+	public ForgeRecipeProvider(DataGenerator generatorIn) {
+		super(generatorIn);
+	}
 
-    private void exclude(IItemProvider item)
-    {
-        excludes.add(item.asItem().getRegistryName());
-    }
+	private void exclude(IItemProvider item) {
+		excludes.add(item.asItem().getRegistryName());
+	}
 
-    private void replace(IItemProvider item, Tag<Item> tag)
-    {
-        replacements.put(item.asItem(), tag);
-    }
+	private void replace(IItemProvider item, Tag<Item> tag) {
+		replacements.put(item.asItem(), tag);
+	}
 
-    @Override
-    protected void registerRecipes(Consumer<IFinishedRecipe> consumer)
-    {
-        replace(Items.STICK,        Tags.Items.RODS_WOODEN);
-        replace(Items.GOLD_INGOT,   Tags.Items.INGOTS_GOLD);
-        replace(Items.IRON_INGOT,   Tags.Items.INGOTS_IRON);
-        replace(Items.DIAMOND,      Tags.Items.GEMS_DIAMOND);
-        replace(Items.EMERALD,      Tags.Items.GEMS_EMERALD);
-        replace(Items.CHEST,        Tags.Items.CHESTS_WOODEN);
-        replace(Blocks.COBBLESTONE, Tags.Items.COBBLESTONE);
+	@Override
+	protected void registerRecipes(Consumer<IFinishedRecipe> consumer) {
+		replace(Items.STICK, Tags.Items.RODS_WOODEN);
+		replace(Items.GOLD_INGOT, Tags.Items.INGOTS_GOLD);
+		replace(Items.IRON_INGOT, Tags.Items.INGOTS_IRON);
+		replace(Items.DIAMOND, Tags.Items.GEMS_DIAMOND);
+		replace(Items.EMERALD, Tags.Items.GEMS_EMERALD);
+		replace(Items.CHEST, Tags.Items.CHESTS_WOODEN);
+		replace(Blocks.COBBLESTONE, Tags.Items.COBBLESTONE);
 
-        exclude(Blocks.GOLD_BLOCK);
-        exclude(Items.GOLD_NUGGET);
-        exclude(Blocks.IRON_BLOCK);
-        exclude(Items.IRON_NUGGET);
-        exclude(Blocks.DIAMOND_BLOCK);
-        exclude(Blocks.EMERALD_BLOCK);
-        
-        exclude(Blocks.COBBLESTONE_STAIRS);
-        exclude(Blocks.COBBLESTONE_SLAB);
-        exclude(Blocks.COBBLESTONE_WALL);
+		exclude(Blocks.GOLD_BLOCK);
+		exclude(Items.GOLD_NUGGET);
+		exclude(Blocks.IRON_BLOCK);
+		exclude(Items.IRON_NUGGET);
+		exclude(Blocks.DIAMOND_BLOCK);
+		exclude(Blocks.EMERALD_BLOCK);
 
-        super.registerRecipes(vanilla -> {
-            IFinishedRecipe modified = enhance(vanilla);
-            if (modified != null)
-                consumer.accept(modified);
-        });
-    }
+		exclude(Blocks.COBBLESTONE_STAIRS);
+		exclude(Blocks.COBBLESTONE_SLAB);
+		exclude(Blocks.COBBLESTONE_WALL);
 
-    @Override
-    protected void saveRecipeAdvancement(DirectoryCache cache, JsonObject advancementJson, Path pathIn) {
-        //NOOP - We dont replace any of the advancement things yet...
-    }
+		super.registerRecipes(vanilla -> {
+			IFinishedRecipe modified = enhance(vanilla);
+			if (modified != null) {
+				consumer.accept(modified);
+			}
+		});
+	}
 
-    private IFinishedRecipe enhance(IFinishedRecipe vanilla)
-    {
-        if (vanilla instanceof ShapelessRecipeBuilder.Result)
-            return enhance((ShapelessRecipeBuilder.Result)vanilla);
-        if (vanilla instanceof ShapedRecipeBuilder.Result)
-            return enhance((ShapedRecipeBuilder.Result)vanilla);
-        return null;
-    }
+	@Override
+	protected void saveRecipeAdvancement(DirectoryCache cache, JsonObject advancementJson, Path pathIn) {
+		//NOOP - We dont replace any of the advancement things yet...
+	}
 
-    private IFinishedRecipe enhance(ShapelessRecipeBuilder.Result vanilla)
-    {
-        List<Ingredient> ingredients = getField(ShapelessRecipeBuilder.Result.class, vanilla, 4);
-        boolean modified = false;
-        for (int x = 0; x < ingredients.size(); x++)
-        {
-            Ingredient ing = enhance(vanilla.getID(), ingredients.get(x));
-            if (ing != null)
-            {
-                ingredients.set(x, ing);
-                modified = true;
-            }
-        }
-        return modified ? vanilla : null;
-    }
+	private IFinishedRecipe enhance(IFinishedRecipe vanilla) {
+		if (vanilla instanceof ShapelessRecipeBuilder.Result) {
+			return enhance((ShapelessRecipeBuilder.Result) vanilla);
+		}
+		if (vanilla instanceof ShapedRecipeBuilder.Result) {
+			return enhance((ShapedRecipeBuilder.Result) vanilla);
+		}
+		return null;
+	}
 
-    private IFinishedRecipe enhance(ShapedRecipeBuilder.Result vanilla)
-    {
-        Map<Character, Ingredient> ingredients = getField(ShapedRecipeBuilder.Result.class, vanilla, 5);
-        boolean modified = false;
-        for (Character x : ingredients.keySet())
-        {
-            Ingredient ing = enhance(vanilla.getID(), ingredients.get(x));
-            if (ing != null)
-            {
-                ingredients.put(x, ing);
-                modified = true;
-            }
-        }
-        return modified ? vanilla : null;
-    }
+	private IFinishedRecipe enhance(ShapelessRecipeBuilder.Result vanilla) {
+		List<Ingredient> ingredients = getField(ShapelessRecipeBuilder.Result.class, vanilla, 4);
+		boolean modified = false;
+		for (int x = 0; x < ingredients.size(); x++) {
+			Ingredient ing = enhance(vanilla.getID(), ingredients.get(x));
+			if (ing != null) {
+				ingredients.set(x, ing);
+				modified = true;
+			}
+		}
+		return modified ? vanilla : null;
+	}
 
-    private Ingredient enhance(ResourceLocation name, Ingredient vanilla)
-    {
-        if (excludes.contains(name))
-            return null;
+	private IFinishedRecipe enhance(ShapedRecipeBuilder.Result vanilla) {
+		Map<Character, Ingredient> ingredients = getField(ShapedRecipeBuilder.Result.class, vanilla, 5);
+		boolean modified = false;
+		for (Character x : ingredients.keySet()) {
+			Ingredient ing = enhance(vanilla.getID(), ingredients.get(x));
+			if (ing != null) {
+				ingredients.put(x, ing);
+				modified = true;
+			}
+		}
+		return modified ? vanilla : null;
+	}
 
-        boolean modified = false;
-        List<IItemList> items = new ArrayList<>();
-        IItemList[] vanillaItems = getField(Ingredient.class, vanilla, 3);
-        for (IItemList entry : vanillaItems)
-        {
-            if (entry instanceof SingleItemList)
-            {
-                ItemStack stack = entry.getStacks().stream().findFirst().orElse(ItemStack.EMPTY);
-                Tag<Item> replacement = replacements.get(stack.getItem());
-                if (replacement != null)
-                {
-                    items.add(new TagList(replacement));
-                    modified = true;
-                }
-                else
-                    items.add(entry);
-            }
-            else
-                items.add(entry);
-        }
-        return modified ? Ingredient.fromItemListStream(items.stream()) : null;
-    }
+	private Ingredient enhance(ResourceLocation name, Ingredient vanilla) {
+		if (excludes.contains(name)) {
+			return null;
+		}
 
-    @SuppressWarnings("unchecked")
-    private <T, R> R getField(Class<T> clz, T inst, int index)
-    {
-        Field fld = clz.getDeclaredFields()[index];
-        fld.setAccessible(true);
-        try
-        {
-            return (R)fld.get(inst);
-        }
-        catch (IllegalArgumentException | IllegalAccessException e)
-        {
-            throw new RuntimeException(e);
-        }
-    }
+		boolean modified = false;
+		List<IItemList> items = new ArrayList<>();
+		IItemList[] vanillaItems = getField(Ingredient.class, vanilla, 3);
+		for (IItemList entry : vanillaItems) {
+			if (entry instanceof SingleItemList) {
+				ItemStack stack = entry.getStacks().stream().findFirst().orElse(ItemStack.EMPTY);
+				Tag<Item> replacement = replacements.get(stack.getItem());
+				if (replacement != null) {
+					items.add(new TagList(replacement));
+					modified = true;
+				} else {
+					items.add(entry);
+				}
+			} else {
+				items.add(entry);
+			}
+		}
+		return modified ? Ingredient.fromItemListStream(items.stream()) : null;
+	}
+
+	@SuppressWarnings("unchecked")
+	private <T, R> R getField(Class<T> clz, T inst, int index) {
+		Field fld = clz.getDeclaredFields()[index];
+		fld.setAccessible(true);
+		try {
+			return (R) fld.get(inst);
+		} catch (IllegalArgumentException | IllegalAccessException e) {
+			throw new RuntimeException(e);
+		}
+	}
 }

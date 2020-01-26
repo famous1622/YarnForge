@@ -20,10 +20,10 @@
 package net.minecraftforge.client.event;
 
 import com.google.common.base.Strings;
+import net.minecraftforge.common.MinecraftForge;
+import net.minecraftforge.event.ForgeEventFactory;
 import net.minecraftforge.eventbus.api.Cancelable;
 import net.minecraftforge.eventbus.api.Event;
-import net.minecraftforge.event.ForgeEventFactory;
-import net.minecraftforge.common.MinecraftForge;
 
 /**
  * ClientChatEvent is fired whenever the client is about to send a chat message or command to the server. <br>
@@ -41,28 +41,24 @@ import net.minecraftforge.common.MinecraftForge;
  * This event is fired on the {@link MinecraftForge#EVENT_BUS}.
  **/
 @Cancelable
-public class ClientChatEvent extends Event
-{
-    private String message;
-    private final String originalMessage;
-    public ClientChatEvent(String message)
-    {
-        this.setMessage(message);
-        this.originalMessage = Strings.nullToEmpty(message);
-    }
+public class ClientChatEvent extends Event {
+	private final String originalMessage;
+	private String message;
 
-    public String getMessage()
-    {
-        return message;
-    }
+	public ClientChatEvent(String message) {
+		this.setMessage(message);
+		this.originalMessage = Strings.nullToEmpty(message);
+	}
 
-    public void setMessage(String message)
-    {
-        this.message = Strings.nullToEmpty(message);
-    }
+	public String getMessage() {
+		return message;
+	}
 
-    public String getOriginalMessage()
-    {
-        return originalMessage;
-    }
+	public void setMessage(String message) {
+		this.message = Strings.nullToEmpty(message);
+	}
+
+	public String getOriginalMessage() {
+		return originalMessage;
+	}
 }

@@ -19,11 +19,11 @@
 
 package net.minecraftforge.event.entity;
 
-import net.minecraft.entity.Entity;
-import net.minecraft.world.dimension.DimensionType;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.eventbus.api.Cancelable;
-import net.minecraftforge.eventbus.api.Event.HasResult;
+
+import net.minecraft.entity.Entity;
+import net.minecraft.world.dimension.DimensionType;
 
 /**
  * EntityTravelToDimensionEvent is fired before an Entity travels to a dimension.<br>
@@ -38,18 +38,15 @@ import net.minecraftforge.eventbus.api.Event.HasResult;
  * This event is fired on the {@link MinecraftForge#EVENT_BUS}.<br>
  **/
 @Cancelable
-public class EntityTravelToDimensionEvent extends EntityEvent
-{
-    private final DimensionType dimension;
+public class EntityTravelToDimensionEvent extends EntityEvent {
+	private final DimensionType dimension;
 
-    public EntityTravelToDimensionEvent(Entity entity, DimensionType dimension)
-    {
-        super(entity);
-        this.dimension = dimension;
-    }
+	public EntityTravelToDimensionEvent(Entity entity, DimensionType dimension) {
+		super(entity);
+		this.dimension = dimension;
+	}
 
-    public DimensionType getDimension()
-    {
-        return dimension;
-    }
+	public DimensionType getDimension() {
+		return dimension;
+	}
 }

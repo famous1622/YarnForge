@@ -19,37 +19,35 @@
 
 package net.minecraftforge.fml.event.lifecycle;
 
-import net.minecraft.client.Minecraft;
+import java.util.function.Supplier;
+
 import net.minecraftforge.fml.ModContainer;
 
-import java.util.function.Supplier;
+import net.minecraft.client.Minecraft;
 
 /**
  * This is the second of four commonly called events during mod lifecycle startup.
- *
+ * <p>
  * Called before {@link InterModEnqueueEvent}
  * Called after {@link FMLCommonSetupEvent}
- *
+ * <p>
  * Called on {@link net.minecraftforge.api.distmarker.Dist#CLIENT} - the game client.
- *
+ * <p>
  * Alternative to {@link FMLDedicatedServerSetupEvent}.
- *
+ * <p>
  * Do client only setup with this event, such as KeyBindings.
- *
+ * <p>
  * This is a parallel dispatch event.
  */
-public class FMLClientSetupEvent extends ModLifecycleEvent
-{
-    private final Supplier<Minecraft> minecraftSupplier;
+public class FMLClientSetupEvent extends ModLifecycleEvent {
+	private final Supplier<Minecraft> minecraftSupplier;
 
-    public FMLClientSetupEvent(Supplier<Minecraft> mc, ModContainer container)
-    {
-        super(container);
-        this.minecraftSupplier = mc;
-    }
+	public FMLClientSetupEvent(Supplier<Minecraft> mc, ModContainer container) {
+		super(container);
+		this.minecraftSupplier = mc;
+	}
 
-    public Supplier<Minecraft> getMinecraftSupplier()
-    {
-        return minecraftSupplier;
-    }
+	public Supplier<Minecraft> getMinecraftSupplier() {
+		return minecraftSupplier;
+	}
 }

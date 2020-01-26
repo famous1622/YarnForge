@@ -19,13 +19,14 @@
 
 package net.minecraftforge.event.entity.living;
 
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.inventory.EquipmentSlotType;
-import net.minecraft.item.ItemStack;
+import javax.annotation.Nonnull;
+
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.eventbus.api.Cancelable;
 
-import javax.annotation.Nonnull;
+import net.minecraft.entity.LivingEntity;
+import net.minecraft.inventory.EquipmentSlotType;
+import net.minecraft.item.ItemStack;
 
 /**
  * {@link LivingEquipmentChangeEvent} is fired when the Equipment of a Entity changes. <br>
@@ -43,23 +44,29 @@ import javax.annotation.Nonnull;
  * <br>
  * This event is fired on the {@link MinecraftForge#EVENT_BUS}.
  **/
-public class LivingEquipmentChangeEvent extends LivingEvent
-{
-    private final EquipmentSlotType slot;
-    private final ItemStack from;
-    private final ItemStack to;
+public class LivingEquipmentChangeEvent extends LivingEvent {
+	private final EquipmentSlotType slot;
+	private final ItemStack from;
+	private final ItemStack to;
 
-    public LivingEquipmentChangeEvent(LivingEntity entity, EquipmentSlotType slot, @Nonnull ItemStack from, @Nonnull ItemStack to)
-    {
-        super(entity);
-        this.slot = slot;
-        this.from = from;
-        this.to = to;
-    }
+	public LivingEquipmentChangeEvent(LivingEntity entity, EquipmentSlotType slot, @Nonnull ItemStack from, @Nonnull ItemStack to) {
+		super(entity);
+		this.slot = slot;
+		this.from = from;
+		this.to = to;
+	}
 
-    public EquipmentSlotType getSlot() { return this.slot; }
-    @Nonnull
-    public ItemStack getFrom() { return this.from; }
-    @Nonnull
-    public ItemStack getTo() { return this.to; }
+	public EquipmentSlotType getSlot() {
+		return this.slot;
+	}
+
+	@Nonnull
+	public ItemStack getFrom() {
+		return this.from;
+	}
+
+	@Nonnull
+	public ItemStack getTo() {
+		return this.to;
+	}
 }

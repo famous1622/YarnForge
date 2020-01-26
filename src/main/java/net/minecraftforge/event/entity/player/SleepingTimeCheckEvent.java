@@ -19,39 +19,38 @@
 
 package net.minecraftforge.event.entity.player;
 
+import java.util.Optional;
+
+import net.minecraftforge.eventbus.api.Event.HasResult;
+
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
-import net.minecraftforge.eventbus.api.Event.HasResult;
-
-import java.util.Optional;
 
 /**
  * This event is fired when the game checks if players can sleep at this time.<br>
  * Failing this check will cause sleeping players to wake up and prevent awake players from sleeping.<br>
- *
+ * <p>
  * This event has a result. {@link HasResult}<br>
- *
+ * <p>
  * setResult(ALLOW) informs game that player can sleep at this time.<br>
  * setResult(DEFAULT) causes game to check !{@link World#isDaytime()} instead.
  */
 @HasResult
-public class SleepingTimeCheckEvent extends PlayerEvent
-{
-    private final Optional<BlockPos> sleepingLocation;
+public class SleepingTimeCheckEvent extends PlayerEvent {
+	private final Optional<BlockPos> sleepingLocation;
 
-    public SleepingTimeCheckEvent(PlayerEntity player, Optional<BlockPos> sleepingLocation)
-    {
-        super(player);
-        this.sleepingLocation = sleepingLocation;
-    }
+	public SleepingTimeCheckEvent(PlayerEntity player, Optional<BlockPos> sleepingLocation) {
+		super(player);
+		this.sleepingLocation = sleepingLocation;
+	}
 
-    /**
-     * Note that the sleeping location may be an approximated one.
-     * @return The player's sleeping location.
-     */
-    public Optional<BlockPos> getSleepingLocation()
-    {
-        return sleepingLocation;
-    }
+	/**
+	 * Note that the sleeping location may be an approximated one.
+	 *
+	 * @return The player's sleeping location.
+	 */
+	public Optional<BlockPos> getSleepingLocation() {
+		return sleepingLocation;
+	}
 }

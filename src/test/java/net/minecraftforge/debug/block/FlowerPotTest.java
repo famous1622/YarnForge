@@ -19,11 +19,6 @@
 
 package net.minecraftforge.debug.block;
 
-import net.minecraft.block.Block;
-import net.minecraft.block.Blocks;
-import net.minecraft.block.FlowerPotBlock;
-import net.minecraft.item.BlockItem;
-import net.minecraft.item.Item;
 import net.minecraftforge.event.RegistryEvent;
 import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
@@ -34,32 +29,36 @@ import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import net.minecraftforge.registries.DeferredRegister;
 import net.minecraftforge.registries.ForgeRegistries;
 
+import net.minecraft.block.Block;
+import net.minecraft.block.Blocks;
+import net.minecraft.block.FlowerPotBlock;
+import net.minecraft.item.BlockItem;
+import net.minecraft.item.Item;
+
 @Mod(FlowerPotTest.MODID)
 @Mod.EventBusSubscriber(modid = FlowerPotTest.MODID, bus = Bus.MOD)
-public class FlowerPotTest
-{
-    static final String MODID = "flower_pot_test";
-    static final String BLOCK_ID = "test_flower_pot";
-    
-    private static final DeferredRegister<Block> BLOCKS = new DeferredRegister<>(ForgeRegistries.BLOCKS, MODID);
-    private static final DeferredRegister<Item> ITEMS = new DeferredRegister<>(ForgeRegistries.ITEMS, MODID);
+public class FlowerPotTest {
+	static final String MODID = "flower_pot_test";
+	static final String BLOCK_ID = "test_flower_pot";
 
-    public static final RegistryObject<FlowerPotBlock> EMPTY_FLOWER_POT = BLOCKS.register(BLOCK_ID, () -> new FlowerPotBlock(null, Blocks.AIR.delegate, Block.Properties.from(Blocks.FLOWER_POT)));
-    public static final RegistryObject<FlowerPotBlock> OAK_FLOWER_POT = BLOCKS.<FlowerPotBlock>register(
-            BLOCK_ID + "_oak", () -> new FlowerPotBlock(EMPTY_FLOWER_POT, Blocks.OAK_SAPLING.delegate, Block.Properties.from(Blocks.FLOWER_POT)));
-    
-    static {
-        ITEMS.register(BLOCK_ID, () -> new BlockItem(EMPTY_FLOWER_POT.get(), new Item.Properties()));
-    }
-    
-    @SubscribeEvent
-    public static void onItemRegister(RegistryEvent.Register<Item> event) {
-        EMPTY_FLOWER_POT.get().addPlant(Blocks.OAK_SAPLING.getRegistryName(), OAK_FLOWER_POT);
-    }
+	private static final DeferredRegister<Block> BLOCKS = new DeferredRegister<>(ForgeRegistries.BLOCKS, MODID);
+	public static final RegistryObject<FlowerPotBlock> EMPTY_FLOWER_POT = BLOCKS.register(BLOCK_ID, () -> new FlowerPotBlock(null, Blocks.AIR.delegate, Block.Properties.from(Blocks.FLOWER_POT)));
+	public static final RegistryObject<FlowerPotBlock> OAK_FLOWER_POT = BLOCKS.register(
+			BLOCK_ID + "_oak", () -> new FlowerPotBlock(EMPTY_FLOWER_POT, Blocks.OAK_SAPLING.delegate, Block.Properties.from(Blocks.FLOWER_POT)));
+	private static final DeferredRegister<Item> ITEMS = new DeferredRegister<>(ForgeRegistries.ITEMS, MODID);
 
-    public FlowerPotTest() {
-        IEventBus modBus = FMLJavaModLoadingContext.get().getModEventBus();
-        BLOCKS.register(modBus);
-        ITEMS.register(modBus);
-    }
+	static {
+		ITEMS.register(BLOCK_ID, () -> new BlockItem(EMPTY_FLOWER_POT.get(), new Item.Properties()));
+	}
+
+	public FlowerPotTest() {
+		IEventBus modBus = FMLJavaModLoadingContext.get().getModEventBus();
+		BLOCKS.register(modBus);
+		ITEMS.register(modBus);
+	}
+
+	@SubscribeEvent
+	public static void onItemRegister(RegistryEvent.Register<Item> event) {
+		EMPTY_FLOWER_POT.get().addPlant(Blocks.OAK_SAPLING.getRegistryName(), OAK_FLOWER_POT);
+	}
 }

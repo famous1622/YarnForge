@@ -19,11 +19,6 @@
 
 package net.minecraftforge.fml;
 
-import net.minecraftforge.eventbus.api.Event;
-import net.minecraftforge.fml.config.ModConfig;
-import net.minecraftforge.forgespi.language.IModInfo;
-import org.apache.commons.lang3.tuple.Pair;
-
 import java.util.Collections;
 import java.util.EnumMap;
 import java.util.HashMap;
@@ -35,6 +30,11 @@ import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
+import net.minecraftforge.eventbus.api.Event;
+import net.minecraftforge.fml.config.ModConfig;
+import net.minecraftforge.forgespi.language.IModInfo;
+import org.apache.commons.lang3.tuple.Pair;
+
 /**
  * The container that wraps around mods in the system.
  * <p>
@@ -45,124 +45,115 @@ import java.util.function.Supplier;
  * </p>
  *
  * @author cpw
- *
  */
 
-public abstract class ModContainer
-{
-    protected final String modId;
-    protected final String namespace;
-    protected final IModInfo modInfo;
-    protected ModLoadingStage modLoadingStage;
-    protected Supplier<?> contextExtension;
-    protected final Map<ModLoadingStage, Consumer<LifecycleEventProvider.LifecycleEvent>> triggerMap;
-    protected final Map<ExtensionPoint, Supplier<?>> extensionPoints = new IdentityHashMap<>();
-    protected final EnumMap<ModConfig.Type, ModConfig> configs = new EnumMap<>(ModConfig.Type.class);
-    @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
-    protected Optional<Consumer<ModConfig.ModConfigEvent>> configHandler = Optional.empty();
+public abstract class ModContainer {
+	protected final String modId;
+	protected final String namespace;
+	protected final IModInfo modInfo;
+	protected final Map<ModLoadingStage, Consumer<LifecycleEventProvider.LifecycleEvent>> triggerMap;
+	protected final Map<ExtensionPoint, Supplier<?>> extensionPoints = new IdentityHashMap<>();
+	protected final EnumMap<ModConfig.Type, ModConfig> configs = new EnumMap<>(ModConfig.Type.class);
+	protected ModLoadingStage modLoadingStage;
+	protected Supplier<?> contextExtension;
+	@SuppressWarnings("OptionalUsedAsFieldOrParameterType")
+	protected Optional<Consumer<ModConfig.ModConfigEvent>> configHandler = Optional.empty();
 
-    public ModContainer(IModInfo info)
-    {
-        this.modId = info.getModId();
-        // TODO: Currently not reading namespace from configuration..
-        this.namespace = this.modId;
-        this.modInfo = info;
-        this.triggerMap = new HashMap<>();
-        this.modLoadingStage = ModLoadingStage.CONSTRUCT;
-        // default displaytest extension checks for version string match
-        registerExtensionPoint(ExtensionPoint.DISPLAYTEST, () -> Pair.of(()->this.modInfo.getVersion().toString(),
-                (incoming, isNetwork)->Objects.equals(incoming, this.modInfo.getVersion().toString())));
-    }
+	public ModContainer(IModInfo info) {
+		this.modId = info.getModId();
+		// TODO: Currently not reading namespace from configuration..
+		this.namespace = this.modId;
+		this.modInfo = info;
+		this.triggerMap = new HashMap<>();
+		this.modLoadingStage = ModLoadingStage.CONSTRUCT;
+		// default displaytest extension checks for version string match
+		registerExtensionPoint(ExtensionPoint.DISPLAYTEST, () -> Pair.of(() -> this.modInfo.getVersion().toString(),
+				(incoming, isNetwork) -> Objects.equals(incoming, this.modInfo.getVersion().toString())));
+	}
 
-    /**
-     * @return the modid for this mod
-     */
-    public final String getModId()
-    {
-        return modId;
-    }
+	/**
+	 * @return the modid for this mod
+	 */
+	public final String getModId() {
+		return modId;
+	}
 
-    /**
-     * @return the resource prefix for the mod
-     */
-    public final String getNamespace()
-    {
-        return namespace;
-    }
+	/**
+	 * @return the resource prefix for the mod
+	 */
+	public final String getNamespace() {
+		return namespace;
+	}
 
-    /**
-     * @return The current loading stage for this mod
-     */
-    public ModLoadingStage getCurrentState()
-    {
-        return modLoadingStage;
-    }
+	/**
+	 * @return The current loading stage for this mod
+	 */
+	public ModLoadingStage getCurrentState() {
+		return modLoadingStage;
+	}
 
-    /**
-     * Transition the mod to this event if possible.
-     * @param event to transition to
-     */
-    public final void transitionState(LifecycleEventProvider.LifecycleEvent event, Consumer<List<ModLoadingException>> errorHandler)
-    {
-        if (modLoadingStage == event.fromStage())
-        {
-            try
-            {
-                ModLoadingContext.get().setActiveContainer(this, contextExtension.get());
-                triggerMap.getOrDefault(modLoadingStage, e->{}).accept(event);
-                modLoadingStage = event.toStage();
-                ModLoadingContext.get().setActiveContainer(null, null);
-            }
-            catch (ModLoadingException e)
-            {
-                modLoadingStage = ModLoadingStage.ERROR;
-                errorHandler.accept(Collections.singletonList(e));
-            }
-        }
-    }
+	/**
+	 * Transition the mod to this event if possible.
+	 *
+	 * @param event to transition to
+	 */
+	public final void transitionState(LifecycleEventProvider.LifecycleEvent event, Consumer<List<ModLoadingException>> errorHandler) {
+		if (modLoadingStage == event.fromStage()) {
+			try {
+				ModLoadingContext.get().setActiveContainer(this, contextExtension.get());
+				triggerMap.getOrDefault(modLoadingStage, e -> {
+				}).accept(event);
+				modLoadingStage = event.toStage();
+				ModLoadingContext.get().setActiveContainer(null, null);
+			} catch (ModLoadingException e) {
+				modLoadingStage = ModLoadingStage.ERROR;
+				errorHandler.accept(Collections.singletonList(e));
+			}
+		}
+	}
 
-    /**
-     * @return the modinfo used to create this mod instance
-     */
-    public IModInfo getModInfo()
-    {
-        return modInfo;
-    }
+	/**
+	 * @return the modinfo used to create this mod instance
+	 */
+	public IModInfo getModInfo() {
+		return modInfo;
+	}
 
-    @SuppressWarnings("unchecked")
-    public <T> Optional<T> getCustomExtension(ExtensionPoint<T> point) {
-        return Optional.ofNullable((T)extensionPoints.getOrDefault(point,()-> null).get());
-    }
+	@SuppressWarnings("unchecked")
+	public <T> Optional<T> getCustomExtension(ExtensionPoint<T> point) {
+		return Optional.ofNullable((T) extensionPoints.getOrDefault(point, () -> null).get());
+	}
 
-    public <T> void registerExtensionPoint(ExtensionPoint<T> point, Supplier<T> extension)
-    {
-        extensionPoints.put(point, extension);
-    }
+	public <T> void registerExtensionPoint(ExtensionPoint<T> point, Supplier<T> extension) {
+		extensionPoints.put(point, extension);
+	}
 
-    public void addConfig(final ModConfig modConfig) {
-       configs.put(modConfig.getType(), modConfig);
-    }
+	public void addConfig(final ModConfig modConfig) {
+		configs.put(modConfig.getType(), modConfig);
+	}
 
-    public void dispatchConfigEvent(ModConfig.ModConfigEvent event) {
-        configHandler.ifPresent(configHandler->configHandler.accept(event));
-    }
+	public void dispatchConfigEvent(ModConfig.ModConfigEvent event) {
+		configHandler.ifPresent(configHandler -> configHandler.accept(event));
+	}
 
-    /**
-     * Does this mod match the supplied mod?
-     *
-     * @param mod to compare
-     * @return if the mod matches
-     */
-    public abstract boolean matches(Object mod);
+	/**
+	 * Does this mod match the supplied mod?
+	 *
+	 * @param mod to compare
+	 * @return if the mod matches
+	 */
+	public abstract boolean matches(Object mod);
 
-    /**
-     * @return the mod object instance
-     */
-    public abstract Object getMod();
+	/**
+	 * @return the mod object instance
+	 */
+	public abstract Object getMod();
 
-    /**
-     * Accept an arbitrary event for processing by the mod. Probably posted to an event bus in the lower level container.
-     * @param e Event to accept
-     */
-    protected void acceptEvent(Event e) {}
+	/**
+	 * Accept an arbitrary event for processing by the mod. Probably posted to an event bus in the lower level container.
+	 *
+	 * @param e Event to accept
+	 */
+	protected void acceptEvent(Event e) {
+	}
 }

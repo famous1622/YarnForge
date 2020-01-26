@@ -50,6 +50,9 @@ import javax.annotation.Nullable;
 /**
  * Simple mod to test chunk capabilities.
  * Use flint and steel to increase pollution in a chunk and saplings to decrease pollution in a chunk.
+ * <p>
+ * Marks the chunk as dirty when the value changes.
+ * Cannot be the default implementation because it requires a chunk in the constructor
  *//*
 
 //@Mod(modid = ChunkCapabilityTest.MODID, name = "Chunk Capability Test", version = "0.0.0", acceptableRemoteVersions = "*")
@@ -100,9 +103,9 @@ public class ChunkCapabilityTest
 
     */
 /**
-     * Marks the chunk as dirty when the value changes.
-     * Cannot be the default implementation because it requires a chunk in the constructor
-     *//*
+ * Marks the chunk as dirty when the value changes.
+ * Cannot be the default implementation because it requires a chunk in the constructor
+ *//*
 
     public static class SafePollution extends DefaultPollution
     {

@@ -22,10 +22,11 @@ package net.minecraftforge.fml;
 import java.util.Objects;
 
 public final class StackTraceUtils {
-    private StackTraceUtils() {}
+	private StackTraceUtils() {
+	}
 
-    public static boolean threadClassNameEquals(final String className) {
-        final StackTraceElement[] stackTrace = Thread.currentThread().getStackTrace();
-        return Objects.equals(stackTrace[stackTrace.length-1].getClassName(), className);
-    }
+	public static boolean threadClassNameEquals(final String className) {
+		final StackTraceElement[] stackTrace = Thread.currentThread().getStackTrace();
+		return Objects.equals(stackTrace[stackTrace.length - 1].getClassName(), className);
+	}
 }

@@ -19,36 +19,34 @@
 
 package net.minecraftforge.event.entity.player;
 
-import net.minecraft.item.ItemUseContext;
+import javax.annotation.Nonnull;
+
 import net.minecraftforge.eventbus.api.Cancelable;
 import net.minecraftforge.eventbus.api.Event.HasResult;
 
-import javax.annotation.Nonnull;
+import net.minecraft.item.ItemUseContext;
 
 /**
  * This event is fired when a player attempts to use a Hoe on a block, it
  * can be canceled to completely prevent any further processing.
- *
+ * <p>
  * You can also set the result to ALLOW to mark the event as processed
  * and damage the hoe.
- *
+ * <p>
  * setResult(ALLOW) is the same as the old setHandled();
  */
 @Cancelable
 @HasResult
-public class UseHoeEvent extends PlayerEvent
-{
-    private final ItemUseContext context;;
+public class UseHoeEvent extends PlayerEvent {
+	private final ItemUseContext context;
 
-    public UseHoeEvent(ItemUseContext context)
-    {
-        super(context.getPlayer());
-        this.context = context;
-    }
+	public UseHoeEvent(ItemUseContext context) {
+		super(context.getPlayer());
+		this.context = context;
+	}
 
-    @Nonnull
-    public ItemUseContext getContext()
-    {
-        return context;
-    }
+	@Nonnull
+	public ItemUseContext getContext() {
+		return context;
+	}
 }

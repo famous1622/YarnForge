@@ -19,20 +19,7 @@
 
 package net.minecraftforge.fml.network;
 
-import com.google.common.collect.ImmutableMap;
-import com.google.gson.JsonArray;
-import com.google.gson.JsonDeserializationContext;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonSerializationContext;
-import com.google.gson.JsonSyntaxException;
-import net.minecraft.util.JSONUtils;
-import net.minecraft.util.ResourceLocation;
-import net.minecraftforge.fml.ExtensionPoint;
-import net.minecraftforge.fml.ModList;
-import org.apache.commons.lang3.tuple.Pair;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import static net.minecraftforge.fml.network.FMLNetworkConstants.NETWORK;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -40,105 +27,119 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
-import static net.minecraftforge.fml.network.FMLNetworkConstants.NETWORK;
+import com.google.common.collect.ImmutableMap;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonDeserializationContext;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonSerializationContext;
+import com.google.gson.JsonSyntaxException;
+import net.minecraftforge.fml.ExtensionPoint;
+import net.minecraftforge.fml.ModList;
+import org.apache.commons.lang3.tuple.Pair;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
+import net.minecraft.util.JSONUtils;
+import net.minecraft.util.ResourceLocation;
 
 /**
  * {
- *      "fmlNetworkVersion" : FMLNETVERSION,
- *      "channels": [
- *          {
- *              "res": "fml:handshake",
- *              "version": "1.2.3.4",
- *              "required": true
- *          }
- *     ],
- *     "mods": [
- *          {
- *              "modid": "modid",
- *              "modmarker": "<somestring>"
- *          }
- *     ]
+ * "fmlNetworkVersion" : FMLNETVERSION,
+ * "channels": [
+ * {
+ * "res": "fml:handshake",
+ * "version": "1.2.3.4",
+ * "required": true
  * }
- *
+ * ],
+ * "mods": [
+ * {
+ * "modid": "modid",
+ * "modmarker": "<somestring>"
+ * }
+ * ]
+ * }
  */
 public class FMLStatusPing {
-    private static final Logger LOGGER = LogManager.getLogger();
+	private static final Logger LOGGER = LogManager.getLogger();
 
-    private transient Map<ResourceLocation, Pair<String, Boolean>> channels;
-    private transient Map<String, String> mods;
-    private transient int fmlNetworkVer;
-    public FMLStatusPing() {
-        this.channels = NetworkRegistry.buildChannelVersionsForListPing();
-        this.mods = new HashMap<>();
-        ModList.get().forEachModContainer((modid, mc) ->
-                    mods.put(modid, mc.getCustomExtension(ExtensionPoint.DISPLAYTEST).
-                            map(Pair::getLeft).map(Supplier::get).orElse(FMLNetworkConstants.IGNORESERVERONLY)));
-        this.fmlNetworkVer = FMLNetworkConstants.FMLNETVERSION;
-    }
+	private transient Map<ResourceLocation, Pair<String, Boolean>> channels;
+	private transient Map<String, String> mods;
+	private transient int fmlNetworkVer;
 
-    private FMLStatusPing(Map<ResourceLocation, Pair<String, Boolean>> deserialized, Map<String,String> modMarkers, int fmlNetVer) {
-        this.channels = ImmutableMap.copyOf(deserialized);
-        this.mods = modMarkers;
-        this.fmlNetworkVer = fmlNetVer;
-    }
+	public FMLStatusPing() {
+		this.channels = NetworkRegistry.buildChannelVersionsForListPing();
+		this.mods = new HashMap<>();
+		ModList.get().forEachModContainer((modid, mc) ->
+				mods.put(modid, mc.getCustomExtension(ExtensionPoint.DISPLAYTEST).
+						map(Pair::getLeft).map(Supplier::get).orElse(FMLNetworkConstants.IGNORESERVERONLY)));
+		this.fmlNetworkVer = FMLNetworkConstants.FMLNETVERSION;
+	}
 
-    public static class Serializer {
-        public static FMLStatusPing deserialize(JsonObject forgeData, JsonDeserializationContext ctx) {
-            try {
-                final Map<ResourceLocation, Pair<String, Boolean>> channels = StreamSupport.stream(JSONUtils.getJsonArray(forgeData, "channels").spliterator(), false).
-                        map(JsonElement::getAsJsonObject).
-                        collect(Collectors.toMap(jo -> new ResourceLocation(JSONUtils.getString(jo, "res")),
-                                jo -> Pair.of(JSONUtils.getString(jo, "version"), JSONUtils.getBoolean(jo, "required")))
-                        );
+	private FMLStatusPing(Map<ResourceLocation, Pair<String, Boolean>> deserialized, Map<String, String> modMarkers, int fmlNetVer) {
+		this.channels = ImmutableMap.copyOf(deserialized);
+		this.mods = modMarkers;
+		this.fmlNetworkVer = fmlNetVer;
+	}
 
-                final Map<String, String> mods = StreamSupport.stream(JSONUtils.getJsonArray(forgeData, "mods").spliterator(), false).
-                        map(JsonElement::getAsJsonObject).
-                        collect(Collectors.toMap(jo -> JSONUtils.getString(jo, "modId"), jo->JSONUtils.getString(jo, "modmarker")));
+	public Map<ResourceLocation, Pair<String, Boolean>> getRemoteChannels() {
+		return this.channels;
+	}
 
-                final int remoteFMLVersion = JSONUtils.getInt(forgeData, "fmlNetworkVersion");
-                return new FMLStatusPing(channels, mods, remoteFMLVersion);
-            } catch (JsonSyntaxException e) {
-                LOGGER.debug(NETWORK, "Encountered an error parsing status ping data", e);
-                return null;
-            }
-        }
+	public Map<String, String> getRemoteModData() {
+		return mods;
+	}
 
-        public static JsonObject serialize(FMLStatusPing forgeData, JsonSerializationContext ctx) {
-            JsonObject obj = new JsonObject();
-            JsonArray channels = new JsonArray();
-            forgeData.channels.forEach((namespace, version) -> {
-                JsonObject mi = new JsonObject();
-                mi.addProperty("res", namespace.toString());
-                mi.addProperty("version", version.getLeft());
-                mi.addProperty("required", version.getRight());
-                channels.add(mi);
-            });
+	public int getFMLNetworkVersion() {
+		return fmlNetworkVer;
+	}
 
-            obj.add("channels", channels);
+	public static class Serializer {
+		public static FMLStatusPing deserialize(JsonObject forgeData, JsonDeserializationContext ctx) {
+			try {
+				final Map<ResourceLocation, Pair<String, Boolean>> channels = StreamSupport.stream(JSONUtils.getJsonArray(forgeData, "channels").spliterator(), false).
+						map(JsonElement::getAsJsonObject).
+						collect(Collectors.toMap(jo -> new ResourceLocation(JSONUtils.getString(jo, "res")),
+								jo -> Pair.of(JSONUtils.getString(jo, "version"), JSONUtils.getBoolean(jo, "required")))
+						);
 
-            JsonArray modTestValues = new JsonArray();
-            forgeData.mods.forEach((modId, value) -> {
-                JsonObject mi = new JsonObject();
-                mi.addProperty("modId", modId);
-                mi.addProperty("modmarker", value);
-                modTestValues.add(mi);
-            });
-            obj.add("mods", modTestValues);
-            obj.addProperty("fmlNetworkVersion", forgeData.fmlNetworkVer);
-            return obj;
-        }
-    }
+				final Map<String, String> mods = StreamSupport.stream(JSONUtils.getJsonArray(forgeData, "mods").spliterator(), false).
+						map(JsonElement::getAsJsonObject).
+						collect(Collectors.toMap(jo -> JSONUtils.getString(jo, "modId"), jo -> JSONUtils.getString(jo, "modmarker")));
 
-    public Map<ResourceLocation, Pair<String, Boolean>> getRemoteChannels() {
-        return this.channels;
-    }
+				final int remoteFMLVersion = JSONUtils.getInt(forgeData, "fmlNetworkVersion");
+				return new FMLStatusPing(channels, mods, remoteFMLVersion);
+			} catch (JsonSyntaxException e) {
+				LOGGER.debug(NETWORK, "Encountered an error parsing status ping data", e);
+				return null;
+			}
+		}
 
-    public Map<String,String> getRemoteModData() {
-        return mods;
-    }
+		public static JsonObject serialize(FMLStatusPing forgeData, JsonSerializationContext ctx) {
+			JsonObject obj = new JsonObject();
+			JsonArray channels = new JsonArray();
+			forgeData.channels.forEach((namespace, version) -> {
+				JsonObject mi = new JsonObject();
+				mi.addProperty("res", namespace.toString());
+				mi.addProperty("version", version.getLeft());
+				mi.addProperty("required", version.getRight());
+				channels.add(mi);
+			});
 
-    public int getFMLNetworkVersion() {
-        return fmlNetworkVer;
-    }
+			obj.add("channels", channels);
+
+			JsonArray modTestValues = new JsonArray();
+			forgeData.mods.forEach((modId, value) -> {
+				JsonObject mi = new JsonObject();
+				mi.addProperty("modId", modId);
+				mi.addProperty("modmarker", value);
+				modTestValues.add(mi);
+			});
+			obj.add("mods", modTestValues);
+			obj.addProperty("fmlNetworkVersion", forgeData.fmlNetworkVer);
+			return obj;
+		}
+	}
 
 }

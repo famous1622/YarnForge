@@ -25,17 +25,16 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+import net.minecraftforge.client.model.ICustomModelLoader;
+import net.minecraftforge.client.model.ModelLoaderRegistry;
+import org.apache.commons.io.IOUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import net.minecraft.client.renderer.model.IUnbakedModel;
 import net.minecraft.resources.IResource;
 import net.minecraft.resources.IResourceManager;
 import net.minecraft.util.ResourceLocation;
-import net.minecraftforge.client.model.ICustomModelLoader;
-import net.minecraftforge.client.model.ModelLoaderRegistry;
-
-import org.apache.commons.io.IOUtils;
-import org.apache.logging.log4j.Level;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 /*
  * Loader for OBJ models.
@@ -43,77 +42,65 @@ import org.apache.logging.log4j.Logger;
  * If you need more control over accepted resources - extend the class, and register a new instance with ModelLoaderRegistry.
  */
 public enum OBJLoader implements ICustomModelLoader {
-    INSTANCE;
+	INSTANCE;
 
-    private static final Logger LOGGER = LogManager.getLogger();
-    private IResourceManager manager;
-    private final Set<String> enabledDomains = new HashSet<>();
-    private final Map<ResourceLocation, OBJModel> cache = new HashMap<>();
-    private final Map<ResourceLocation, Exception> errors = new HashMap<>();
+	private static final Logger LOGGER = LogManager.getLogger();
+	private final Set<String> enabledDomains = new HashSet<>();
+	private final Map<ResourceLocation, OBJModel> cache = new HashMap<>();
+	private final Map<ResourceLocation, Exception> errors = new HashMap<>();
+	private IResourceManager manager;
 
-    public void addDomain(String domain)
-    {
-        enabledDomains.add(domain.toLowerCase());
-        LOGGER.info("OBJLoader: Domain {} has been added.", domain.toLowerCase());
-    }
+	public void addDomain(String domain) {
+		enabledDomains.add(domain.toLowerCase());
+		LOGGER.info("OBJLoader: Domain {} has been added.", domain.toLowerCase());
+	}
 
-    @Override
-    public void onResourceManagerReload(IResourceManager resourceManager)
-    {
-        this.manager = resourceManager;
-        cache.clear();
-        errors.clear();
-    }
+	@Override
+	public void onResourceManagerReload(IResourceManager resourceManager) {
+		this.manager = resourceManager;
+		cache.clear();
+		errors.clear();
+	}
 
-    @Override
-    public boolean accepts(ResourceLocation modelLocation)
-    {
-        return enabledDomains.contains(modelLocation.getNamespace()) && modelLocation.getPath().endsWith(".obj");
-    }
+	@Override
+	public boolean accepts(ResourceLocation modelLocation) {
+		return enabledDomains.contains(modelLocation.getNamespace()) && modelLocation.getPath().endsWith(".obj");
+	}
 
-    @Override
-    public IUnbakedModel loadModel(ResourceLocation modelLocation) throws Exception
-    {
-        ResourceLocation file = new ResourceLocation(modelLocation.getNamespace(), modelLocation.getPath());
-        if (!cache.containsKey(file))
-        {
-            IResource resource = null;
-            try
-            {
-                try
-                {
-                    resource = manager.getResource(file);
-                }
-                catch (FileNotFoundException e)
-                {
-                    if (modelLocation.getPath().startsWith("models/block/"))
-                        resource = manager.getResource(new ResourceLocation(file.getNamespace(), "models/item/" + file.getPath().substring("models/block/".length())));
-                    else if (modelLocation.getPath().startsWith("models/item/"))
-                        resource = manager.getResource(new ResourceLocation(file.getNamespace(), "models/block/" + file.getPath().substring("models/item/".length())));
-                    else throw e;
-                }
-                OBJModel.Parser parser = new OBJModel.Parser(resource, manager);
-                OBJModel model = null;
-                try
-                {
-                    model = parser.parse();
-                }
-                catch (Exception e)
-                {
-                    errors.put(modelLocation, e);
-                }
-                finally
-                {
-                    cache.put(modelLocation, model);
-                }
-            }
-            finally
-            {
-                IOUtils.closeQuietly(resource);
-            }
-        }
-        OBJModel model = cache.get(file);
-        if (model == null) throw new ModelLoaderRegistry.LoaderException("Error loading model previously: " + file, errors.get(modelLocation));
-        return model;
-    }
+	@Override
+	public IUnbakedModel loadModel(ResourceLocation modelLocation) throws Exception {
+		ResourceLocation file = new ResourceLocation(modelLocation.getNamespace(), modelLocation.getPath());
+		if (!cache.containsKey(file)) {
+			IResource resource = null;
+			try {
+				try {
+					resource = manager.getResource(file);
+				} catch (FileNotFoundException e) {
+					if (modelLocation.getPath().startsWith("models/block/")) {
+						resource = manager.getResource(new ResourceLocation(file.getNamespace(), "models/item/" + file.getPath().substring("models/block/".length())));
+					} else if (modelLocation.getPath().startsWith("models/item/")) {
+						resource = manager.getResource(new ResourceLocation(file.getNamespace(), "models/block/" + file.getPath().substring("models/item/".length())));
+					} else {
+						throw e;
+					}
+				}
+				OBJModel.Parser parser = new OBJModel.Parser(resource, manager);
+				OBJModel model = null;
+				try {
+					model = parser.parse();
+				} catch (Exception e) {
+					errors.put(modelLocation, e);
+				} finally {
+					cache.put(modelLocation, model);
+				}
+			} finally {
+				IOUtils.closeQuietly(resource);
+			}
+		}
+		OBJModel model = cache.get(file);
+		if (model == null) {
+			throw new ModelLoaderRegistry.LoaderException("Error loading model previously: " + file, errors.get(modelLocation));
+		}
+		return model;
+	}
 }

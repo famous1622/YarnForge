@@ -19,14 +19,16 @@
 
 package net.minecraftforge.event.world;
 
-import net.minecraft.entity.Entity;
-import net.minecraft.util.math.AxisAlignedBB;
-import net.minecraft.world.World;
+import java.util.List;
+
+import javax.annotation.Nullable;
+
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.eventbus.api.Cancelable;
 
-import javax.annotation.Nullable;
-import java.util.List;
+import net.minecraft.entity.Entity;
+import net.minecraft.util.math.AxisAlignedBB;
+import net.minecraft.world.World;
 
 /**
  * This event is fired during {@link World#collidesWithAnyBlock(AxisAlignedBB)}
@@ -42,32 +44,27 @@ import java.util.List;
  * <br>
  * This event is fired on the {@link MinecraftForge#EVENT_BUS}.<br>
  **/
-public class GetCollisionBoxesEvent extends WorldEvent
-{
-    private final Entity entity;
-    private final AxisAlignedBB aabb;
-    private final List<AxisAlignedBB> collisionBoxesList;
+public class GetCollisionBoxesEvent extends WorldEvent {
+	private final Entity entity;
+	private final AxisAlignedBB aabb;
+	private final List<AxisAlignedBB> collisionBoxesList;
 
-    public GetCollisionBoxesEvent(World world, @Nullable Entity entity, AxisAlignedBB aabb, List<AxisAlignedBB> collisionBoxesList)
-    {
-        super(world);
-        this.entity = entity;
-        this.aabb = aabb;
-        this.collisionBoxesList = collisionBoxesList;
-    }
+	public GetCollisionBoxesEvent(World world, @Nullable Entity entity, AxisAlignedBB aabb, List<AxisAlignedBB> collisionBoxesList) {
+		super(world);
+		this.entity = entity;
+		this.aabb = aabb;
+		this.collisionBoxesList = collisionBoxesList;
+	}
 
-    public Entity getEntity()
-    {
-        return entity;
-    }
+	public Entity getEntity() {
+		return entity;
+	}
 
-    public AxisAlignedBB getAabb()
-    {
-        return aabb;
-    }
+	public AxisAlignedBB getAabb() {
+		return aabb;
+	}
 
-    public List<AxisAlignedBB> getCollisionBoxesList()
-    {
-        return collisionBoxesList;
-    }
+	public List<AxisAlignedBB> getCollisionBoxesList() {
+		return collisionBoxesList;
+	}
 }

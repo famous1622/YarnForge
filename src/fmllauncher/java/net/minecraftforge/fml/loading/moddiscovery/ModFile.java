@@ -19,23 +19,13 @@
 
 package net.minecraftforge.fml.loading.moddiscovery;
 
-import com.google.common.collect.ImmutableMap;
-import net.minecraftforge.fml.loading.progress.StartupMessageManager;
-import net.minecraftforge.forgespi.language.IModFileInfo;
-import net.minecraftforge.forgespi.language.IModInfo;
-import net.minecraftforge.forgespi.language.ModFileScanData;
-import net.minecraftforge.fml.loading.FMLLoader;
-import net.minecraftforge.forgespi.language.IModLanguageProvider;
-import net.minecraftforge.forgespi.locating.IModFile;
-import net.minecraftforge.forgespi.locating.IModLocator;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import static net.minecraftforge.fml.loading.LogMarkers.LOADING;
+import static net.minecraftforge.fml.loading.LogMarkers.SCAN;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
@@ -44,161 +34,168 @@ import java.util.function.Supplier;
 import java.util.jar.Attributes;
 import java.util.jar.Manifest;
 
-import static net.minecraftforge.fml.loading.LogMarkers.LOADING;
-import static net.minecraftforge.fml.loading.LogMarkers.SCAN;
+import com.google.common.collect.ImmutableMap;
+import net.minecraftforge.fml.loading.FMLLoader;
+import net.minecraftforge.fml.loading.progress.StartupMessageManager;
+import net.minecraftforge.forgespi.language.IModFileInfo;
+import net.minecraftforge.forgespi.language.IModInfo;
+import net.minecraftforge.forgespi.language.IModLanguageProvider;
+import net.minecraftforge.forgespi.language.ModFileScanData;
+import net.minecraftforge.forgespi.locating.IModFile;
+import net.minecraftforge.forgespi.locating.IModLocator;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 public class ModFile implements IModFile {
-    private static final Manifest DEFAULTMANIFEST;
-    private static final Logger LOGGER = LogManager.getLogger();
+	public static final Attributes.Name TYPE = new Attributes.Name("FMLModType");
+	private static final Manifest DEFAULTMANIFEST;
+	private static final Logger LOGGER = LogManager.getLogger();
 
-    static {
-        DEFAULTMANIFEST = new Manifest();
-        DEFAULTMANIFEST.getMainAttributes().putValue("FMLModType", "MOD");
-    }
+	static {
+		DEFAULTMANIFEST = new Manifest();
+		DEFAULTMANIFEST.getMainAttributes().putValue("FMLModType", "MOD");
+	}
 
-    private final String jarVersion;
-    private Map<String, Object> fileProperties;
-    private IModLanguageProvider loader;
-    private Throwable scanError;
+	private final String jarVersion;
+	private final Path filePath;
+	private final Type modFileType;
+	private final Manifest manifest;
+	private final IModLocator locator;
+	private Map<String, Object> fileProperties;
+	private IModLanguageProvider loader;
+	private Throwable scanError;
+	private IModFileInfo modFileInfo;
+	private ModFileScanData fileModFileScanData;
+	private CompletableFuture<ModFileScanData> futureScanResult;
+	private List<CoreModFile> coreMods;
+	private Path accessTransformer;
 
-    public void setFileProperties(Map<String, Object> fileProperties)
-    {
-        this.fileProperties = fileProperties;
-    }
+	public ModFile(final Path file, final IModLocator locator) {
+		this.locator = locator;
+		this.filePath = file;
+		manifest = locator.findManifest(file).orElse(DEFAULTMANIFEST);
+		if (manifest != DEFAULTMANIFEST) {
+			LOGGER.debug(SCAN, "Mod file {} has a manifest", file);
+		} else {
+			LOGGER.debug(SCAN, "Mod file {} is missing a manifest", file);
+		}
+		final Optional<String> value = Optional.ofNullable(manifest.getMainAttributes().getValue(TYPE));
+		modFileType = Type.valueOf(value.orElse("MOD"));
+		jarVersion = Optional.ofNullable(manifest.getMainAttributes().getValue(Attributes.Name.IMPLEMENTATION_VERSION)).orElse("NONE");
+	}
 
-    @Override
-    public IModLanguageProvider getLoader()
-    {
-        return loader;
-    }
+	public void setFileProperties(Map<String, Object> fileProperties) {
+		this.fileProperties = fileProperties;
+	}
 
-    @Override
-    public Path findResource(String className)
-    {
-        return locator.findPath(this, className);
-    }
+	@Override
+	public IModLanguageProvider getLoader() {
+		return loader;
+	}
 
-    public void identifyLanguage() {
-        this.loader = FMLLoader.getLanguageLoadingProvider().findLanguage(this, this.modFileInfo.getModLoader(), this.modFileInfo.getModLoaderVersion());
-    }
+	@Override
+	public Path findResource(String className) {
+		return locator.findPath(this, className);
+	}
 
-    private final Path filePath;
-    private final Type modFileType;
-    private final Manifest manifest;
-    private final IModLocator locator;
-    private IModFileInfo modFileInfo;
-    private ModFileScanData fileModFileScanData;
-    private CompletableFuture<ModFileScanData> futureScanResult;
-    private List<CoreModFile> coreMods;
-    private Path accessTransformer;
+	public void identifyLanguage() {
+		this.loader = FMLLoader.getLanguageLoadingProvider().findLanguage(this, this.modFileInfo.getModLoader(), this.modFileInfo.getModLoaderVersion());
+	}
 
-    public static final Attributes.Name TYPE = new Attributes.Name("FMLModType");
+	@Override
+	public Supplier<Map<String, Object>> getSubstitutionMap() {
+		return () -> ImmutableMap.<String, Object>builder().put("jarVersion", jarVersion).putAll(fileProperties).build();
+	}
 
-    public ModFile(final Path file, final IModLocator locator) {
-        this.locator = locator;
-        this.filePath = file;
-        manifest = locator.findManifest(file).orElse(DEFAULTMANIFEST);
-        if (manifest != DEFAULTMANIFEST) LOGGER.debug(SCAN,"Mod file {} has a manifest", file);
-        else LOGGER.debug(SCAN,"Mod file {} is missing a manifest", file);
-        final Optional<String> value = Optional.ofNullable(manifest.getMainAttributes().getValue(TYPE));
-        modFileType = Type.valueOf(value.orElse("MOD"));
-        jarVersion = Optional.ofNullable(manifest.getMainAttributes().getValue(Attributes.Name.IMPLEMENTATION_VERSION)).orElse("NONE");
-    }
+	@Override
+	public Type getType() {
+		return modFileType;
+	}
 
-    @Override
-    public Supplier<Map<String,Object>> getSubstitutionMap() {
-        return () -> ImmutableMap.<String,Object>builder().put("jarVersion", jarVersion).putAll(fileProperties).build();
-    }
-    @Override
-    public Type getType() {
-        return modFileType;
-    }
+	@Override
+	public Path getFilePath() {
+		return filePath;
+	}
 
-    @Override
-    public Path getFilePath() {
-        return filePath;
-    }
+	@Override
+	public List<IModInfo> getModInfos() {
+		return modFileInfo.getMods();
+	}
 
-    @Override
-    public List<IModInfo> getModInfos() {
-        return modFileInfo.getMods();
-    }
+	public Optional<Path> getAccessTransformer() {
+		return Optional.ofNullable(Files.exists(accessTransformer) ? accessTransformer : null);
+	}
 
-    public Optional<Path> getAccessTransformer() {
-        return Optional.ofNullable(Files.exists(accessTransformer) ? accessTransformer : null);
-    }
+	public boolean identifyMods() {
+		this.modFileInfo = ModFileParser.readModList(this);
+		if (this.modFileInfo == null) return false;
+		LOGGER.debug(LOADING, "Loading mod file {} with language {}", this.getFilePath(), this.modFileInfo.getModLoader());
+		this.coreMods = ModFileParser.getCoreMods(this);
+		this.coreMods.forEach(mi -> LOGGER.debug(LOADING, "Found coremod {}", mi.getPath()));
+		this.accessTransformer = locator.findPath(this, "META-INF", "accesstransformer.cfg");
+		return true;
+	}
 
-    public boolean identifyMods() {
-        this.modFileInfo = ModFileParser.readModList(this);
-        if (this.modFileInfo == null) return false;
-        LOGGER.debug(LOADING,"Loading mod file {} with language {}", this.getFilePath(), this.modFileInfo.getModLoader());
-        this.coreMods = ModFileParser.getCoreMods(this);
-        this.coreMods.forEach(mi-> LOGGER.debug(LOADING,"Found coremod {}", mi.getPath()));
-        this.accessTransformer = locator.findPath(this, "META-INF", "accesstransformer.cfg");
-        return true;
-    }
+	public List<CoreModFile> getCoreMods() {
+		return coreMods;
+	}
 
-    public List<CoreModFile> getCoreMods() {
-        return coreMods;
-    }
+	/**
+	 * Run in an executor thread to harvest the class and annotation list
+	 */
+	public ModFileScanData compileContent() {
+		return new Scanner(this).scan();
+	}
 
-    /**
-     * Run in an executor thread to harvest the class and annotation list
-     */
-    public ModFileScanData compileContent() {
-        return new Scanner(this).scan();
-    }
+	public void scanFile(Consumer<Path> pathConsumer) {
+		locator.scanFile(this, pathConsumer);
+	}
 
-    public void scanFile(Consumer<Path> pathConsumer) {
-        locator.scanFile(this, pathConsumer);
-    }
+	public void setFutureScanResult(CompletableFuture<ModFileScanData> future) {
+		this.futureScanResult = future;
+	}
 
-    public void setFutureScanResult(CompletableFuture<ModFileScanData> future)
-    {
-        this.futureScanResult = future;
-    }
+	@Override
+	public ModFileScanData getScanResult() {
+		if (this.futureScanResult != null) {
+			try {
+				this.futureScanResult.get();
+			} catch (InterruptedException | ExecutionException e) {
+				e.printStackTrace();
+			}
+		}
+		if (this.scanError != null) {
+			throw new RuntimeException(this.scanError);
+		}
+		return this.fileModFileScanData;
+	}
 
-    @Override
-    public ModFileScanData getScanResult() {
-        if (this.futureScanResult != null) {
-            try {
-                this.futureScanResult.get();
-            } catch (InterruptedException | ExecutionException e) {
-                e.printStackTrace();
-            }
-        }
-        if (this.scanError != null) {
-            throw new RuntimeException(this.scanError);
-        }
-        return this.fileModFileScanData;
-    }
+	public void setScanResult(final ModFileScanData modFileScanData, final Throwable throwable) {
+		this.futureScanResult = null;
+		this.fileModFileScanData = modFileScanData;
+		if (throwable != null) {
+			this.scanError = throwable;
+		}
+		StartupMessageManager.modLoaderConsumer().ifPresent(c -> c.accept("Completed deep scan of " + this.getFileName()));
+	}
 
-    public void setScanResult(final ModFileScanData modFileScanData, final Throwable throwable) {
-        this.futureScanResult = null;
-        this.fileModFileScanData = modFileScanData;
-        if (throwable != null) {
-            this.scanError = throwable;
-        }
-        StartupMessageManager.modLoaderConsumer().ifPresent(c->c.accept("Completed deep scan of "+this.getFileName()));
-    }
+	@Override
+	public String toString() {
+		return "Mod File: " + this.filePath;
+	}
 
-    @Override
-    public String toString() {
-        return "Mod File: " + Objects.toString(this.filePath);
-    }
+	@Override
+	public String getFileName() {
+		return getFilePath().getFileName().toString();
+	}
 
-    @Override
-    public String getFileName() {
-        return getFilePath().getFileName().toString();
-    }
+	@Override
+	public IModLocator getLocator() {
+		return locator;
+	}
 
-    @Override
-    public IModLocator getLocator() {
-        return locator;
-    }
-
-    @Override
-    public IModFileInfo getModFileInfo() {
-        return modFileInfo;
-    }
+	@Override
+	public IModFileInfo getModFileInfo() {
+		return modFileInfo;
+	}
 }

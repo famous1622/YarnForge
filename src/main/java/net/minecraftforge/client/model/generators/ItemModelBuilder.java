@@ -36,67 +36,69 @@ import net.minecraft.util.ResourceLocation;
  */
 public class ItemModelBuilder extends ModelBuilder<ItemModelBuilder> {
 
-    protected List<OverrideBuilder> overrides = new ArrayList<>();
+	protected List<OverrideBuilder> overrides = new ArrayList<>();
 
-    public ItemModelBuilder(ResourceLocation outputLocation, ExistingFileHelper existingFileHelper) {
-        super(outputLocation, existingFileHelper);
-    }
+	public ItemModelBuilder(ResourceLocation outputLocation, ExistingFileHelper existingFileHelper) {
+		super(outputLocation, existingFileHelper);
+	}
 
-    public OverrideBuilder override() {
-        OverrideBuilder ret = new OverrideBuilder();
-        overrides.add(ret);
-        return ret;
-    }
+	public OverrideBuilder override() {
+		OverrideBuilder ret = new OverrideBuilder();
+		overrides.add(ret);
+		return ret;
+	}
 
-    /**
-     * Get an existing override builder
-     * 
-     * @param index the index of the existing override builder
-     * @return the override builder
-     * @throws IndexOutOfBoundsException if {@code} index is out of bounds
-     */
-    public OverrideBuilder override(int index) {
-        Preconditions.checkElementIndex(index, overrides.size(), "override");
-        return overrides.get(index);
-    }
+	/**
+	 * Get an existing override builder
+	 *
+	 * @param index the index of the existing override builder
+	 * @return the override builder
+	 * @throws IndexOutOfBoundsException if {@code} index is out of bounds
+	 */
+	public OverrideBuilder override(int index) {
+		Preconditions.checkElementIndex(index, overrides.size(), "override");
+		return overrides.get(index);
+	}
 
-    @Override
-    public JsonObject toJson() {
-        JsonObject root = super.toJson();
-        if (!overrides.isEmpty()) {
-            JsonArray overridesJson = new JsonArray();
-            overrides.stream().map(OverrideBuilder::toJson).forEach(overridesJson::add);
-            root.add("overrides", overridesJson);
-        }
-        return root;
-    }
+	@Override
+	public JsonObject toJson() {
+		JsonObject root = super.toJson();
+		if (!overrides.isEmpty()) {
+			JsonArray overridesJson = new JsonArray();
+			overrides.stream().map(OverrideBuilder::toJson).forEach(overridesJson::add);
+			root.add("overrides", overridesJson);
+		}
+		return root;
+	}
 
-    public class OverrideBuilder {
+	public class OverrideBuilder {
 
-        private ModelFile model;
-        private final Map<ResourceLocation, Float> predicates = new LinkedHashMap<>();
+		private final Map<ResourceLocation, Float> predicates = new LinkedHashMap<>();
+		private ModelFile model;
 
-        public OverrideBuilder model(ModelFile model) {
-            this.model = model;
-            model.assertExistence();
-            return this;
-        }
+		public OverrideBuilder model(ModelFile model) {
+			this.model = model;
+			model.assertExistence();
+			return this;
+		}
 
-        public OverrideBuilder predicate(ResourceLocation key, float value) {
-            this.predicates.put(key, value);
-            return this;
-        }
+		public OverrideBuilder predicate(ResourceLocation key, float value) {
+			this.predicates.put(key, value);
+			return this;
+		}
 
-        public ItemModelBuilder end() { return ItemModelBuilder.this; }
+		public ItemModelBuilder end() {
+			return ItemModelBuilder.this;
+		}
 
-        JsonObject toJson() {
-            JsonObject ret = new JsonObject();
-            JsonObject predicatesJson = new JsonObject();
-            predicates.forEach((key, val) -> predicatesJson.addProperty(serializeLoc(key), val));
-            ret.add("predicate", predicatesJson);
-            ret.addProperty("model", serializeLoc(model.getLocation()));
-            return ret;
-        }
-    }
+		JsonObject toJson() {
+			JsonObject ret = new JsonObject();
+			JsonObject predicatesJson = new JsonObject();
+			predicates.forEach((key, val) -> predicatesJson.addProperty(serializeLoc(key), val));
+			ret.add("predicate", predicatesJson);
+			ret.addProperty("model", serializeLoc(model.getLocation()));
+			return ret;
+		}
+	}
 
 }

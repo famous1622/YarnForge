@@ -19,56 +19,62 @@
 
 package net.minecraftforge.fml.server;
 
-import net.minecraft.server.dedicated.DedicatedServer;
+import static net.minecraftforge.fml.loading.LogMarkers.LOADING;
+
+import java.util.List;
+
 import net.minecraftforge.common.MinecraftForge;
-import net.minecraftforge.fml.*;
+import net.minecraftforge.fml.LoadingFailedException;
+import net.minecraftforge.fml.LogicalSidedProvider;
+import net.minecraftforge.fml.ModLoader;
+import net.minecraftforge.fml.ModLoadingWarning;
+import net.minecraftforge.fml.SidedProvider;
 import net.minecraftforge.fml.network.FMLStatusPing;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import java.util.List;
+import net.minecraft.server.dedicated.DedicatedServer;
 
-import static net.minecraftforge.fml.loading.LogMarkers.LOADING;
+public class ServerModLoader {
+	private static final Logger LOGGER = LogManager.getLogger();
+	private static DedicatedServer server;
+	private static boolean hasErrors = false;
 
-public class ServerModLoader
-{
-    private static final Logger LOGGER = LogManager.getLogger();
-    private static DedicatedServer server;
-    private static boolean hasErrors = false;
-
-    public static void begin(DedicatedServer dedicatedServer) {
-        ServerModLoader.server = dedicatedServer;
-        SidedProvider.setServer(()->dedicatedServer);
-        LogicalSidedProvider.setServer(()->dedicatedServer);
-        LanguageHook.loadForgeAndMCLangs();
-        try {
-            ModLoader.get().gatherAndInitializeMods(null);
-            ModLoader.get().loadMods(Runnable::run, (a)->{}, (a)->{});
-        } catch (LoadingFailedException e) {
-            ServerModLoader.hasErrors = true;
-            throw e;
-        }
-    }
+	public static void begin(DedicatedServer dedicatedServer) {
+		ServerModLoader.server = dedicatedServer;
+		SidedProvider.setServer(() -> dedicatedServer);
+		LogicalSidedProvider.setServer(() -> dedicatedServer);
+		LanguageHook.loadForgeAndMCLangs();
+		try {
+			ModLoader.get().gatherAndInitializeMods(null);
+			ModLoader.get().loadMods(Runnable::run, (a) -> {
+			}, (a) -> {
+			});
+		} catch (LoadingFailedException e) {
+			ServerModLoader.hasErrors = true;
+			throw e;
+		}
+	}
 
 
-    public static void end() {
-        try {
-            ModLoader.get().finishMods(Runnable::run);
-        } catch (LoadingFailedException e) {
-            ServerModLoader.hasErrors = true;
-            throw e;
+	public static void end() {
+		try {
+			ModLoader.get().finishMods(Runnable::run);
+		} catch (LoadingFailedException e) {
+			ServerModLoader.hasErrors = true;
+			throw e;
 
-        }
-        List<ModLoadingWarning> warnings = ModLoader.get().getWarnings();
-        if (!warnings.isEmpty()) {
-            LOGGER.warn(LOADING, "Mods loaded with {} warnings", warnings.size());
-            warnings.forEach(warning -> LOGGER.warn(LOADING, warning.formatToString()));
-        }
-        MinecraftForge.EVENT_BUS.start();
-        server.getServerStatusResponse().setForgeData(new FMLStatusPing()); //gathers NetworkRegistry data
-    }
+		}
+		List<ModLoadingWarning> warnings = ModLoader.get().getWarnings();
+		if (!warnings.isEmpty()) {
+			LOGGER.warn(LOADING, "Mods loaded with {} warnings", warnings.size());
+			warnings.forEach(warning -> LOGGER.warn(LOADING, warning.formatToString()));
+		}
+		MinecraftForge.EVENT_BUS.start();
+		server.getServerStatusResponse().setForgeData(new FMLStatusPing()); //gathers NetworkRegistry data
+	}
 
-    public static boolean hasErrors() {
-        return ServerModLoader.hasErrors;
-    }
+	public static boolean hasErrors() {
+		return ServerModLoader.hasErrors;
+	}
 }

@@ -19,9 +19,10 @@
 
 package net.minecraftforge.event.entity.living;
 
-import net.minecraft.entity.LivingEntity;
 import net.minecraftforge.common.ForgeHooks;
 import net.minecraftforge.common.MinecraftForge;
+
+import net.minecraft.entity.LivingEntity;
 
 /**
  * LivingSetAttackTargetEvent is fired when an Entity sets a target to attack.<br>
@@ -39,18 +40,16 @@ import net.minecraftforge.common.MinecraftForge;
  * <br>
  * This event is fired on the {@link MinecraftForge#EVENT_BUS}.
  **/
-public class LivingSetAttackTargetEvent extends LivingEvent
-{
+public class LivingSetAttackTargetEvent extends LivingEvent {
 
-    private final LivingEntity target;
-    public LivingSetAttackTargetEvent(LivingEntity entity, LivingEntity target)
-    {
-        super(entity);
-        this.target = target;
-    }
+	private final LivingEntity target;
 
-    public LivingEntity getTarget()
-    {
-        return target;
-    }
+	public LivingSetAttackTargetEvent(LivingEntity entity, LivingEntity target) {
+		super(entity);
+		this.target = target;
+	}
+
+	public LivingEntity getTarget() {
+		return target;
+	}
 }

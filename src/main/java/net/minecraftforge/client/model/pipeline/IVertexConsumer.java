@@ -28,16 +28,19 @@ import net.minecraft.util.Direction;
  * Also assumes that element index passed will increment from 0 to format.getElementCount() - 1.
  * Normal, Color and UV are assumed to be in 0-1 range.
  */
-public interface IVertexConsumer
-{
-    /**
-     * @return the format that should be used for passed data.
-     */
-    VertexFormat getVertexFormat();
+public interface IVertexConsumer {
+	/**
+	 * @return the format that should be used for passed data.
+	 */
+	VertexFormat getVertexFormat();
 
-    void setQuadTint(int tint);
-    void setQuadOrientation(Direction orientation);
-    void setApplyDiffuseLighting(boolean diffuse);
-    void setTexture(TextureAtlasSprite texture);
-    void put(int element, float... data);
+	void setQuadTint(int tint);
+
+	void setQuadOrientation(Direction orientation);
+
+	void setApplyDiffuseLighting(boolean diffuse);
+
+	void setTexture(TextureAtlasSprite texture);
+
+	void put(int element, float... data);
 }

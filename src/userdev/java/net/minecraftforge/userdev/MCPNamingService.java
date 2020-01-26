@@ -19,10 +19,7 @@
 
 package net.minecraftforge.userdev;
 
-import cpw.mods.modlauncher.api.INameMappingService;
-import org.apache.commons.lang3.tuple.Pair;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import static net.minecraftforge.fml.loading.LogMarkers.CORE;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -33,79 +30,78 @@ import java.util.Map;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 
-import static net.minecraftforge.fml.loading.LogMarkers.CORE;
+import cpw.mods.modlauncher.api.INameMappingService;
+import org.apache.commons.lang3.tuple.Pair;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 public class MCPNamingService implements INameMappingService {
-    private static final Logger LOGGER = LogManager.getLogger();
-    private HashMap<String, String> methods;
-    private HashMap<String, String> fields;
+	private static final Logger LOGGER = LogManager.getLogger();
+	private HashMap<String, String> methods;
+	private HashMap<String, String> fields;
 
-    @Override
-    public String mappingName() {
-        return "srgtomcp";
-    }
+	private static void loadMappings(final String mappingFileName, BiConsumer<String, String> mapStore) {
+		URL path = ClassLoader.getSystemResource(mappingFileName); //We EXPLICITLY go throught the SystemClassLoader here because this is dev-time only. And will be on the root classpath.
+		if (path == null) {
+			return;
+		}
 
-    @Override
-    public String mappingVersion() {
-        return "1234";
-    }
+		try (BufferedReader reader = new BufferedReader(new InputStreamReader(path.openStream()))) {
+			reader.lines().skip(1).map(e -> e.split(",")).forEach(e -> mapStore.accept(e[0], e[1]));
+		} catch (IOException e1) {
+			LOGGER.error(CORE, "Error reading mappings", e1);
+		}
+	}
 
-    @Override
-    public Map.Entry<String, String> understanding() {
-        return Pair.of("srg", "mcp");
-    }
+	@Override
+	public String mappingName() {
+		return "srgtomcp";
+	}
 
-    @Override
-    public BiFunction<Domain, String, String> namingFunction() {
-        return this::findMapping;
-    }
+	@Override
+	public String mappingVersion() {
+		return "1234";
+	}
 
-    private String findMapping(final Domain domain, final String srgName) {
-        switch (domain) {
-            case CLASS:
-                return srgName;
-            case FIELD:
-                return findFieldMapping(srgName);
-            case METHOD:
-                return findMethodMapping(srgName);
-        }
-        return srgName;
-    }
+	@Override
+	public Map.Entry<String, String> understanding() {
+		return Pair.of("srg", "mcp");
+	}
 
-    private String findMethodMapping(final String origin) {
-        if (methods == null) {
-            HashMap<String,String> tmpmethods = new HashMap<>(1000);
-            loadMappings("methods.csv", tmpmethods::put);
-            methods = tmpmethods;
-            LOGGER.debug(CORE, "Loaded {} method mappings from methods.csv", methods.size());
-        }
-        return methods.getOrDefault(origin, origin);
-    }
+	@Override
+	public BiFunction<Domain, String, String> namingFunction() {
+		return this::findMapping;
+	}
 
-    private String findFieldMapping(final String origin) {
-        if (fields == null) {
-            HashMap<String,String> tmpfields = new HashMap<>(1000);
-            loadMappings("fields.csv", tmpfields::put);
-            fields = tmpfields;
-            LOGGER.debug(CORE, "Loaded {} field mappings from fields.csv", fields.size());
-        }
-        return fields.getOrDefault(origin, origin);
-    }
+	private String findMapping(final Domain domain, final String srgName) {
+		switch (domain) {
+		case CLASS:
+			return srgName;
+		case FIELD:
+			return findFieldMapping(srgName);
+		case METHOD:
+			return findMethodMapping(srgName);
+		}
+		return srgName;
+	}
 
+	private String findMethodMapping(final String origin) {
+		if (methods == null) {
+			HashMap<String, String> tmpmethods = new HashMap<>(1000);
+			loadMappings("methods.csv", tmpmethods::put);
+			methods = tmpmethods;
+			LOGGER.debug(CORE, "Loaded {} method mappings from methods.csv", methods.size());
+		}
+		return methods.getOrDefault(origin, origin);
+	}
 
-    private static void loadMappings(final String mappingFileName, BiConsumer<String, String> mapStore)
-    {
-        URL path = ClassLoader.getSystemResource(mappingFileName); //We EXPLICITLY go throught the SystemClassLoader here because this is dev-time only. And will be on the root classpath.
-        if (path == null)
-            return;
-
-        try (BufferedReader reader = new BufferedReader(new InputStreamReader(path.openStream())))
-        {
-            reader.lines().skip(1).map(e -> e.split(",")).forEach(e -> mapStore.accept(e[0], e[1]));
-        }
-        catch (IOException e1)
-        {
-            LOGGER.error(CORE, "Error reading mappings", e1);
-        }
-    }
+	private String findFieldMapping(final String origin) {
+		if (fields == null) {
+			HashMap<String, String> tmpfields = new HashMap<>(1000);
+			loadMappings("fields.csv", tmpfields::put);
+			fields = tmpfields;
+			LOGGER.debug(CORE, "Loaded {} field mappings from fields.csv", fields.size());
+		}
+		return fields.getOrDefault(origin, origin);
+	}
 }

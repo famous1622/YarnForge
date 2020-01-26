@@ -34,34 +34,29 @@ import java.util.TreeSet;
  * This is implemented very basically, and thus is not a speedy system.
  * This is not recommended for used in high traffic areas, and is mainly intended for writing to disc.
  */
-public class SortedProperties extends Properties
-{
-    private static final long serialVersionUID = -8913480931455982442L;
+public class SortedProperties extends Properties {
+	private static final long serialVersionUID = -8913480931455982442L;
 
-    @Override
-    public Set<Map.Entry<Object, Object>> entrySet()
-    {
-        Set<Map.Entry<Object, Object>> ret = new TreeSet<>((left, right) -> left.getKey().toString().compareTo(right.getKey().toString()));
-        ret.addAll(super.entrySet());
-        return ret;
-    }
+	public static void store(Properties props, OutputStream stream, String comment) throws IOException {
+		SortedProperties sorted = new SortedProperties();
+		sorted.putAll(props);
+		sorted.store(stream, comment);
+	}
 
-    @Override
-    public Set<Object> keySet()
-    {
-        return new TreeSet<>(super.keySet());
-    }
+	@Override
+	public Set<Map.Entry<Object, Object>> entrySet() {
+		Set<Map.Entry<Object, Object>> ret = new TreeSet<>((left, right) -> left.getKey().toString().compareTo(right.getKey().toString()));
+		ret.addAll(super.entrySet());
+		return ret;
+	}
 
-    @Override
-    public synchronized Enumeration<Object> keys()
-    {
-        return Collections.enumeration(new TreeSet<>(super.keySet()));
-    }
+	@Override
+	public Set<Object> keySet() {
+		return new TreeSet<>(super.keySet());
+	}
 
-    public static void store(Properties props, OutputStream stream, String comment) throws IOException
-    {
-        SortedProperties sorted = new SortedProperties();
-        sorted.putAll(props);
-        sorted.store(stream, comment);
-    }
+	@Override
+	public synchronized Enumeration<Object> keys() {
+		return Collections.enumeration(new TreeSet<>(super.keySet()));
+	}
 }

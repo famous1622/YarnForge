@@ -19,28 +19,26 @@
 
 package net.minecraftforge.debug.block;
 
-import net.minecraft.block.Blocks;
 import net.minecraftforge.event.world.BlockEvent.NeighborNotifyEvent;
-import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
-
+import net.minecraftforge.fml.common.Mod;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+
+import net.minecraft.block.Blocks;
 
 //Disables update notification from comparators.
 
 @Mod("neighbor_notify_event_test")
 @Mod.EventBusSubscriber
-public class NeighborNotifyEventTest
-{
-    private static Logger logger = LogManager.getLogger(NeighborNotifyEventTest.class);
+public class NeighborNotifyEventTest {
+	private static Logger logger = LogManager.getLogger(NeighborNotifyEventTest.class);
 
-    @SubscribeEvent
-    public static void onNeighborNotify(NeighborNotifyEvent event)
-    {
-        if (event.getState().getBlock() == Blocks.COMPARATOR) {
-            logger.info("{} with face information: {}", event.getPos().toString(), event.getNotifiedSides());
-            event.setCanceled(true);
-        }
-    }
+	@SubscribeEvent
+	public static void onNeighborNotify(NeighborNotifyEvent event) {
+		if (event.getState().getBlock() == Blocks.COMPARATOR) {
+			logger.info("{} with face information: {}", event.getPos().toString(), event.getNotifiedSides());
+			event.setCanceled(true);
+		}
+	}
 }

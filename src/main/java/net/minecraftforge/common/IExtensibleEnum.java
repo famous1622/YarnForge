@@ -27,24 +27,24 @@ package net.minecraftforge.common;
  * <p>
  * For example, an enum with the constructor {@code MyEnum(Object foo)} would
  * require the method:
- * 
+ *
  * <pre>
  * public static MyEnum create(String name, Object foo)
  * {
  *     throw new IllegalStateException("Enum not extended");
  * }
  * </pre>
- * 
+ * <p>
  * The method contents will be replaced with ASM at runtime. Multiple
  * {@code create} methods <strong>can</strong> be defined as long as each
  * matches a constructor.
  */
-public interface IExtensibleEnum
-{
-    /**
-     * Called by generated factory code to do any post-constructor setup required by
-     * the enum. Should not be called manually.
-     */
-    @Deprecated
-    default void init() {}
+public interface IExtensibleEnum {
+	/**
+	 * Called by generated factory code to do any post-constructor setup required by
+	 * the enum. Should not be called manually.
+	 */
+	@Deprecated
+	default void init() {
+	}
 }

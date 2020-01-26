@@ -28,103 +28,101 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonSyntaxException;
+import net.minecraftforge.common.crafting.conditions.ICondition;
 
 import net.minecraft.advancements.Advancement;
 import net.minecraft.util.JSONUtils;
 import net.minecraft.util.ResourceLocation;
-import net.minecraftforge.common.crafting.conditions.ICondition;
 
-public class ConditionalAdvancement
-{
-    public static Builder builder()
-    {
-        return new Builder();
-    }
+public class ConditionalAdvancement {
+	public static Builder builder() {
+		return new Builder();
+	}
 
-    public static Advancement.Builder read(Gson gson, ResourceLocation recipeId, JsonObject json)
-    {
-        JsonArray entries = JSONUtils.getJsonArray(json, "advancements", null);
-        if (entries == null)
-        {
-            if (!CraftingHelper.processConditions(json, "conditions"))
-                return null;
-            return gson.fromJson(json, Advancement.Builder.class);
-        }
+	public static Advancement.Builder read(Gson gson, ResourceLocation recipeId, JsonObject json) {
+		JsonArray entries = JSONUtils.getJsonArray(json, "advancements", null);
+		if (entries == null) {
+			if (!CraftingHelper.processConditions(json, "conditions")) {
+				return null;
+			}
+			return gson.fromJson(json, Advancement.Builder.class);
+		}
 
-        int idx = 0;
-        for (JsonElement ele : entries)
-        {
-            if (!ele.isJsonObject())
-                throw new JsonSyntaxException("Invalid advancement entry at index " + idx + " Must be JsonObject");
-            if (CraftingHelper.processConditions(JSONUtils.getJsonArray(ele.getAsJsonObject(), "conditions")))
-                return gson.fromJson(JSONUtils.getJsonObject(ele.getAsJsonObject(), "advancement"), Advancement.Builder.class);
-            idx++;
-        }
-        return null;
-    }
+		int idx = 0;
+		for (JsonElement ele : entries) {
+			if (!ele.isJsonObject()) {
+				throw new JsonSyntaxException("Invalid advancement entry at index " + idx + " Must be JsonObject");
+			}
+			if (CraftingHelper.processConditions(JSONUtils.getJsonArray(ele.getAsJsonObject(), "conditions"))) {
+				return gson.fromJson(JSONUtils.getJsonObject(ele.getAsJsonObject(), "advancement"), Advancement.Builder.class);
+			}
+			idx++;
+		}
+		return null;
+	}
 
-    public static class Builder
-    {
-        private List<ICondition[]> conditions = new ArrayList<>();
-        private List<Advancement.Builder> advancements = new ArrayList<>();
+	public static class Builder {
+		private List<ICondition[]> conditions = new ArrayList<>();
+		private List<Advancement.Builder> advancements = new ArrayList<>();
 
-        private List<ICondition> currentConditions = new ArrayList<>();
-        private boolean locked = false;
+		private List<ICondition> currentConditions = new ArrayList<>();
+		private boolean locked = false;
 
-        public Builder addCondition(ICondition condition)
-        {
-            if (locked)
-                throw new IllegalStateException("Attempted to modify finished builder");
-            currentConditions.add(condition);
-            return this;
-        }
+		public Builder addCondition(ICondition condition) {
+			if (locked) {
+				throw new IllegalStateException("Attempted to modify finished builder");
+			}
+			currentConditions.add(condition);
+			return this;
+		}
 
-        public Builder addAdvancement(Consumer<Consumer<Advancement.Builder>> callable)
-        {
-            if (locked)
-                throw new IllegalStateException("Attempted to modify finished builder");
-            callable.accept(this::addAdvancement);
-            return this;
-        }
+		public Builder addAdvancement(Consumer<Consumer<Advancement.Builder>> callable) {
+			if (locked) {
+				throw new IllegalStateException("Attempted to modify finished builder");
+			}
+			callable.accept(this::addAdvancement);
+			return this;
+		}
 
-        public Builder addAdvancement(Advancement.Builder recipe)
-        {
-            if (locked)
-                throw new IllegalStateException("Attempted to modify finished builder");
-            if (currentConditions.isEmpty())
-                throw new IllegalStateException("Can not add a advancement with no conditions.");
-            conditions.add(currentConditions.toArray(new ICondition[currentConditions.size()]));
-            advancements.add(recipe);
-            currentConditions.clear();
-            return this;
-        }
+		public Builder addAdvancement(Advancement.Builder recipe) {
+			if (locked) {
+				throw new IllegalStateException("Attempted to modify finished builder");
+			}
+			if (currentConditions.isEmpty()) {
+				throw new IllegalStateException("Can not add a advancement with no conditions.");
+			}
+			conditions.add(currentConditions.toArray(new ICondition[currentConditions.size()]));
+			advancements.add(recipe);
+			currentConditions.clear();
+			return this;
+		}
 
-        public JsonObject write()
-        {
-            if (!locked)
-            {
-                if (!currentConditions.isEmpty())
-                    throw new IllegalStateException("Invalid builder state: Orphaned conditions");
-                if (advancements.isEmpty())
-                    throw new IllegalStateException("Invalid builder state: No Advancements");
-                locked = true;
-            }
-            JsonObject json = new JsonObject();
-            JsonArray array = new JsonArray();
-            json.add("advancements", array);
-            for (int x = 0; x < conditions.size(); x++)
-            {
-                JsonObject holder = new JsonObject();
+		public JsonObject write() {
+			if (!locked) {
+				if (!currentConditions.isEmpty()) {
+					throw new IllegalStateException("Invalid builder state: Orphaned conditions");
+				}
+				if (advancements.isEmpty()) {
+					throw new IllegalStateException("Invalid builder state: No Advancements");
+				}
+				locked = true;
+			}
+			JsonObject json = new JsonObject();
+			JsonArray array = new JsonArray();
+			json.add("advancements", array);
+			for (int x = 0; x < conditions.size(); x++) {
+				JsonObject holder = new JsonObject();
 
-                JsonArray conds = new JsonArray();
-                for (ICondition c : conditions.get(x))
-                    conds.add(CraftingHelper.serialize(c));
-                holder.add("conditions", conds);
-                holder.add("advancement", advancements.get(x).serialize());
+				JsonArray conds = new JsonArray();
+				for (ICondition c : conditions.get(x)) {
+					conds.add(CraftingHelper.serialize(c));
+				}
+				holder.add("conditions", conds);
+				holder.add("advancement", advancements.get(x).serialize());
 
-                array.add(holder);
-            }
-            return json;
-        }
-    }
+				array.add(holder);
+			}
+			return json;
+		}
+	}
 }

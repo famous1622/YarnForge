@@ -25,36 +25,33 @@ import java.util.Set;
 
 import javax.annotation.Nullable;
 
-import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.common.DimensionManager.SavedEntry;
 import net.minecraftforge.eventbus.api.Event;
+
+import net.minecraft.util.ResourceLocation;
 
 /**
  * Register all of your custom ModDimensons here, fired during server loading when
  * dimension data is read from the world file.
- *
+ * <p>
  * Contains a list of missing entries. Registering an entry with the DimensionManger
  * will remove the matching entry from the missing list.
  */
-public class RegisterDimensionsEvent extends Event
-{
-    private final Map<ResourceLocation, SavedEntry> missing;
-    private final Set<ResourceLocation> keys;
+public class RegisterDimensionsEvent extends Event {
+	private final Map<ResourceLocation, SavedEntry> missing;
+	private final Set<ResourceLocation> keys;
 
-    public RegisterDimensionsEvent(Map<ResourceLocation, SavedEntry> missing)
-    {
-        this.missing = missing;
-        this.keys = Collections.unmodifiableSet(this.missing.keySet());
-    }
+	public RegisterDimensionsEvent(Map<ResourceLocation, SavedEntry> missing) {
+		this.missing = missing;
+		this.keys = Collections.unmodifiableSet(this.missing.keySet());
+	}
 
-    public Set<ResourceLocation> getMissingNames()
-    {
-        return keys;
-    }
+	public Set<ResourceLocation> getMissingNames() {
+		return keys;
+	}
 
-    @Nullable
-    public SavedEntry getEntry(ResourceLocation key)
-    {
-        return missing.get(key);
-    }
+	@Nullable
+	public SavedEntry getEntry(ResourceLocation key) {
+		return missing.get(key);
+	}
 }

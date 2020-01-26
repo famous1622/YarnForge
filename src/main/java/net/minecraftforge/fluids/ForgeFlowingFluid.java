@@ -19,6 +19,10 @@
 
 package net.minecraftforge.fluids;
 
+import java.util.function.Supplier;
+
+import javax.annotation.Nullable;
+
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
@@ -29,7 +33,6 @@ import net.minecraft.fluid.IFluidState;
 import net.minecraft.item.Item;
 import net.minecraft.item.Items;
 import net.minecraft.state.StateContainer;
-import net.minecraft.tags.FluidTags;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.BlockRenderLayer;
 import net.minecraft.util.Direction;
@@ -38,226 +41,196 @@ import net.minecraft.world.IBlockReader;
 import net.minecraft.world.IWorld;
 import net.minecraft.world.IWorldReader;
 
-import javax.annotation.Nullable;
-import java.util.function.Supplier;
+public abstract class ForgeFlowingFluid extends FlowingFluid {
+	private final Supplier<? extends Fluid> flowing;
+	private final Supplier<? extends Fluid> still;
+	@Nullable
+	private final Supplier<? extends Item> bucket;
+	@Nullable
+	private final Supplier<? extends FlowingFluidBlock> block;
+	private final FluidAttributes.Builder builder;
+	private final boolean canMultiply;
+	private final int slopeFindDistance;
+	private final int levelDecreasePerBlock;
+	private final float explosionResistance;
+	private final BlockRenderLayer renderLayer;
+	private final int tickRate;
 
-public abstract class ForgeFlowingFluid extends FlowingFluid
-{
-    private final Supplier<? extends Fluid> flowing;
-    private final Supplier<? extends Fluid> still;
-    @Nullable
-    private final Supplier<? extends Item> bucket;
-    @Nullable
-    private final Supplier<? extends FlowingFluidBlock> block;
-    private final FluidAttributes.Builder builder;
-    private final boolean canMultiply;
-    private final int slopeFindDistance;
-    private final int levelDecreasePerBlock;
-    private final float explosionResistance;
-    private final BlockRenderLayer renderLayer;
-    private final int tickRate;
+	protected ForgeFlowingFluid(Properties properties) {
+		this.flowing = properties.flowing;
+		this.still = properties.still;
+		this.builder = properties.attributes;
+		this.canMultiply = properties.canMultiply;
+		this.bucket = properties.bucket;
+		this.block = properties.block;
+		this.slopeFindDistance = properties.slopeFindDistance;
+		this.levelDecreasePerBlock = properties.levelDecreasePerBlock;
+		this.explosionResistance = properties.explosionResistance;
+		this.renderLayer = properties.renderLayer;
+		this.tickRate = properties.tickRate;
+	}
 
-    protected ForgeFlowingFluid(Properties properties)
-    {
-        this.flowing = properties.flowing;
-        this.still = properties.still;
-        this.builder = properties.attributes;
-        this.canMultiply = properties.canMultiply;
-        this.bucket = properties.bucket;
-        this.block = properties.block;
-        this.slopeFindDistance = properties.slopeFindDistance;
-        this.levelDecreasePerBlock = properties.levelDecreasePerBlock;
-        this.explosionResistance = properties.explosionResistance;
-        this.renderLayer = properties.renderLayer;
-        this.tickRate = properties.tickRate;
-    }
+	@Override
+	public Fluid getFlowingFluid() {
+		return flowing.get();
+	}
 
-    @Override
-    public Fluid getFlowingFluid()
-    {
-        return flowing.get();
-    }
+	@Override
+	public Fluid getStillFluid() {
+		return still.get();
+	}
 
-    @Override
-    public Fluid getStillFluid()
-    {
-        return still.get();
-    }
+	@Override
+	protected boolean canSourcesMultiply() {
+		return canMultiply;
+	}
 
-    @Override
-    protected boolean canSourcesMultiply()
-    {
-        return canMultiply;
-    }
+	@Override
+	protected void beforeReplacingBlock(IWorld worldIn, BlockPos pos, BlockState state) {
+		TileEntity tileentity = state.getBlock().hasTileEntity() ? worldIn.getTileEntity(pos) : null;
+		Block.spawnDrops(state, worldIn.getWorld(), pos, tileentity);
+	}
 
-    @Override
-    protected void beforeReplacingBlock(IWorld worldIn, BlockPos pos, BlockState state)
-    {
-        TileEntity tileentity = state.getBlock().hasTileEntity() ? worldIn.getTileEntity(pos) : null;
-        Block.spawnDrops(state, worldIn.getWorld(), pos, tileentity);
-    }
+	@Override
+	protected int getSlopeFindDistance(IWorldReader worldIn) {
+		return slopeFindDistance;
+	}
 
-    @Override
-    protected int getSlopeFindDistance(IWorldReader worldIn)
-    {
-        return slopeFindDistance;
-    }
+	@Override
+	protected int getLevelDecreasePerBlock(IWorldReader worldIn) {
+		return levelDecreasePerBlock;
+	}
 
-    @Override
-    protected int getLevelDecreasePerBlock(IWorldReader worldIn)
-    {
-        return levelDecreasePerBlock;
-    }
+	@Override
+	public BlockRenderLayer getRenderLayer() {
+		return renderLayer;
+	}
 
-    @Override
-    public BlockRenderLayer getRenderLayer()
-    {
-        return renderLayer;
-    }
+	@Override
+	public Item getFilledBucket() {
+		return bucket != null ? bucket.get() : Items.AIR;
+	}
 
-    @Override
-    public Item getFilledBucket()
-    {
-        return bucket != null ? bucket.get() : Items.AIR;
-    }
+	@Override
+	protected boolean func_215665_a(IFluidState state, IBlockReader world, BlockPos pos, Fluid fluidIn, Direction direction) {
+		// Based on the water implementation, may need to be overriden for mod fluids that shouldn't behave like water.
+		return direction == Direction.DOWN && !isEquivalentTo(fluidIn);
+	}
 
-    @Override
-    protected boolean func_215665_a(IFluidState state, IBlockReader world, BlockPos pos, Fluid fluidIn, Direction direction)
-    {
-        // Based on the water implementation, may need to be overriden for mod fluids that shouldn't behave like water.
-        return direction == Direction.DOWN && !isEquivalentTo(fluidIn);
-    }
+	@Override
+	public int getTickRate(IWorldReader world) {
+		return tickRate;
+	}
 
-    @Override
-    public int getTickRate(IWorldReader world)
-    {
-        return tickRate;
-    }
+	@Override
+	protected float getExplosionResistance() {
+		return explosionResistance;
+	}
 
-    @Override
-    protected float getExplosionResistance()
-    {
-        return explosionResistance;
-    }
+	@Override
+	protected BlockState getBlockState(IFluidState state) {
+		if (block != null) {
+			return block.get().getDefaultState().with(FlowingFluidBlock.LEVEL, getLevelFromState(state));
+		}
+		return Blocks.AIR.getDefaultState();
+	}
 
-    @Override
-    protected BlockState getBlockState(IFluidState state)
-    {
-        if (block != null)
-            return block.get().getDefaultState().with(FlowingFluidBlock.LEVEL, getLevelFromState(state));
-        return Blocks.AIR.getDefaultState();
-    }
+	@Override
+	public boolean isEquivalentTo(Fluid fluidIn) {
+		return fluidIn == still.get() || fluidIn == flowing.get();
+	}
 
-    @Override
-    public boolean isEquivalentTo(Fluid fluidIn) {
-        return fluidIn == still.get() || fluidIn == flowing.get();
-    }
+	@Override
+	protected FluidAttributes createAttributes() {
+		return builder.build(this);
+	}
 
-    @Override
-    protected FluidAttributes createAttributes()
-    {
-        return builder.build(this);
-    }
+	public static class Flowing extends ForgeFlowingFluid {
+		public Flowing(Properties properties) {
+			super(properties);
+			setDefaultState(getStateContainer().getBaseState().with(LEVEL_1_8, 7));
+		}
 
-    public static class Flowing extends ForgeFlowingFluid
-    {
-        public Flowing(Properties properties)
-        {
-            super(properties);
-            setDefaultState(getStateContainer().getBaseState().with(LEVEL_1_8, 7));
-        }
+		protected void fillStateContainer(StateContainer.Builder<Fluid, IFluidState> builder) {
+			super.fillStateContainer(builder);
+			builder.add(LEVEL_1_8);
+		}
 
-        protected void fillStateContainer(StateContainer.Builder<Fluid, IFluidState> builder) {
-            super.fillStateContainer(builder);
-            builder.add(LEVEL_1_8);
-        }
+		public int getLevel(IFluidState state) {
+			return state.get(LEVEL_1_8);
+		}
 
-        public int getLevel(IFluidState state) {
-            return state.get(LEVEL_1_8);
-        }
+		public boolean isSource(IFluidState state) {
+			return false;
+		}
+	}
 
-        public boolean isSource(IFluidState state) {
-            return false;
-        }
-    }
+	public static class Source extends ForgeFlowingFluid {
+		public Source(Properties properties) {
+			super(properties);
+		}
 
-    public static class Source extends ForgeFlowingFluid
-    {
-        public Source(Properties properties)
-        {
-            super(properties);
-        }
+		public int getLevel(IFluidState state) {
+			return 8;
+		}
 
-        public int getLevel(IFluidState state) {
-            return 8;
-        }
+		public boolean isSource(IFluidState state) {
+			return true;
+		}
+	}
 
-        public boolean isSource(IFluidState state) {
-            return true;
-        }
-    }
+	public static class Properties {
+		private Supplier<? extends Fluid> still;
+		private Supplier<? extends Fluid> flowing;
+		private FluidAttributes.Builder attributes;
+		private boolean canMultiply;
+		private Supplier<? extends Item> bucket;
+		private Supplier<? extends FlowingFluidBlock> block;
+		private int slopeFindDistance = 4;
+		private int levelDecreasePerBlock = 1;
+		private float explosionResistance = 1;
+		private BlockRenderLayer renderLayer = BlockRenderLayer.TRANSLUCENT;
+		private int tickRate = 5;
 
-    public static class Properties
-    {
-        private Supplier<? extends Fluid> still;
-        private Supplier<? extends Fluid> flowing;
-        private FluidAttributes.Builder attributes;
-        private boolean canMultiply;
-        private Supplier<? extends Item> bucket;
-        private Supplier<? extends FlowingFluidBlock> block;
-        private int slopeFindDistance = 4;
-        private int levelDecreasePerBlock = 1;
-        private float explosionResistance = 1;
-        private BlockRenderLayer renderLayer = BlockRenderLayer.TRANSLUCENT;
-        private int tickRate = 5;
+		public Properties(Supplier<? extends Fluid> still, Supplier<? extends Fluid> flowing, FluidAttributes.Builder attributes) {
+			this.still = still;
+			this.flowing = flowing;
+			this.attributes = attributes;
+		}
 
-        public Properties(Supplier<? extends Fluid> still, Supplier<? extends Fluid> flowing, FluidAttributes.Builder attributes)
-        {
-            this.still = still;
-            this.flowing = flowing;
-            this.attributes = attributes;
-        }
+		public Properties canMultiply() {
+			canMultiply = true;
+			return this;
+		}
 
-        public Properties canMultiply()
-        {
-            canMultiply = true;
-            return this;
-        }
+		public Properties bucket(Supplier<? extends Item> bucket) {
+			this.bucket = bucket;
+			return this;
+		}
 
-        public Properties bucket(Supplier<? extends Item> bucket)
-        {
-            this.bucket = bucket;
-            return this;
-        }
+		public Properties block(Supplier<? extends FlowingFluidBlock> block) {
+			this.block = block;
+			return this;
+		}
 
-        public Properties block(Supplier<? extends FlowingFluidBlock> block)
-        {
-            this.block = block;
-            return this;
-        }
+		public Properties slopeFindDistance(int slopeFindDistance) {
+			this.slopeFindDistance = slopeFindDistance;
+			return this;
+		}
 
-        public Properties slopeFindDistance(int slopeFindDistance)
-        {
-            this.slopeFindDistance = slopeFindDistance;
-            return this;
-        }
+		public Properties levelDecreasePerBlock(int levelDecreasePerBlock) {
+			this.levelDecreasePerBlock = levelDecreasePerBlock;
+			return this;
+		}
 
-        public Properties levelDecreasePerBlock(int levelDecreasePerBlock)
-        {
-            this.levelDecreasePerBlock = levelDecreasePerBlock;
-            return this;
-        }
+		public Properties explosionResistance(float explosionResistance) {
+			this.explosionResistance = explosionResistance;
+			return this;
+		}
 
-        public Properties explosionResistance(float explosionResistance)
-        {
-            this.explosionResistance = explosionResistance;
-            return this;
-        }
-
-        public Properties renderLayer(BlockRenderLayer layer)
-        {
-            this.renderLayer = layer;
-            return this;
-        }
-    }
+		public Properties renderLayer(BlockRenderLayer layer) {
+			this.renderLayer = layer;
+			return this;
+		}
+	}
 }

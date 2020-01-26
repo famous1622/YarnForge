@@ -19,12 +19,10 @@
 
 package net.minecraftforge.event;
 
-import net.minecraft.world.Difficulty;
 import net.minecraftforge.common.ForgeHooks;
 import net.minecraftforge.common.MinecraftForge;
-import net.minecraftforge.eventbus.api.Cancelable;
-import net.minecraftforge.eventbus.api.Event;
-import net.minecraftforge.eventbus.api.Event.HasResult;
+
+import net.minecraft.world.Difficulty;
 
 /**
  * DifficultyChangeEvent is fired when difficulty is changing. <br>
@@ -37,24 +35,20 @@ import net.minecraftforge.eventbus.api.Event.HasResult;
  * <br>
  * This event is fired on the {@link MinecraftForge#EVENT_BUS}.
  **/
-public class DifficultyChangeEvent extends net.minecraftforge.eventbus.api.Event
-{
-    private final Difficulty difficulty;
-    private final Difficulty oldDifficulty;
+public class DifficultyChangeEvent extends net.minecraftforge.eventbus.api.Event {
+	private final Difficulty difficulty;
+	private final Difficulty oldDifficulty;
 
-    public DifficultyChangeEvent(Difficulty difficulty, Difficulty oldDifficulty)
-    {
-        this.difficulty = difficulty;
-        this.oldDifficulty = oldDifficulty;
-    }
+	public DifficultyChangeEvent(Difficulty difficulty, Difficulty oldDifficulty) {
+		this.difficulty = difficulty;
+		this.oldDifficulty = oldDifficulty;
+	}
 
-    public Difficulty getDifficulty()
-    {
-        return difficulty;
-    }
+	public Difficulty getDifficulty() {
+		return difficulty;
+	}
 
-    public Difficulty getOldDifficulty()
-    {
-        return oldDifficulty;
-    }
+	public Difficulty getOldDifficulty() {
+		return oldDifficulty;
+	}
 }

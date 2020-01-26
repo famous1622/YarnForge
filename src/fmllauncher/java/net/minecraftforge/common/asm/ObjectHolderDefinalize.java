@@ -19,16 +19,15 @@
 
 package net.minecraftforge.common.asm;
 
-import java.nio.file.Path;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import cpw.mods.modlauncher.serviceapi.ILaunchPluginService;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.AnnotationNode;
 import org.objectweb.asm.tree.ClassNode;
-import cpw.mods.modlauncher.serviceapi.ILaunchPluginService;
 
 /**
  * Removes the final modifier from fields with the @ObjectHolder annotation, prevents the JITer from in lining them so our runtime replacements can work.
@@ -36,67 +35,60 @@ import cpw.mods.modlauncher.serviceapi.ILaunchPluginService;
  */
 public class ObjectHolderDefinalize implements ILaunchPluginService {
 
-    private final String OBJECT_HOLDER = "Lnet/minecraftforge/registries/ObjectHolder;"; //Don't directly reference this to prevent class loading.
+	private static final EnumSet<Phase> YAY = EnumSet.of(Phase.AFTER);
+	private static final EnumSet<Phase> NAY = EnumSet.noneOf(Phase.class);
+	private final String OBJECT_HOLDER = "Lnet/minecraftforge/registries/ObjectHolder;"; //Don't directly reference this to prevent class loading.
 
-    @Override
-    public String name() {
-        return "object_holder_definalize";
-    }
+	@Override
+	public String name() {
+		return "object_holder_definalize";
+	}
 
+	@Override
+	public EnumSet<Phase> handlesClass(Type classType, boolean isEmpty) {
+		return isEmpty ? NAY : YAY;
+	}
 
-    private static final EnumSet<Phase> YAY = EnumSet.of(Phase.AFTER);
-    private static final EnumSet<Phase> NAY = EnumSet.noneOf(Phase.class);
+	private boolean hasHolder(List<AnnotationNode> lst) {
+		return lst != null && lst.stream().anyMatch(n -> n.desc.equals(OBJECT_HOLDER));
+	}
 
-    @Override
-    public EnumSet<Phase> handlesClass(Type classType, boolean isEmpty)
-    {
-        return isEmpty ? NAY : YAY;
-    }
+	private String getValue(List<AnnotationNode> lst) {
+		AnnotationNode ann = lst.stream().filter(n -> n.desc.equals(OBJECT_HOLDER)).findFirst().get();
+		if (ann.values != null) {
+			for (int x = 0; x < ann.values.size() - 1; x += 2) {
+				if (ann.values.get(x).equals("value")) {
+					return (String) ann.values.get(x + 1);
+				}
+			}
+		}
+		return null;
+	}
 
-    private boolean hasHolder(List<AnnotationNode> lst)
-    {
-        return lst != null && lst.stream().anyMatch(n -> n.desc.equals(OBJECT_HOLDER));
-    }
+	@Override
+	public boolean processClass(Phase phase, ClassNode classNode, Type classType) {
+		AtomicBoolean changes = new AtomicBoolean();
+		//Must be public static finals, and non-array objects
+		final int flags = Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC | Opcodes.ACC_FINAL;
 
-    private String getValue(List<AnnotationNode> lst)
-    {
-        AnnotationNode ann = lst.stream().filter(n -> n.desc.equals(OBJECT_HOLDER)).findFirst().get();
-        if (ann.values != null)
-        {
-            for (int x = 0; x < ann.values.size() - 1; x += 2) {
-                if (ann.values.get(x).equals("value")) {
-                    return (String)ann.values.get(x + 1);
-                }
-            }
-        }
-        return null;
-    }
+		//Fix Annotated Fields before injecting from class level
+		classNode.fields.stream().filter(f -> ((f.access & flags) == flags) && f.desc.startsWith("L") && hasHolder(f.visibleAnnotations)).forEach(f ->
+		{
+			int prev = f.access;
+			f.access &= ~Opcodes.ACC_FINAL; //Strip final
+			f.access |= Opcodes.ACC_SYNTHETIC; //Add Synthetic so we can check in runtime. ? Good idea?
+			changes.compareAndSet(false, prev != f.access);
+		});
 
-    @Override
-    public boolean processClass(Phase phase, ClassNode classNode, Type classType)
-    {
-        AtomicBoolean changes = new AtomicBoolean();
-        //Must be public static finals, and non-array objects
-        final int flags = Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC | Opcodes.ACC_FINAL;
-
-        //Fix Annotated Fields before injecting from class level
-        classNode.fields.stream().filter(f -> ((f.access & flags) == flags) && f.desc.startsWith("L") && hasHolder(f.visibleAnnotations)).forEach(f ->
-        {
-            int prev = f.access;
-            f.access &= ~Opcodes.ACC_FINAL; //Strip final
-            f.access |= Opcodes.ACC_SYNTHETIC; //Add Synthetic so we can check in runtime. ? Good idea?
-            changes.compareAndSet(false, prev != f.access);
-        });
-
-        if (hasHolder(classNode.visibleAnnotations)) //Class level, de-finalize all fields and add @ObjectHolder to them!
-        {
-            @SuppressWarnings("unused")
-            String value = getValue(classNode.visibleAnnotations);
-            classNode.fields.stream().filter(f -> ((f.access & flags) == flags) && f.desc.startsWith("L")).forEach(f ->
-            {
-                int prev = f.access;
-                f.access &= ~Opcodes.ACC_FINAL;
-                f.access |= Opcodes.ACC_SYNTHETIC;
+		if (hasHolder(classNode.visibleAnnotations)) //Class level, de-finalize all fields and add @ObjectHolder to them!
+		{
+			@SuppressWarnings("unused")
+			String value = getValue(classNode.visibleAnnotations);
+			classNode.fields.stream().filter(f -> ((f.access & flags) == flags) && f.desc.startsWith("L")).forEach(f ->
+			{
+				int prev = f.access;
+				f.access &= ~Opcodes.ACC_FINAL;
+				f.access |= Opcodes.ACC_SYNTHETIC;
                 /*if (!hasHolder(f.visibleAnnotations)) //Add field level annotation, doesn't do anything until after we figure out how ASMDataTable is gatherered
                 {
                    if (value == null)
@@ -104,10 +96,10 @@ public class ObjectHolderDefinalize implements ILaunchPluginService {
                    else
                        f.visitAnnotation(OBJECT_HOLDER, true).visit("value", value + ":" + f.name.toLowerCase());
                 }*/
-                changes.compareAndSet(false, prev != f.access);
-            });
-        }
-        return changes.get();
-    }
+				changes.compareAndSet(false, prev != f.access);
+			});
+		}
+		return changes.get();
+	}
 
 }

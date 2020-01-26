@@ -24,11 +24,10 @@ import com.google.gson.JsonObject;
 import net.minecraft.item.crafting.Ingredient;
 import net.minecraft.network.PacketBuffer;
 
-public interface IIngredientSerializer<T extends Ingredient>
-{
-    T parse(PacketBuffer buffer);
+public interface IIngredientSerializer<T extends Ingredient> {
+	T parse(PacketBuffer buffer);
 
-    T parse(JsonObject json);
+	T parse(JsonObject json);
 
-    void write(PacketBuffer buffer, T ingredient);
+	void write(PacketBuffer buffer, T ingredient);
 }

@@ -19,31 +19,29 @@
 
 package net.minecraftforge.event.brewing;
 
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.ItemStack;
+import javax.annotation.Nonnull;
+
 import net.minecraftforge.event.entity.player.PlayerEvent;
 
-import javax.annotation.Nonnull;
+import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.item.ItemStack;
 
 /**
  * This event is called when a player picks up a potion from a brewing stand.
  */
-public class PlayerBrewedPotionEvent extends PlayerEvent
-{
-    private final ItemStack stack;
+public class PlayerBrewedPotionEvent extends PlayerEvent {
+	private final ItemStack stack;
 
-    public PlayerBrewedPotionEvent(PlayerEntity player, @Nonnull ItemStack stack)
-    {
-        super(player);
-        this.stack = stack;
-    }
+	public PlayerBrewedPotionEvent(PlayerEntity player, @Nonnull ItemStack stack) {
+		super(player);
+		this.stack = stack;
+	}
 
-    /**
-     * The ItemStack of the potion.
-     */
-    @Nonnull
-    public ItemStack getStack()
-    {
-        return stack;
-    }
+	/**
+	 * The ItemStack of the potion.
+	 */
+	@Nonnull
+	public ItemStack getStack() {
+		return stack;
+	}
 }

@@ -19,12 +19,11 @@
 
 package net.minecraftforge.event.terraingen;
 
-import net.minecraft.block.BlockState;
-import net.minecraft.world.biome.Biome;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.eventbus.api.Event;
 
-import net.minecraftforge.eventbus.api.Event.HasResult;
+import net.minecraft.block.BlockState;
+import net.minecraft.world.biome.Biome;
 
 /**
  * BiomeEvent is fired whenever an event involving biomes occurs.<br>
@@ -34,119 +33,100 @@ import net.minecraftforge.eventbus.api.Event.HasResult;
  * All children of this event are fired on the {@link MinecraftForge#TERRAIN_GEN_BUS}
  * unless stated otherwise in their Javadocs.
  **/
-public class BiomeEvent extends Event
-{
-    private final Biome biome;
+public class BiomeEvent extends Event {
+	private final Biome biome;
 
-    public BiomeEvent(Biome biome)
-    {
-        this.biome = biome;
-    }
+	public BiomeEvent(Biome biome) {
+		this.biome = biome;
+	}
 
-    public Biome getBiome()
-    {
-        return biome;
-    }
+	public Biome getBiome() {
+		return biome;
+	}
 
-    /**
-     * BiomeColor is fired whenever an event involving biome colors occurs. <br>
-     * If a method utilizes this {@link Event} as its parameter, the method will
-     * receive every child event of this class.<br>
-     * <br>
-     * All children of this event are fired on the {@link MinecraftForge#EVENT_BUS}.
-     **/
-    public static class BiomeColor extends BiomeEvent
-    {
-        private final int originalColor;
-        private int newColor;
+	/**
+	 * BiomeColor is fired whenever an event involving biome colors occurs. <br>
+	 * If a method utilizes this {@link Event} as its parameter, the method will
+	 * receive every child event of this class.<br>
+	 * <br>
+	 * All children of this event are fired on the {@link MinecraftForge#EVENT_BUS}.
+	 **/
+	public static class BiomeColor extends BiomeEvent {
+		private final int originalColor;
+		private int newColor;
 
-        public BiomeColor(Biome biome, int original)
-        {
-            super(biome);
-            originalColor = original;
-            setNewColor(original);
-        }
+		public BiomeColor(Biome biome, int original) {
+			super(biome);
+			originalColor = original;
+			setNewColor(original);
+		}
 
-        public int getOriginalColor()
-        {
-            return originalColor;
-        }
+		public int getOriginalColor() {
+			return originalColor;
+		}
 
-        public int getNewColor()
-        {
-            return newColor;
-        }
+		public int getNewColor() {
+			return newColor;
+		}
 
-        public void setNewColor(int newColor)
-        {
-            this.newColor = newColor;
-        }
-    }
+		public void setNewColor(int newColor) {
+			this.newColor = newColor;
+		}
+	}
 
-    /**
-     * This event is fired when the village generator attempts to choose a block ID
-     * based on the village's biome.
-     *
-     * You can cancel the event to override default values
-     */
-    @HasResult
-    public static class GetVillageBlockID extends BiomeEvent
-    {
-        private final BlockState original;
-        private BlockState replacement;
+	/**
+	 * This event is fired when the village generator attempts to choose a block ID
+	 * based on the village's biome.
+	 * <p>
+	 * You can cancel the event to override default values
+	 */
+	@HasResult
+	public static class GetVillageBlockID extends BiomeEvent {
+		private final BlockState original;
+		private BlockState replacement;
 
-        public GetVillageBlockID(Biome biome, BlockState original)
-        {
-            super(biome);
-            this.original = original;
-        }
+		public GetVillageBlockID(Biome biome, BlockState original) {
+			super(biome);
+			this.original = original;
+		}
 
-        public BlockState getOriginal()
-        {
-            return original;
-        }
+		public BlockState getOriginal() {
+			return original;
+		}
 
-        public BlockState getReplacement()
-        {
-            return replacement;
-        }
+		public BlockState getReplacement() {
+			return replacement;
+		}
 
-        public void setReplacement(BlockState replacement)
-        {
-            this.replacement = replacement;
-        }
-    }
+		public void setReplacement(BlockState replacement) {
+			this.replacement = replacement;
+		}
+	}
 
-    /**
-     * This event is fired when a biome is queried for its grass color.
-     */
-    public static class GetGrassColor extends BiomeColor
-    {
-        public GetGrassColor(Biome biome, int original)
-        {
-            super(biome, original);
-        }
-    }
+	/**
+	 * This event is fired when a biome is queried for its grass color.
+	 */
+	public static class GetGrassColor extends BiomeColor {
+		public GetGrassColor(Biome biome, int original) {
+			super(biome, original);
+		}
+	}
 
-    /**
-     * This event is fired when a biome is queried for its grass color.
-     */
-    public static class GetFoliageColor extends BiomeColor
-    {
-        public GetFoliageColor(Biome biome, int original)
-        {
-            super(biome, original);
-        }
-    }
+	/**
+	 * This event is fired when a biome is queried for its grass color.
+	 */
+	public static class GetFoliageColor extends BiomeColor {
+		public GetFoliageColor(Biome biome, int original) {
+			super(biome, original);
+		}
+	}
 
-    /**
-     * This event is fired when a biome is queried for its water color.
-     */
-    public static class GetWaterColor extends BiomeColor
-    {
-        public GetWaterColor(Biome biome, int original)
-        {
-            super(biome, original);
-        }
-    }
+	/**
+	 * This event is fired when a biome is queried for its water color.
+	 */
+	public static class GetWaterColor extends BiomeColor {
+		public GetWaterColor(Biome biome, int original) {
+			super(biome, original);
+		}
+	}
 }

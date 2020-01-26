@@ -6,5 +6,5 @@ import com.google.gson.JsonObject;
 @VisibleForTesting
 public interface IGeneratedBlockstate {
 
-    JsonObject toJson();
+	JsonObject toJson();
 }

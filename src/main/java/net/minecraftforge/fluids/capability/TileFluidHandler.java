@@ -19,50 +19,47 @@
 
 package net.minecraftforge.fluids.capability;
 
-import net.minecraft.nbt.CompoundNBT;
-import net.minecraft.tileentity.TileEntity;
-import net.minecraft.tileentity.TileEntityType;
-import net.minecraft.util.Direction;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
+
 import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.common.util.LazyOptional;
 import net.minecraftforge.fluids.FluidAttributes;
 import net.minecraftforge.fluids.capability.templates.FluidTank;
 
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
+import net.minecraft.nbt.CompoundNBT;
+import net.minecraft.tileentity.TileEntity;
+import net.minecraft.tileentity.TileEntityType;
+import net.minecraft.util.Direction;
 
-public class TileFluidHandler extends TileEntity
-{
-    protected FluidTank tank = new FluidTank(FluidAttributes.BUCKET_VOLUME);
-    
-    private final LazyOptional<IFluidHandler> holder = LazyOptional.of(() -> tank);
+public class TileFluidHandler extends TileEntity {
+	protected FluidTank tank = new FluidTank(FluidAttributes.BUCKET_VOLUME);
 
-    public TileFluidHandler(@Nonnull TileEntityType<?> tileEntityTypeIn)
-    {
-        super(tileEntityTypeIn);
-    }
+	private final LazyOptional<IFluidHandler> holder = LazyOptional.of(() -> tank);
 
-    @Override
-    public void read(CompoundNBT tag)
-    {
-        super.read(tag);
-        tank.readFromNBT(tag);
-    }
+	public TileFluidHandler(@Nonnull TileEntityType<?> tileEntityTypeIn) {
+		super(tileEntityTypeIn);
+	}
 
-    @Override
-    public CompoundNBT write(CompoundNBT tag)
-    {
-        tag = super.write(tag);
-        tank.writeToNBT(tag);
-        return tag;
-    }
+	@Override
+	public void read(CompoundNBT tag) {
+		super.read(tag);
+		tank.readFromNBT(tag);
+	}
 
-    @Override
-    @Nonnull
-    public <T> LazyOptional<T> getCapability(@Nonnull Capability<T> capability, @Nullable Direction facing)
-    {
-        if (capability == CapabilityFluidHandler.FLUID_HANDLER_CAPABILITY)
-            return holder.cast();
-        return super.getCapability(capability, facing);
-    }
+	@Override
+	public CompoundNBT write(CompoundNBT tag) {
+		tag = super.write(tag);
+		tank.writeToNBT(tag);
+		return tag;
+	}
+
+	@Override
+	@Nonnull
+	public <T> LazyOptional<T> getCapability(@Nonnull Capability<T> capability, @Nullable Direction facing) {
+		if (capability == CapabilityFluidHandler.FLUID_HANDLER_CAPABILITY) {
+			return holder.cast();
+		}
+		return super.getCapability(capability, facing);
+	}
 }

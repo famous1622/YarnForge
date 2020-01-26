@@ -19,34 +19,35 @@
 
 package net.minecraftforge.fml;
 
-import net.minecraftforge.fml.event.lifecycle.*;
-
 import java.util.function.Function;
 import java.util.function.Supplier;
 
-public enum ModLoadingStage
-{
-    ERROR(null),
-    VALIDATE(null),
-    CONSTRUCT(null),
-    CREATE_REGISTRIES(null),
-    LOAD_REGISTRIES(null),
-    COMMON_SETUP(()-> FMLCommonSetupEvent::new),
-    SIDED_SETUP(SidedProvider.SIDED_SETUP_EVENT::get),
-    ENQUEUE_IMC(()-> InterModEnqueueEvent::new),
-    PROCESS_IMC(()-> InterModProcessEvent::new),
-    COMPLETE(()-> FMLLoadCompleteEvent::new),
-    DONE(null),
-    GATHERDATA(ModLoader.get()::getDataGeneratorEvent);
-    private final Supplier<Function<ModContainer, ModLifecycleEvent>> modLifecycleEventFunction;
+import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
+import net.minecraftforge.fml.event.lifecycle.FMLLoadCompleteEvent;
+import net.minecraftforge.fml.event.lifecycle.InterModEnqueueEvent;
+import net.minecraftforge.fml.event.lifecycle.InterModProcessEvent;
+import net.minecraftforge.fml.event.lifecycle.ModLifecycleEvent;
 
-    ModLoadingStage(Supplier<Function<ModContainer, ModLifecycleEvent>> modLifecycleEventFunction)
-    {
-        this.modLifecycleEventFunction = modLifecycleEventFunction;
-    }
+public enum ModLoadingStage {
+	ERROR(null),
+	VALIDATE(null),
+	CONSTRUCT(null),
+	CREATE_REGISTRIES(null),
+	LOAD_REGISTRIES(null),
+	COMMON_SETUP(() -> FMLCommonSetupEvent::new),
+	SIDED_SETUP(SidedProvider.SIDED_SETUP_EVENT::get),
+	ENQUEUE_IMC(() -> InterModEnqueueEvent::new),
+	PROCESS_IMC(() -> InterModProcessEvent::new),
+	COMPLETE(() -> FMLLoadCompleteEvent::new),
+	DONE(null),
+	GATHERDATA(ModLoader.get()::getDataGeneratorEvent);
+	private final Supplier<Function<ModContainer, ModLifecycleEvent>> modLifecycleEventFunction;
 
-    public ModLifecycleEvent getModEvent(ModContainer modContainer)
-    {
-        return modLifecycleEventFunction.get().apply(modContainer);
-    }
+	ModLoadingStage(Supplier<Function<ModContainer, ModLifecycleEvent>> modLifecycleEventFunction) {
+		this.modLifecycleEventFunction = modLifecycleEventFunction;
+	}
+
+	public ModLifecycleEvent getModEvent(ModContainer modContainer) {
+		return modLifecycleEventFunction.get().apply(modContainer);
+	}
 }

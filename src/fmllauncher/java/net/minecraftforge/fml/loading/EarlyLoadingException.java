@@ -26,34 +26,36 @@ import java.util.List;
  * or server.
  */
 public class EarlyLoadingException extends RuntimeException {
-    public static class ExceptionData {
+	private final List<ExceptionData> errorMessages;
+
+	EarlyLoadingException(final String message, final Throwable originalException, List<ExceptionData> errorMessages) {
+		super(message, originalException);
+		this.errorMessages = errorMessages;
+	}
+
+	public List<ExceptionData> getAllData() {
+		return errorMessages;
+	}
+
+	public static class ExceptionData {
 
 
-        private final String i18message;
-        private final Object[] args;
-        public ExceptionData(final String message, Object... args) {
-            this.i18message = message;
-            this.args = args;
-        }
+		private final String i18message;
+		private final Object[] args;
 
-        public String getI18message() {
-            return i18message;
-        }
+		public ExceptionData(final String message, Object... args) {
+			this.i18message = message;
+			this.args = args;
+		}
 
-        public Object[] getArgs() {
-            return args;
-        }
-    }
-    private final List<ExceptionData> errorMessages;
+		public String getI18message() {
+			return i18message;
+		}
 
-    public List<ExceptionData> getAllData() {
-        return errorMessages;
-    }
-
-    EarlyLoadingException(final String message, final Throwable originalException, List<ExceptionData> errorMessages) {
-        super(message, originalException);
-        this.errorMessages = errorMessages;
-    }
+		public Object[] getArgs() {
+			return args;
+		}
+	}
 
 
 }

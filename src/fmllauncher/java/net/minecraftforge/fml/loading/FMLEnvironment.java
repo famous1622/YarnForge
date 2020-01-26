@@ -19,24 +19,23 @@
 
 package net.minecraftforge.fml.loading;
 
+import java.util.function.Supplier;
+
 import cpw.mods.modlauncher.api.IEnvironment;
 import cpw.mods.modlauncher.api.TypesafeMap;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.forgespi.Environment;
 
-import java.util.function.Supplier;
+public class FMLEnvironment {
+	public static final Dist dist = FMLLoader.getDist();
+	public static final String naming = FMLLoader.getNaming();
 
-public class FMLEnvironment
-{
-    public static final Dist dist = FMLLoader.getDist();
-    public static final String naming = FMLLoader.getNaming();
+	static void setupInteropEnvironment(IEnvironment environment) {
+		environment.computePropertyIfAbsent(IEnvironment.Keys.NAMING.get(), v -> naming);
+		environment.computePropertyIfAbsent(Environment.Keys.DIST.get(), v -> dist);
+	}
 
-    static void setupInteropEnvironment(IEnvironment environment) {
-        environment.computePropertyIfAbsent(IEnvironment.Keys.NAMING.get(), v->naming);
-        environment.computePropertyIfAbsent(Environment.Keys.DIST.get(), v->dist);
-    }
-
-    public static class Keys {
-        public static final Supplier<TypesafeMap.Key<ClassLoader>> LOCATORCLASSLOADER = IEnvironment.buildKey("LOCATORCLASSLOADER",ClassLoader.class);
-    }
+	public static class Keys {
+		public static final Supplier<TypesafeMap.Key<ClassLoader>> LOCATORCLASSLOADER = IEnvironment.buildKey("LOCATORCLASSLOADER", ClassLoader.class);
+	}
 }

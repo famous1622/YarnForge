@@ -1,5 +1,7 @@
 {
   "variants": {
-    "normal": { "model": "item_model_conflict_test:test" }
+    "normal": {
+      "model": "item_model_conflict_test:test"
+    }
   }
 }

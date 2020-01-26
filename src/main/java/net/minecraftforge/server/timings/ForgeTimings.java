@@ -28,53 +28,49 @@ import java.util.Arrays;
  *
  * @param <T>
  */
-public class ForgeTimings<T>
-{
+public class ForgeTimings<T> {
 
-    private WeakReference<T> object;
+	private WeakReference<T> object;
 
-    private int[] rawTimingData;
+	private int[] rawTimingData;
 
-    public ForgeTimings(T object, int[] rawTimingData)
-    {
-        this.object = new WeakReference<T>(object);
-        this.rawTimingData = rawTimingData;
-    }
+	public ForgeTimings(T object, int[] rawTimingData) {
+		this.object = new WeakReference<T>(object);
+		this.rawTimingData = rawTimingData;
+	}
 
-    /**
-     * Retrieves the object that the timings are for
-     *
-     * @return The object
-     */
-    public WeakReference<T> getObject()
-    {
-        return object;
-    }
+	/**
+	 * Retrieves the object that the timings are for
+	 *
+	 * @return The object
+	 */
+	public WeakReference<T> getObject() {
+		return object;
+	}
 
 
-    /**
-     * Averages the raw timings data collected
-     *
-     * @return An average of the raw timing data
-     */
-    public double getAverageTimings()
-    {
-        double sum = 0.0;
+	/**
+	 * Averages the raw timings data collected
+	 *
+	 * @return An average of the raw timing data
+	 */
+	public double getAverageTimings() {
+		double sum = 0.0;
 
-        for (int data : rawTimingData)
-        {
-            sum += data;
-        }
+		for (int data : rawTimingData) {
+			sum += data;
+		}
 
-        return sum / rawTimingData.length;
-    }
+		return sum / rawTimingData.length;
+	}
 
-    /**
-     * Returns a copy of the raw timings data collected by the tracker
-     * @return The raw timing data
-     * @deprecated Added for compatibility, remove in 1.13
-     */
-    public int[] getRawTimingData(){
-        return Arrays.copyOfRange(rawTimingData, 0, rawTimingData.length);
-    }
+	/**
+	 * Returns a copy of the raw timings data collected by the tracker
+	 *
+	 * @return The raw timing data
+	 * @deprecated Added for compatibility, remove in 1.13
+	 */
+	public int[] getRawTimingData() {
+		return Arrays.copyOfRange(rawTimingData, 0, rawTimingData.length);
+	}
 }

@@ -21,12 +21,13 @@ package net.minecraftforge.event.furnace;
 
 import javax.annotation.Nonnull;
 
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.ForgeEventFactory;
 import net.minecraftforge.eventbus.api.Cancelable;
 import net.minecraftforge.eventbus.api.Event;
+
+import net.minecraft.item.Item;
+import net.minecraft.item.ItemStack;
 
 /**
  * {@link FurnaceFuelBurnTimeEvent} is fired when determining the fuel value for an ItemStack. <br>
@@ -42,46 +43,40 @@ import net.minecraftforge.eventbus.api.Event;
  * This event is fired on the {@link MinecraftForge#EVENT_BUS}.
  **/
 @Cancelable
-public class FurnaceFuelBurnTimeEvent extends Event
-{
-    @Nonnull
-    private final ItemStack itemStack;
-    private int burnTime;
+public class FurnaceFuelBurnTimeEvent extends Event {
+	@Nonnull
+	private final ItemStack itemStack;
+	private int burnTime;
 
-    public FurnaceFuelBurnTimeEvent(@Nonnull ItemStack itemStack, int burnTime)
-    {
-        this.itemStack = itemStack;
-        this.burnTime = burnTime;
-    }
+	public FurnaceFuelBurnTimeEvent(@Nonnull ItemStack itemStack, int burnTime) {
+		this.itemStack = itemStack;
+		this.burnTime = burnTime;
+	}
 
-    /**
-     * Get the ItemStack "fuel" in question.
-     */
-    @Nonnull
-    public ItemStack getItemStack()
-    {
-        return itemStack;
-    }
+	/**
+	 * Get the ItemStack "fuel" in question.
+	 */
+	@Nonnull
+	public ItemStack getItemStack() {
+		return itemStack;
+	}
 
-    /**
-     * Set the burn time for the given ItemStack.
-     * Setting it to 0 will prevent the item from being used as fuel, overriding vanilla's decision.
-     */
-    public void setBurnTime(int burnTime)
-    {
-        if (burnTime >= 0)
-        {
-            this.burnTime = burnTime;
-            setCanceled(true);
-        }
-    }
+	/**
+	 * The resulting value of this event, the burn time for the ItemStack.
+	 * A value of 0 will prevent the item from being used as fuel, overriding vanilla's decision.
+	 */
+	public int getBurnTime() {
+		return burnTime;
+	}
 
-    /**
-     * The resulting value of this event, the burn time for the ItemStack.
-     * A value of 0 will prevent the item from being used as fuel, overriding vanilla's decision.
-     */
-    public int getBurnTime()
-    {
-        return burnTime;
-    }
+	/**
+	 * Set the burn time for the given ItemStack.
+	 * Setting it to 0 will prevent the item from being used as fuel, overriding vanilla's decision.
+	 */
+	public void setBurnTime(int burnTime) {
+		if (burnTime >= 0) {
+			this.burnTime = burnTime;
+			setCanceled(true);
+		}
+	}
 }

@@ -19,50 +19,43 @@
 
 package net.minecraftforge.client.event;
 
+import net.minecraftforge.eventbus.api.Event;
+
 import net.minecraft.client.renderer.color.BlockColors;
 import net.minecraft.client.renderer.color.ItemColors;
-import net.minecraftforge.eventbus.api.Event;
 
 /**
  * Use these events to register block/item
  * color handlers at the appropriate time.
  */
-public abstract class ColorHandlerEvent extends Event
-{
-    public static class Block extends ColorHandlerEvent
-    {
-        private final BlockColors blockColors;
+public abstract class ColorHandlerEvent extends Event {
+	public static class Block extends ColorHandlerEvent {
+		private final BlockColors blockColors;
 
-        public Block(BlockColors blockColors)
-        {
-            this.blockColors = blockColors;
-        }
+		public Block(BlockColors blockColors) {
+			this.blockColors = blockColors;
+		}
 
-        public BlockColors getBlockColors()
-        {
-            return blockColors;
-        }
-    }
+		public BlockColors getBlockColors() {
+			return blockColors;
+		}
+	}
 
-    public static class Item extends ColorHandlerEvent
-    {
-        private final ItemColors itemColors;
-        private final BlockColors blockColors;
+	public static class Item extends ColorHandlerEvent {
+		private final ItemColors itemColors;
+		private final BlockColors blockColors;
 
-        public Item(ItemColors itemColors, BlockColors blockColors)
-        {
-            this.itemColors = itemColors;
-            this.blockColors = blockColors;
-        }
+		public Item(ItemColors itemColors, BlockColors blockColors) {
+			this.itemColors = itemColors;
+			this.blockColors = blockColors;
+		}
 
-        public ItemColors getItemColors()
-        {
-            return itemColors;
-        }
+		public ItemColors getItemColors() {
+			return itemColors;
+		}
 
-        public BlockColors getBlockColors()
-        {
-            return blockColors;
-        }
-    }
+		public BlockColors getBlockColors() {
+			return blockColors;
+		}
+	}
 }

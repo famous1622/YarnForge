@@ -28,54 +28,48 @@ import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
-import net.minecraft.resources.IPackFinder;
-import net.minecraft.resources.ResourcePack;
-import net.minecraft.resources.ResourcePackInfo;
-import net.minecraft.resources.ResourcePackList;
 import net.minecraftforge.fml.ModList;
 import net.minecraftforge.fml.loading.moddiscovery.ModFile;
 import net.minecraftforge.fml.loading.moddiscovery.ModFileInfo;
 
-public class ResourcePackLoader
-{
-    private static Map<ModFile, ModFileResourcePack> modResourcePacks;
-    private static ResourcePackList<?> resourcePackList;
+import net.minecraft.resources.IPackFinder;
+import net.minecraft.resources.ResourcePackInfo;
+import net.minecraft.resources.ResourcePackList;
 
-    public static Optional<ModFileResourcePack> getResourcePackFor(String modId)
-    {
-        return Optional.ofNullable(ModList.get().getModFileById(modId)).
-                map(ModFileInfo::getFile).map(mf->modResourcePacks.get(mf));
-    }
+public class ResourcePackLoader {
+	private static Map<ModFile, ModFileResourcePack> modResourcePacks;
+	private static ResourcePackList<?> resourcePackList;
 
-    public static <T extends ResourcePackInfo> void loadResourcePacks(ResourcePackList<T> resourcePacks, BiFunction<Map<ModFile, ? extends ModFileResourcePack>, BiConsumer<? super ModFileResourcePack, T>, IPackInfoFinder> packFinder) {
-        resourcePackList = resourcePacks;
-        modResourcePacks = ModList.get().getModFiles().stream().
-                filter(mf->!Objects.equals(mf.getModLoader(),"minecraft")).
-                map(mf -> new ModFileResourcePack(mf.getFile())).
-                collect(Collectors.toMap(ModFileResourcePack::getModFile, Function.identity()));
-        resourcePacks.addPackFinder(new LambdaFriendlyPackFinder(packFinder.apply(modResourcePacks, ModFileResourcePack::setPackInfo)));
-    }
+	public static Optional<ModFileResourcePack> getResourcePackFor(String modId) {
+		return Optional.ofNullable(ModList.get().getModFileById(modId)).
+				map(ModFileInfo::getFile).map(mf -> modResourcePacks.get(mf));
+	}
 
-    public interface IPackInfoFinder<T extends ResourcePackInfo> {
-        void addPackInfosToMap(Map<String, T> packList, ResourcePackInfo.IFactory<T> factory);
-    }
+	public static <T extends ResourcePackInfo> void loadResourcePacks(ResourcePackList<T> resourcePacks, BiFunction<Map<ModFile, ? extends ModFileResourcePack>, BiConsumer<? super ModFileResourcePack, T>, IPackInfoFinder> packFinder) {
+		resourcePackList = resourcePacks;
+		modResourcePacks = ModList.get().getModFiles().stream().
+				filter(mf -> !Objects.equals(mf.getModLoader(), "minecraft")).
+				map(mf -> new ModFileResourcePack(mf.getFile())).
+				collect(Collectors.toMap(ModFileResourcePack::getModFile, Function.identity()));
+		resourcePacks.addPackFinder(new LambdaFriendlyPackFinder(packFinder.apply(modResourcePacks, ModFileResourcePack::setPackInfo)));
+	}
 
-    // SO GROSS - DON'T @ me bro
-    @SuppressWarnings("unchecked")
-    private static class LambdaFriendlyPackFinder implements IPackFinder {
-        private IPackInfoFinder wrapped;
+	public interface IPackInfoFinder<T extends ResourcePackInfo> {
+		void addPackInfosToMap(Map<String, T> packList, ResourcePackInfo.IFactory<T> factory);
+	}
 
-        private LambdaFriendlyPackFinder(final IPackInfoFinder wrapped) {
-            this.wrapped = wrapped;
-        }
+	// SO GROSS - DON'T @ me bro
+	@SuppressWarnings("unchecked")
+	private static class LambdaFriendlyPackFinder implements IPackFinder {
+		private IPackInfoFinder wrapped;
 
-        @Override
-        public <T extends ResourcePackInfo> void addPackInfosToMap(Map<String, T> packList, ResourcePackInfo.IFactory<T> factory)
-        {
-            wrapped.addPackInfosToMap(packList, factory);
-        }
-    }
+		private LambdaFriendlyPackFinder(final IPackInfoFinder wrapped) {
+			this.wrapped = wrapped;
+		}
+
+		@Override
+		public <T extends ResourcePackInfo> void addPackInfosToMap(Map<String, T> packList, ResourcePackInfo.IFactory<T> factory) {
+			wrapped.addPackInfosToMap(packList, factory);
+		}
+	}
 }

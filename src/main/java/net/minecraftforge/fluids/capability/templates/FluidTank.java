@@ -19,15 +19,15 @@
 
 package net.minecraftforge.fluids.capability.templates;
 
-import net.minecraft.nbt.CompoundNBT;
+import java.util.function.Predicate;
+
+import javax.annotation.Nonnull;
+
 import net.minecraftforge.fluids.FluidStack;
 import net.minecraftforge.fluids.IFluidTank;
 import net.minecraftforge.fluids.capability.IFluidHandler;
-import net.minecraftforge.fluids.capability.IFluidHandler.FluidAction;
 
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
-import java.util.function.Predicate;
+import net.minecraft.nbt.CompoundNBT;
 
 /**
  * Flexible implementation of a Fluid Storage object. NOT REQUIRED.
@@ -36,189 +36,164 @@ import java.util.function.Predicate;
  */
 public class FluidTank implements IFluidHandler, IFluidTank {
 
-    protected Predicate<FluidStack> validator;
-    @Nonnull
-    protected FluidStack fluid = FluidStack.EMPTY;
-    protected int capacity;
+	protected Predicate<FluidStack> validator;
+	@Nonnull
+	protected FluidStack fluid = FluidStack.EMPTY;
+	protected int capacity;
 
-    public FluidTank(int capacity)
-    {
-        this(capacity, e -> true);
-    }
+	public FluidTank(int capacity) {
+		this(capacity, e -> true);
+	}
 
-    public FluidTank(int capacity, Predicate<FluidStack> validator)
-    {
-        this.capacity = capacity;
-        this.validator = validator;
-    }
+	public FluidTank(int capacity, Predicate<FluidStack> validator) {
+		this.capacity = capacity;
+		this.validator = validator;
+	}
 
-    public FluidTank setCapacity(int capacity)
-    {
-        this.capacity = capacity;
-        return this;
-    }
+	public FluidTank setValidator(Predicate<FluidStack> validator) {
+		if (validator != null) {
+			this.validator = validator;
+		}
+		return this;
+	}
 
-    public FluidTank setValidator(Predicate<FluidStack> validator)
-    {
-        if (validator != null) {
-            this.validator = validator;
-        }
-        return this;
-    }
+	public boolean isFluidValid(FluidStack stack) {
+		return validator.test(stack);
+	}
 
-    public boolean isFluidValid(FluidStack stack)
-    {
-        return validator.test(stack);
-    }
+	public int getCapacity() {
+		return capacity;
+	}
 
-    public int getCapacity()
-    {
-        return capacity;
-    }
+	public FluidTank setCapacity(int capacity) {
+		this.capacity = capacity;
+		return this;
+	}
 
-    @Nonnull
-    public FluidStack getFluid()
-    {
-        return fluid;
-    }
+	@Nonnull
+	public FluidStack getFluid() {
+		return fluid;
+	}
 
-    public int getFluidAmount()
-    {
-        return fluid.getAmount();
-    }
+	public void setFluid(FluidStack stack) {
+		this.fluid = stack;
+	}
 
-    public FluidTank readFromNBT(CompoundNBT nbt) {
+	public int getFluidAmount() {
+		return fluid.getAmount();
+	}
 
-        FluidStack fluid = FluidStack.loadFluidStackFromNBT(nbt);
-        setFluid(fluid);
-        return this;
-    }
+	public FluidTank readFromNBT(CompoundNBT nbt) {
 
-    public CompoundNBT writeToNBT(CompoundNBT nbt) {
+		FluidStack fluid = FluidStack.loadFluidStackFromNBT(nbt);
+		setFluid(fluid);
+		return this;
+	}
 
-        fluid.writeToNBT(nbt);
+	public CompoundNBT writeToNBT(CompoundNBT nbt) {
 
-        return nbt;
-    }
+		fluid.writeToNBT(nbt);
 
-    @Override
-    public int getTanks() {
+		return nbt;
+	}
 
-        return 1;
-    }
+	@Override
+	public int getTanks() {
 
-    @Nonnull
-    @Override
-    public FluidStack getFluidInTank(int tank) {
+		return 1;
+	}
 
-        return getFluid();
-    }
+	@Nonnull
+	@Override
+	public FluidStack getFluidInTank(int tank) {
 
-    @Override
-    public int getTankCapacity(int tank) {
+		return getFluid();
+	}
 
-        return getCapacity();
-    }
+	@Override
+	public int getTankCapacity(int tank) {
 
-    @Override
-    public boolean isFluidValid(int tank, @Nonnull FluidStack stack) {
+		return getCapacity();
+	}
 
-        return isFluidValid(stack);
-    }
+	@Override
+	public boolean isFluidValid(int tank, @Nonnull FluidStack stack) {
 
-    @Override
-    public int fill(FluidStack resource, FluidAction action)
-    {
-        if (resource.isEmpty() || !isFluidValid(resource))
-        {
-            return 0;
-        }
-        if (action.simulate())
-        {
-            if (fluid.isEmpty())
-            {
-                return Math.min(capacity, resource.getAmount());
-            }
-            if (!fluid.isFluidEqual(resource))
-            {
-                return 0;
-            }
-            return Math.min(capacity - fluid.getAmount(), resource.getAmount());
-        }
-        if (fluid.isEmpty())
-        {
-            fluid = new FluidStack(resource, Math.min(capacity, resource.getAmount()));
-            onContentsChanged();
-            return fluid.getAmount();
-        }
-        if (!fluid.isFluidEqual(resource))
-        {
-            return 0;
-        }
-        int filled = capacity - fluid.getAmount();
+		return isFluidValid(stack);
+	}
 
-        if (resource.getAmount() < filled)
-        {
-            fluid.grow(resource.getAmount());
-            filled = resource.getAmount();
-        }
-        else
-        {
-            fluid.setAmount(capacity);
-        }
-        if (filled > 0)
-            onContentsChanged();
-        return filled;
-    }
+	@Override
+	public int fill(FluidStack resource, FluidAction action) {
+		if (resource.isEmpty() || !isFluidValid(resource)) {
+			return 0;
+		}
+		if (action.simulate()) {
+			if (fluid.isEmpty()) {
+				return Math.min(capacity, resource.getAmount());
+			}
+			if (!fluid.isFluidEqual(resource)) {
+				return 0;
+			}
+			return Math.min(capacity - fluid.getAmount(), resource.getAmount());
+		}
+		if (fluid.isEmpty()) {
+			fluid = new FluidStack(resource, Math.min(capacity, resource.getAmount()));
+			onContentsChanged();
+			return fluid.getAmount();
+		}
+		if (!fluid.isFluidEqual(resource)) {
+			return 0;
+		}
+		int filled = capacity - fluid.getAmount();
 
-    @Nonnull
-    @Override
-    public FluidStack drain(FluidStack resource, FluidAction action)
-    {
-        if (resource.isEmpty() || !resource.isFluidEqual(fluid))
-        {
-            return FluidStack.EMPTY;
-        }
-        return drain(resource.getAmount(), action);
-    }
+		if (resource.getAmount() < filled) {
+			fluid.grow(resource.getAmount());
+			filled = resource.getAmount();
+		} else {
+			fluid.setAmount(capacity);
+		}
+		if (filled > 0) {
+			onContentsChanged();
+		}
+		return filled;
+	}
 
-    @Nonnull
-    @Override
-    public FluidStack drain(int maxDrain, FluidAction action)
-    {
-        int drained = maxDrain;
-        if (fluid.getAmount() < drained)
-        {
-            drained = fluid.getAmount();
-        }
-        FluidStack stack = new FluidStack(fluid, drained);
-        if (action.execute() && drained > 0)
-        {
-            fluid.shrink(drained);
-        }
-        if (drained > 0)
-            onContentsChanged();
-        return stack;
-    }
+	@Nonnull
+	@Override
+	public FluidStack drain(FluidStack resource, FluidAction action) {
+		if (resource.isEmpty() || !resource.isFluidEqual(fluid)) {
+			return FluidStack.EMPTY;
+		}
+		return drain(resource.getAmount(), action);
+	}
 
-    protected void onContentsChanged()
-    {
+	@Nonnull
+	@Override
+	public FluidStack drain(int maxDrain, FluidAction action) {
+		int drained = maxDrain;
+		if (fluid.getAmount() < drained) {
+			drained = fluid.getAmount();
+		}
+		FluidStack stack = new FluidStack(fluid, drained);
+		if (action.execute() && drained > 0) {
+			fluid.shrink(drained);
+		}
+		if (drained > 0) {
+			onContentsChanged();
+		}
+		return stack;
+	}
 
-    }
+	protected void onContentsChanged() {
 
-    public void setFluid(FluidStack stack)
-    {
-        this.fluid = stack;
-    }
+	}
 
-    public boolean isEmpty()
-    {
-        return fluid.isEmpty();
-    }
+	public boolean isEmpty() {
+		return fluid.isEmpty();
+	}
 
-    public int getSpace()
-    {
-        return Math.max(0, capacity - fluid.getAmount());
-    }
+	public int getSpace() {
+		return Math.max(0, capacity - fluid.getAmount());
+	}
 
 }

@@ -21,42 +21,41 @@ package net.minecraftforge.common;
 
 import net.minecraftforge.eventbus.api.BusBuilder;
 import net.minecraftforge.eventbus.api.IEventBus;
-import net.minecraft.crash.CrashReport;
 import net.minecraftforge.versions.forge.ForgeVersion;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.Marker;
 import org.apache.logging.log4j.MarkerManager;
 
-public class MinecraftForge
-{
-    /**
-     * The core Forge EventBusses, all events for Forge will be fired on these,
-     * you should use this to register all your listeners.
-     * This replaces every register*Handler() function in the old version of Forge.
-     * TERRAIN_GEN_BUS for terrain gen events
-     * ORE_GEN_BUS for ore gen events
-     * EVENT_BUS for everything else
-     */
-    public static final IEventBus EVENT_BUS = BusBuilder.builder().startShutdown().build();
+import net.minecraft.crash.CrashReport;
 
-    static final ForgeInternalHandler INTERNAL_HANDLER = new ForgeInternalHandler();
-    private static final Logger LOGGER = LogManager.getLogger();
-    private static final Marker FORGE = MarkerManager.getMarker("FORGE");
+public class MinecraftForge {
+	/**
+	 * The core Forge EventBusses, all events for Forge will be fired on these,
+	 * you should use this to register all your listeners.
+	 * This replaces every register*Handler() function in the old version of Forge.
+	 * TERRAIN_GEN_BUS for terrain gen events
+	 * ORE_GEN_BUS for ore gen events
+	 * EVENT_BUS for everything else
+	 */
+	public static final IEventBus EVENT_BUS = BusBuilder.builder().startShutdown().build();
 
-   /**
-    * Method invoked by FML before any other mods are loaded.
-    */
-   public static void initialize()
-   {
-       LOGGER.info(FORGE,"MinecraftForge v{} Initialized", ForgeVersion.getVersion());
+	static final ForgeInternalHandler INTERNAL_HANDLER = new ForgeInternalHandler();
+	private static final Logger LOGGER = LogManager.getLogger();
+	private static final Marker FORGE = MarkerManager.getMarker("FORGE");
 
-       UsernameCache.load();
-       ForgeHooks.initTools();
+	/**
+	 * Method invoked by FML before any other mods are loaded.
+	 */
+	public static void initialize() {
+		LOGGER.info(FORGE, "MinecraftForge v{} Initialized", ForgeVersion.getVersion());
 
-       //For all the normal CrashReport classes to be defined. We're in MC's classloader so this should all be fine
-       new CrashReport("ThisIsFake", new Exception("Not real"));
-   }
+		UsernameCache.load();
+		ForgeHooks.initTools();
+
+		//For all the normal CrashReport classes to be defined. We're in MC's classloader so this should all be fine
+		new CrashReport("ThisIsFake", new Exception("Not real"));
+	}
 
 
 

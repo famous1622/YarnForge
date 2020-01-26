@@ -38,19 +38,28 @@ import java.util.Set;
 /**
  * Uses {@code ResettingClassLoader} to load the test class. Minecraft and Forge
  * classes are loaded using the separate class loader.
- *
+ * <p>
  * Use of a separate class loader allows classes to be reloaded for each test
  * class, which is handy when you're testing frameworks that make use of static
  * members.
- *
+ * <p>
  * The selective quarantining is required because if the test class and its
  * 'children' are all loaded by a different class loader, then the {@code Test}
  * annotations yield different {@code Class} instances. JUnit then thinks there
  * are no runnable methods, because it looks them up by Class.
- *
+ * <p>
  * This is a simplified copy of https://github.com/BinaryTweed/quarantining-test-runner
  * tailored for Minecraft use.
+ * <p>
+ * <p>
+ * If a class name starts with any of the supplied patterns, it is loaded by
+ * <em>this</em> classloader; otherwise it is loaded by the parent classloader.
  *
+ * @param quarantinedClassNames prefixes to match against when deciding how to load a class
+ * <p>
+ * If a class name starts with any of the supplied patterns, it is loaded by
+ * <em>this</em> classloader; otherwise it is loaded by the parent classloader.
+ * @param name class to load
  *//*
 
 public class ForgeTestRunner extends Runner
@@ -111,9 +120,9 @@ public class ForgeTestRunner extends Runner
 
     */
 /**
-     * If a class name starts with any of the supplied patterns, it is loaded by
-     * <em>this</em> classloader; otherwise it is loaded by the parent classloader.
-     *//*
+ * If a class name starts with any of the supplied patterns, it is loaded by
+ * <em>this</em> classloader; otherwise it is loaded by the parent classloader.
+ *//*
 
     private class ResettingClassLoader extends URLClassLoader
     {
@@ -121,8 +130,8 @@ public class ForgeTestRunner extends Runner
 
         */
 /**
-         * @param quarantinedClassNames prefixes to match against when deciding how to load a class
-         *//*
+ * @param quarantinedClassNames prefixes to match against when deciding how to load a class
+ *//*
 
         public ResettingClassLoader(String... quarantinedClassNames)
         {
@@ -136,11 +145,11 @@ public class ForgeTestRunner extends Runner
 
         */
 /**
-         * If a class name starts with any of the supplied patterns, it is loaded by
-         * <em>this</em> classloader; otherwise it is loaded by the parent classloader.
-         *
-         * @param name class to load
-         *//*
+ * If a class name starts with any of the supplied patterns, it is loaded by
+ * <em>this</em> classloader; otherwise it is loaded by the parent classloader.
+ *
+ * @param name class to load
+ *//*
 
         @Override
         public Class<?> loadClass(String name) throws ClassNotFoundException

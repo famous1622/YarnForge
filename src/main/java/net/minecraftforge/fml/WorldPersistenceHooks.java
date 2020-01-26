@@ -19,37 +19,33 @@
 
 package net.minecraftforge.fml;
 
-import net.minecraft.nbt.CompoundNBT;
-import net.minecraft.world.storage.SaveHandler;
-import net.minecraft.world.storage.WorldInfo;
-import net.minecraftforge.fml.common.thread.EffectiveSide;
-
 import java.util.ArrayList;
 import java.util.List;
 
-public class WorldPersistenceHooks
-{
-    private static List<WorldPersistenceHook> worldPersistenceHooks = new ArrayList<>();
+import net.minecraftforge.fml.common.thread.EffectiveSide;
 
-    public static void addHook(WorldPersistenceHook hook) {
-        worldPersistenceHooks.add(hook);
-    }
+import net.minecraft.nbt.CompoundNBT;
+import net.minecraft.world.storage.SaveHandler;
+import net.minecraft.world.storage.WorldInfo;
 
-    public static void handleWorldDataSave(final SaveHandler handler, final WorldInfo worldInfo, final CompoundNBT tagCompound)
-    {
-        worldPersistenceHooks.forEach(wac->tagCompound.put(wac.getModId(), wac.getDataForWriting(handler, worldInfo)));
-    }
+public class WorldPersistenceHooks {
+	private static List<WorldPersistenceHook> worldPersistenceHooks = new ArrayList<>();
 
-    public static void handleWorldDataLoad(SaveHandler handler, WorldInfo worldInfo, CompoundNBT tagCompound)
-    {
-        if (EffectiveSide.get() == LogicalSide.SERVER)
-        {
-            worldPersistenceHooks.forEach(wac->wac.readData(handler, worldInfo, tagCompound.getCompound(wac.getModId())));
-        }
-    }
+	public static void addHook(WorldPersistenceHook hook) {
+		worldPersistenceHooks.add(hook);
+	}
 
-    public static void confirmBackupLevelDatUse(SaveHandler handler)
-    {
+	public static void handleWorldDataSave(final SaveHandler handler, final WorldInfo worldInfo, final CompoundNBT tagCompound) {
+		worldPersistenceHooks.forEach(wac -> tagCompound.put(wac.getModId(), wac.getDataForWriting(handler, worldInfo)));
+	}
+
+	public static void handleWorldDataLoad(SaveHandler handler, WorldInfo worldInfo, CompoundNBT tagCompound) {
+		if (EffectiveSide.get() == LogicalSide.SERVER) {
+			worldPersistenceHooks.forEach(wac -> wac.readData(handler, worldInfo, tagCompound.getCompound(wac.getModId())));
+		}
+	}
+
+	public static void confirmBackupLevelDatUse(SaveHandler handler) {
 /*
         if (handlerToCheck == null || handlerToCheck.get() != handler) {
             // only run if the save has been initially loaded
@@ -65,12 +61,13 @@ public class WorldPersistenceHooks
         boolean confirmed = StartupQuery.confirm(text);
         if (!confirmed) StartupQuery.abort();
 */
-    }
+	}
 
-    public interface WorldPersistenceHook
-    {
-        String getModId();
-        CompoundNBT getDataForWriting(SaveHandler handler, WorldInfo info);
-        void readData(SaveHandler handler, WorldInfo info, CompoundNBT tag);
-    }
+	public interface WorldPersistenceHook {
+		String getModId();
+
+		CompoundNBT getDataForWriting(SaveHandler handler, WorldInfo info);
+
+		void readData(SaveHandler handler, WorldInfo info, CompoundNBT tag);
+	}
 }

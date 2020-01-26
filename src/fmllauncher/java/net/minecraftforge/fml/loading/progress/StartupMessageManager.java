@@ -19,90 +19,96 @@
 
 package net.minecraftforge.fml.loading.progress;
 
-import com.google.common.base.Ascii;
-import com.google.common.base.CharMatcher;
-import org.apache.commons.lang3.tuple.Pair;
-
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Comparator;
+import java.util.EnumMap;
+import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
+import com.google.common.base.Ascii;
+import com.google.common.base.CharMatcher;
+import org.apache.commons.lang3.tuple.Pair;
+
 public class StartupMessageManager {
-    private static final EnumMap<MessageType, List<Message>> messages = new EnumMap<>(MessageType.class);
-    static {
-        Arrays.stream(MessageType.values()).forEach(mt->messages.computeIfAbsent(mt, k->new CopyOnWriteArrayList<>()));
-    }
+	private static final EnumMap<MessageType, List<Message>> messages = new EnumMap<>(MessageType.class);
 
-    public static List<Pair<Integer,Message>> getMessages() {
-        final long ts = System.nanoTime();
-        return messages.values().stream().flatMap(Collection::stream).
-                sorted(Comparator.comparingLong(Message::getTimestamp).thenComparing(Message::getText).reversed()).
-                map(m -> Pair.of((int) ((ts - m.timestamp) / 1e6), m)).
-                collect(Collectors.toList());
-    }
+	static {
+		Arrays.stream(MessageType.values()).forEach(mt -> messages.computeIfAbsent(mt, k -> new CopyOnWriteArrayList<>()));
+	}
 
-    public static class Message {
-        private final String text;
-        private final MessageType type;
-        private final long timestamp;
+	public static List<Pair<Integer, Message>> getMessages() {
+		final long ts = System.nanoTime();
+		return messages.values().stream().flatMap(Collection::stream).
+				sorted(Comparator.comparingLong(Message::getTimestamp).thenComparing(Message::getText).reversed()).
+				map(m -> Pair.of((int) ((ts - m.timestamp) / 1e6), m)).
+				collect(Collectors.toList());
+	}
 
-        public Message(final String text, final MessageType type) {
-            this.text = text;
-            this.type = type;
-            this.timestamp = System.nanoTime();
-        }
+	public static void addModMessage(final String message) {
+		final String safeMessage = Ascii.truncate(CharMatcher.ascii().retainFrom(message), 80, "~");
+		final List<Message> messages = StartupMessageManager.messages.get(MessageType.MOD);
+		messages.subList(0, Math.max(0, messages.size() - 20)).clear();
+		messages.add(new Message(safeMessage, MessageType.MOD));
+	}
 
-        public String getText() {
-            return text;
-        }
+	public static Optional<Consumer<String>> modLoaderConsumer() {
+		return Optional.of(s -> messages.get(MessageType.ML).add(new Message(s, MessageType.ML)));
+	}
 
-        MessageType getType() {
-            return type;
-        }
+	public static Optional<Consumer<String>> locatorConsumer() {
+		return Optional.of(s -> messages.get(MessageType.LOC).add(new Message(s, MessageType.LOC)));
+	}
 
-        long getTimestamp() {
-            return timestamp;
-        }
+	static Optional<Consumer<String>> mcLoaderConsumer() {
+		return Optional.of(s -> messages.get(MessageType.MC).add(new Message(s, MessageType.MC)));
+	}
 
-        public float[] getTypeColour() {
-            return type.colour();
-        }
-    }
+	enum MessageType {
+		MC(0.0f, 0.0f, 0.0f),
+		ML(0.0f, 0.0f, 0.5f),
+		LOC(0.0f, 0.5f, 0.0f),
+		MOD(0.5f, 0.0f, 0.0f);
 
-    enum MessageType {
-        MC(0.0f, 0.0f, 0.0f),
-        ML(0.0f, 0.0f, 0.5f),
-        LOC(0.0f, 0.5f, 0.0f),
-        MOD(0.5f, 0.0f, 0.0f);
+		private final float[] colour;
 
-        private final float[] colour;
+		MessageType(final float r, final float g, final float b) {
+			colour = new float[] {r, g, b};
+		}
 
-        MessageType(final float r, final float g, final float b) {
-            colour = new float[] {r,g,b};
-        }
+		public float[] colour() {
+			return colour;
+		}
+	}
 
-        public float[] colour() {
-            return colour;
-        }
-    }
+	public static class Message {
+		private final String text;
+		private final MessageType type;
+		private final long timestamp;
 
-    public static void addModMessage(final String message) {
-        final String safeMessage = Ascii.truncate(CharMatcher.ascii().retainFrom(message),80,"~");
-        final List<Message> messages = StartupMessageManager.messages.get(MessageType.MOD);
-        messages.subList(0, Math.max(0, messages.size() - 20)).clear();
-        messages.add(new Message(safeMessage, MessageType.MOD));
-    }
+		public Message(final String text, final MessageType type) {
+			this.text = text;
+			this.type = type;
+			this.timestamp = System.nanoTime();
+		}
 
-    public static Optional<Consumer<String>> modLoaderConsumer() {
-        return Optional.of(s-> messages.get(MessageType.ML).add(new Message(s, MessageType.ML)));
-    }
+		public String getText() {
+			return text;
+		}
 
-    public static Optional<Consumer<String>> locatorConsumer() {
-        return Optional.of(s -> messages.get(MessageType.LOC).add(new Message(s, MessageType.LOC)));
-    }
+		MessageType getType() {
+			return type;
+		}
 
-    static Optional<Consumer<String>> mcLoaderConsumer() {
-        return Optional.of(s-> messages.get(MessageType.MC).add(new Message(s, MessageType.MC)));
-    }
+		long getTimestamp() {
+			return timestamp;
+		}
+
+		public float[] getTypeColour() {
+			return type.colour();
+		}
+	}
 }

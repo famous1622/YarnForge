@@ -25,13 +25,12 @@ import java.util.Optional;
  * An {@code IModelState} is a function from model part to a transformation that should be applied
  * when that part is baked, thus representing the current "state" of the model and its parts.
  */
-public interface IModelState
-{
-    /**
-     * @param part Part of the model we are wanting to transform. An empty optional means
-     *             we want a transform for the entire model.
-     * @return A transformation to apply to the part, if any. The coordinate system of the transform
-     *         is determined by the part type.
-     */
-    Optional<TRSRTransformation> apply(Optional<? extends IModelPart> part);
+public interface IModelState {
+	/**
+	 * @param part Part of the model we are wanting to transform. An empty optional means
+	 *             we want a transform for the entire model.
+	 * @return A transformation to apply to the part, if any. The coordinate system of the transform
+	 * is determined by the part type.
+	 */
+	Optional<TRSRTransformation> apply(Optional<? extends IModelPart> part);
 }

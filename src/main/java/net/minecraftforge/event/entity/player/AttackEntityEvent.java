@@ -21,6 +21,7 @@ package net.minecraftforge.event.entity.player;
 
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.eventbus.api.Cancelable;
+
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.PlayerEntity;
 
@@ -39,17 +40,15 @@ import net.minecraft.entity.player.PlayerEntity;
  * This event is fired on the {@link MinecraftForge#EVENT_BUS}.
  **/
 @Cancelable
-public class AttackEntityEvent extends PlayerEvent
-{
-    private final Entity target;
-    public AttackEntityEvent(PlayerEntity player, Entity target)
-    {
-        super(player);
-        this.target = target;
-    }
+public class AttackEntityEvent extends PlayerEvent {
+	private final Entity target;
 
-    public Entity getTarget()
-    {
-        return target;
-    }
+	public AttackEntityEvent(PlayerEntity player, Entity target) {
+		super(player);
+		this.target = target;
+	}
+
+	public Entity getTarget() {
+		return target;
+	}
 }

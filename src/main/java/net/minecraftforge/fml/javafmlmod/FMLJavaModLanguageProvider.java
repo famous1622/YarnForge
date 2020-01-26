@@ -19,13 +19,8 @@
 
 package net.minecraftforge.fml.javafmlmod;
 
-import net.minecraftforge.forgespi.language.ILifecycleEvent;
-import net.minecraftforge.forgespi.language.IModLanguageProvider;
-import net.minecraftforge.forgespi.language.IModInfo;
-import net.minecraftforge.forgespi.language.ModFileScanData;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import org.objectweb.asm.Type;
+import static net.minecraftforge.fml.Logging.LOADING;
+import static net.minecraftforge.fml.Logging.SCAN;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
@@ -35,73 +30,70 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
-import static net.minecraftforge.fml.Logging.*;
+import net.minecraftforge.forgespi.language.ILifecycleEvent;
+import net.minecraftforge.forgespi.language.IModInfo;
+import net.minecraftforge.forgespi.language.IModLanguageProvider;
+import net.minecraftforge.forgespi.language.ModFileScanData;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.objectweb.asm.Type;
 
-public class FMLJavaModLanguageProvider implements IModLanguageProvider
-{
+public class FMLJavaModLanguageProvider implements IModLanguageProvider {
 
-    private static final Logger LOGGER = LogManager.getLogger();
+	public static final Type MODANNOTATION = Type.getType("Lnet/minecraftforge/fml/common/Mod;");
+	private static final Logger LOGGER = LogManager.getLogger();
 
-    private static class FMLModTarget implements IModLanguageProvider.IModLanguageLoader {
-        private static final Logger LOGGER = FMLJavaModLanguageProvider.LOGGER;
-        private final String className;
-        private final String modId;
+	@Override
+	public String name() {
+		return "javafml";
+	}
 
-        private FMLModTarget(String className, String modId)
-        {
-            this.className = className;
-            this.modId = modId;
-        }
+	@Override
+	public Consumer<ModFileScanData> getFileVisitor() {
+		return scanResult -> {
+			final Map<String, FMLModTarget> modTargetMap = scanResult.getAnnotations().stream()
+					.filter(ad -> ad.getAnnotationType().equals(MODANNOTATION))
+					.peek(ad -> LOGGER.debug(SCAN, "Found @Mod class {} with id {}", ad.getClassType().getClassName(), ad.getAnnotationData().get("value")))
+					.map(ad -> new FMLModTarget(ad.getClassType().getClassName(), (String) ad.getAnnotationData().get("value")))
+					.collect(Collectors.toMap(FMLModTarget::getModId, Function.identity(), (a, b) -> a));
+			scanResult.addLanguageLoader(modTargetMap);
+		};
+	}
 
-        public String getModId()
-        {
-            return modId;
-        }
+	@Override
+	public <R extends ILifecycleEvent<R>> void consumeLifecycleEvent(final Supplier<R> consumeEvent) {
 
-        @SuppressWarnings("unchecked")
-        @Override
-        public <T> T loadMod(final IModInfo info, final ClassLoader modClassLoader, final ModFileScanData modFileScanResults)
-        {
-            // This language class is loaded in the system level classloader - before the game even starts
-            // So we must treat container construction as an arms length operation, and load the container
-            // in the classloader of the game - the context classloader is appropriate here.
-            try
-            {
-                final Class<?> fmlContainer = Class.forName("net.minecraftforge.fml.javafmlmod.FMLModContainer", true, Thread.currentThread().getContextClassLoader());
-                LOGGER.debug(LOADING, "Loading FMLModContainer from classloader {} - got {}", Thread.currentThread().getContextClassLoader(), fmlContainer.getClassLoader());
-                final Constructor<?> constructor = fmlContainer.getConstructor(IModInfo.class, String.class, ClassLoader.class, ModFileScanData.class);
-                return (T)constructor.newInstance(info, className, modClassLoader, modFileScanResults);
-            }
-            catch (NoSuchMethodException | ClassNotFoundException | InstantiationException | IllegalAccessException | InvocationTargetException e)
-            {
-                LOGGER.fatal(LOADING,"Unable to load FMLModContainer, wut?", e);
-                throw new RuntimeException(e);
-            }
-        }
-    }
+	}
 
-    public static final Type MODANNOTATION = Type.getType("Lnet/minecraftforge/fml/common/Mod;");
+	private static class FMLModTarget implements IModLanguageProvider.IModLanguageLoader {
+		private static final Logger LOGGER = FMLJavaModLanguageProvider.LOGGER;
+		private final String className;
+		private final String modId;
 
-    @Override
-    public String name()
-    {
-        return "javafml";
-    }
+		private FMLModTarget(String className, String modId) {
+			this.className = className;
+			this.modId = modId;
+		}
 
-    @Override
-    public Consumer<ModFileScanData> getFileVisitor() {
-        return scanResult -> {
-            final Map<String, FMLModTarget> modTargetMap = scanResult.getAnnotations().stream()
-                    .filter(ad -> ad.getAnnotationType().equals(MODANNOTATION))
-                    .peek(ad -> LOGGER.debug(SCAN, "Found @Mod class {} with id {}", ad.getClassType().getClassName(), ad.getAnnotationData().get("value")))
-                    .map(ad -> new FMLModTarget(ad.getClassType().getClassName(), (String)ad.getAnnotationData().get("value")))
-                    .collect(Collectors.toMap(FMLModTarget::getModId, Function.identity(), (a,b)->a));
-            scanResult.addLanguageLoader(modTargetMap);
-        };
-    }
+		public String getModId() {
+			return modId;
+		}
 
-    @Override
-    public <R extends ILifecycleEvent<R>> void consumeLifecycleEvent(final Supplier<R> consumeEvent) {
-
-    }
+		@SuppressWarnings("unchecked")
+		@Override
+		public <T> T loadMod(final IModInfo info, final ClassLoader modClassLoader, final ModFileScanData modFileScanResults) {
+			// This language class is loaded in the system level classloader - before the game even starts
+			// So we must treat container construction as an arms length operation, and load the container
+			// in the classloader of the game - the context classloader is appropriate here.
+			try {
+				final Class<?> fmlContainer = Class.forName("net.minecraftforge.fml.javafmlmod.FMLModContainer", true, Thread.currentThread().getContextClassLoader());
+				LOGGER.debug(LOADING, "Loading FMLModContainer from classloader {} - got {}", Thread.currentThread().getContextClassLoader(), fmlContainer.getClassLoader());
+				final Constructor<?> constructor = fmlContainer.getConstructor(IModInfo.class, String.class, ClassLoader.class, ModFileScanData.class);
+				return (T) constructor.newInstance(info, className, modClassLoader, modFileScanResults);
+			} catch (NoSuchMethodException | ClassNotFoundException | InstantiationException | IllegalAccessException | InvocationTargetException e) {
+				LOGGER.fatal(LOADING, "Unable to load FMLModContainer, wut?", e);
+				throw new RuntimeException(e);
+			}
+		}
+	}
 }

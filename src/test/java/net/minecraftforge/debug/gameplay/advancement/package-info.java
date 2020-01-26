@@ -22,4 +22,5 @@
 package net.minecraftforge.debug.gameplay.advancement;
 
 import javax.annotation.ParametersAreNonnullByDefault;
+
 import mcp.MethodsReturnNonnullByDefault;

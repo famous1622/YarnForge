@@ -19,22 +19,8 @@
 
 package net.minecraftforge.debug.chat;
 
-import net.minecraft.command.CommandException;
-import net.minecraft.server.MinecraftServer;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.text.StringTextComponent;
-import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.registries.ForgeRegistries;
-import net.minecraftforge.registries.GameData;
-
-import javax.annotation.Nullable;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-
 //@Mod("client_command_test")
-public class ClientCommandTest
-{
+public class ClientCommandTest {
     /*
     @EventHandler
     public void init(FMLInitializationEvent event)

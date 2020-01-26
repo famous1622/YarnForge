@@ -19,52 +19,46 @@
 
 package net.minecraftforge.event;
 
+import net.minecraftforge.eventbus.api.Cancelable;
+import net.minecraftforge.eventbus.api.Event;
+
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.world.storage.loot.LootTable;
 import net.minecraft.world.storage.loot.LootTableManager;
-import net.minecraftforge.eventbus.api.Cancelable;
-import net.minecraftforge.eventbus.api.Event;
 
 /**
  * Event fired when a LootTable json is loaded from json.
  * This event is fired whenever resources are loaded, or when the server starts.
  * This event will NOT be fired for LootTables loaded from the world folder, these are
  * considered configurations files and should not be modified by mods.
- *
+ * <p>
  * Canceling the event will make it load a empty loot table.
- *
  */
 @Cancelable
-public class LootTableLoadEvent extends Event
-{
-    private final ResourceLocation name;
-    private LootTable table;
-    private LootTableManager lootTableManager;
+public class LootTableLoadEvent extends Event {
+	private final ResourceLocation name;
+	private LootTable table;
+	private LootTableManager lootTableManager;
 
-    public LootTableLoadEvent(ResourceLocation name, LootTable table, LootTableManager lootTableManager)
-    {
-        this.name = name;
-        this.table = table;
-        this.lootTableManager = lootTableManager;
-    }
+	public LootTableLoadEvent(ResourceLocation name, LootTable table, LootTableManager lootTableManager) {
+		this.name = name;
+		this.table = table;
+		this.lootTableManager = lootTableManager;
+	}
 
-    public ResourceLocation getName()
-    {
-        return this.name;
-    }
+	public ResourceLocation getName() {
+		return this.name;
+	}
 
-    public LootTable getTable()
-    {
-        return this.table;
-    }
+	public LootTable getTable() {
+		return this.table;
+	}
 
-    public LootTableManager getLootTableManager()
-    {
-        return this.lootTableManager;
-    }
+	public void setTable(LootTable table) {
+		this.table = table;
+	}
 
-    public void setTable(LootTable table)
-    {
-        this.table = table;
-    }
+	public LootTableManager getLootTableManager() {
+		return this.lootTableManager;
+	}
 }

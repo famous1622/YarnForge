@@ -19,136 +19,130 @@
 
 package net.minecraftforge.fml;
 
-import net.minecraftforge.eventbus.api.Event;
-import net.minecraftforge.forgespi.language.ILifecycleEvent;
-
 import java.util.List;
 import java.util.concurrent.Executor;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
-public enum LifecycleEventProvider
-{
-    CONSTRUCT(()->new LifecycleEvent(ModLoadingStage.CONSTRUCT)),
-    CREATE_REGISTRIES(()->new LifecycleEvent(ModLoadingStage.CREATE_REGISTRIES), ModList.inlineDispatcher),
-    LOAD_REGISTRIES(()->new LifecycleEvent(ModLoadingStage.LOAD_REGISTRIES, LifecycleEvent.Progression.STAY), ModList.inlineDispatcher),
-    SETUP(()->new LifecycleEvent(ModLoadingStage.COMMON_SETUP)),
-    SIDED_SETUP(()->new LifecycleEvent(ModLoadingStage.SIDED_SETUP)),
-    ENQUEUE_IMC(()->new LifecycleEvent(ModLoadingStage.ENQUEUE_IMC)),
-    PROCESS_IMC(()->new LifecycleEvent(ModLoadingStage.PROCESS_IMC)),
-    COMPLETE(()->new LifecycleEvent(ModLoadingStage.COMPLETE)),
-    GATHERDATA(()->new GatherDataLifecycleEvent(ModLoadingStage.GATHERDATA), ModList.inlineDispatcher);
+import net.minecraftforge.eventbus.api.Event;
+import net.minecraftforge.forgespi.language.ILifecycleEvent;
 
-    private final Supplier<? extends LifecycleEvent> event;
-    private final EventHandler<LifecycleEvent, Consumer<List<ModLoadingException>>,Executor, Runnable> eventDispatcher;
-    private Supplier<Event> customEventSupplier;
-    private LifecycleEvent.Progression progression = LifecycleEvent.Progression.NEXT;
+public enum LifecycleEventProvider {
+	CONSTRUCT(() -> new LifecycleEvent(ModLoadingStage.CONSTRUCT)),
+	CREATE_REGISTRIES(() -> new LifecycleEvent(ModLoadingStage.CREATE_REGISTRIES), ModList.inlineDispatcher),
+	LOAD_REGISTRIES(() -> new LifecycleEvent(ModLoadingStage.LOAD_REGISTRIES, LifecycleEvent.Progression.STAY), ModList.inlineDispatcher),
+	SETUP(() -> new LifecycleEvent(ModLoadingStage.COMMON_SETUP)),
+	SIDED_SETUP(() -> new LifecycleEvent(ModLoadingStage.SIDED_SETUP)),
+	ENQUEUE_IMC(() -> new LifecycleEvent(ModLoadingStage.ENQUEUE_IMC)),
+	PROCESS_IMC(() -> new LifecycleEvent(ModLoadingStage.PROCESS_IMC)),
+	COMPLETE(() -> new LifecycleEvent(ModLoadingStage.COMPLETE)),
+	GATHERDATA(() -> new GatherDataLifecycleEvent(ModLoadingStage.GATHERDATA), ModList.inlineDispatcher);
 
-    LifecycleEventProvider(Supplier<? extends LifecycleEvent> e)
-    {
-        this(e, ModList.parallelDispatcher);
-    }
+	private final Supplier<? extends LifecycleEvent> event;
+	private final EventHandler<LifecycleEvent, Consumer<List<ModLoadingException>>, Executor, Runnable> eventDispatcher;
+	private Supplier<Event> customEventSupplier;
+	private LifecycleEvent.Progression progression = LifecycleEvent.Progression.NEXT;
 
-    LifecycleEventProvider(Supplier<? extends LifecycleEvent> e, EventHandler<LifecycleEvent, Consumer<List<ModLoadingException>>,Executor, Runnable> eventDispatcher)
-    {
-        this.event = e;
-        this.eventDispatcher = eventDispatcher;
-    }
+	LifecycleEventProvider(Supplier<? extends LifecycleEvent> e) {
+		this(e, ModList.parallelDispatcher);
+	}
 
-    public void setCustomEventSupplier(Supplier<Event> eventSupplier) {
-        this.customEventSupplier = eventSupplier;
-    }
+	LifecycleEventProvider(Supplier<? extends LifecycleEvent> e, EventHandler<LifecycleEvent, Consumer<List<ModLoadingException>>, Executor, Runnable> eventDispatcher) {
+		this.event = e;
+		this.eventDispatcher = eventDispatcher;
+	}
 
-    public void changeProgression(LifecycleEvent.Progression progression) {
-        this.progression = progression;
-    }
+	public void setCustomEventSupplier(Supplier<Event> eventSupplier) {
+		this.customEventSupplier = eventSupplier;
+	}
 
-    public void dispatch(Consumer<List<ModLoadingException>> errorHandler, final Executor executor, final Runnable ticker) {
-        final LifecycleEvent lifecycleEvent = this.event.get();
-        lifecycleEvent.setCustomEventSupplier(this.customEventSupplier);
-        lifecycleEvent.changeProgression(this.progression);
-        this.eventDispatcher.dispatchEvent(lifecycleEvent, errorHandler, executor, ticker);
-    }
+	public void changeProgression(LifecycleEvent.Progression progression) {
+		this.progression = progression;
+	}
+
+	public void dispatch(Consumer<List<ModLoadingException>> errorHandler, final Executor executor, final Runnable ticker) {
+		final LifecycleEvent lifecycleEvent = this.event.get();
+		lifecycleEvent.setCustomEventSupplier(this.customEventSupplier);
+		lifecycleEvent.changeProgression(this.progression);
+		this.eventDispatcher.dispatchEvent(lifecycleEvent, errorHandler, executor, ticker);
+	}
 
 
-    public static class LifecycleEvent implements ILifecycleEvent<LifecycleEvent> {
-        private final ModLoadingStage stage;
-        private Supplier<Event> customEventSupplier;
-        private Progression progression;
-        LifecycleEvent(final ModLoadingStage stage)
-        {
-            this(stage, Progression.NEXT);
-        }
+	public interface EventHandler<T extends LifecycleEvent, U extends Consumer<? extends List<? super ModLoadingException>>, V extends Executor, R extends Runnable> {
+		void dispatchEvent(T event, U exceptionHandler, V executor, R ticker);
+	}
 
-        LifecycleEvent(final ModLoadingStage stage, final Progression progression) {
-            this.stage = stage;
-            this.progression = progression;
-        }
+	public static class LifecycleEvent implements ILifecycleEvent<LifecycleEvent> {
+		private final ModLoadingStage stage;
+		private Supplier<Event> customEventSupplier;
+		private Progression progression;
 
-        public ModLoadingStage fromStage()
-        {
-            return this.stage;
-        }
+		LifecycleEvent(final ModLoadingStage stage) {
+			this(stage, Progression.NEXT);
+		}
 
-        public ModLoadingStage toStage()
-        {
-            return progression.apply(this.stage);
-        }
+		LifecycleEvent(final ModLoadingStage stage, final Progression progression) {
+			this.stage = stage;
+			this.progression = progression;
+		}
 
-        public void setCustomEventSupplier(Supplier<Event> customEventSupplier) {
-            this.customEventSupplier = customEventSupplier;
-        }
+		public ModLoadingStage fromStage() {
+			return this.stage;
+		}
 
-        public void changeProgression(Progression p) {
-            this.progression = p;
-        }
+		public ModLoadingStage toStage() {
+			return progression.apply(this.stage);
+		}
 
-        public Event getOrBuildEvent(ModContainer modContainer)
-        {
-            if (customEventSupplier!=null) return customEventSupplier.get();
+		public void setCustomEventSupplier(Supplier<Event> customEventSupplier) {
+			this.customEventSupplier = customEventSupplier;
+		}
 
-            return stage.getModEvent(modContainer);
-        }
+		public void changeProgression(Progression p) {
+			this.progression = p;
+		}
 
-        @Override
-        public String toString() {
-            return "LifecycleEvent:"+stage;
-        }
+		public Event getOrBuildEvent(ModContainer modContainer) {
+			if (customEventSupplier != null) return customEventSupplier.get();
 
-        public enum Progression {
-            NEXT((current)-> ModLoadingStage.values()[current.ordinal()+1]),
-            STAY(Function.identity());
+			return stage.getModEvent(modContainer);
+		}
 
-            private final Function<ModLoadingStage, ModLoadingStage> edge;
+		@Override
+		public String toString() {
+			return "LifecycleEvent:" + stage;
+		}
 
-            Progression(Function<ModLoadingStage, ModLoadingStage> edge) {
-                this.edge = edge;
-            }
+		public enum Progression {
+			NEXT((current) -> ModLoadingStage.values()[current.ordinal() + 1]),
+			STAY(Function.identity());
 
-            public ModLoadingStage apply(ModLoadingStage in) {
-                return this.edge.apply(in);
-            }
-        }
-    }
+			private final Function<ModLoadingStage, ModLoadingStage> edge;
 
-    private static class GatherDataLifecycleEvent extends LifecycleEvent {
-        GatherDataLifecycleEvent(final ModLoadingStage stage) {
-            super(stage);
-        }
+			Progression(Function<ModLoadingStage, ModLoadingStage> edge) {
+				this.edge = edge;
+			}
 
-        @Override
-        public ModLoadingStage fromStage() {
-            return ModLoadingStage.COMMON_SETUP;
-        }
+			public ModLoadingStage apply(ModLoadingStage in) {
+				return this.edge.apply(in);
+			}
+		}
+	}
 
-        @Override
-        public ModLoadingStage toStage() {
-            return ModLoadingStage.DONE;
-        }
-    }
+	private static class GatherDataLifecycleEvent extends LifecycleEvent {
+		GatherDataLifecycleEvent(final ModLoadingStage stage) {
+			super(stage);
+		}
 
-    public interface EventHandler<T extends LifecycleEvent, U extends Consumer<? extends List<? super ModLoadingException>>, V extends Executor, R extends Runnable>  {
-        void dispatchEvent(T event, U exceptionHandler, V executor, R ticker);
-    }
+		@Override
+		public ModLoadingStage fromStage() {
+			return ModLoadingStage.COMMON_SETUP;
+		}
+
+		@Override
+		public ModLoadingStage toStage() {
+			return ModLoadingStage.DONE;
+		}
+	}
 }

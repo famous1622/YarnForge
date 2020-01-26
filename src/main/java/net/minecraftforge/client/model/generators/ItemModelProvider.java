@@ -8,7 +8,7 @@ import net.minecraft.data.DataGenerator;
  */
 public abstract class ItemModelProvider extends ModelProvider<ItemModelBuilder> {
 
-    public ItemModelProvider(DataGenerator generator, String modid, ExistingFileHelper existingFileHelper) {
-        super(generator, modid, ITEM_FOLDER, ItemModelBuilder::new, existingFileHelper);
-    }
+	public ItemModelProvider(DataGenerator generator, String modid, ExistingFileHelper existingFileHelper) {
+		super(generator, modid, ITEM_FOLDER, ItemModelBuilder::new, existingFileHelper);
+	}
 }

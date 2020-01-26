@@ -19,37 +19,35 @@
 
 package net.minecraftforge.fml.event.lifecycle;
 
-import net.minecraft.server.dedicated.DedicatedServer;
+import java.util.function.Supplier;
+
 import net.minecraftforge.fml.ModContainer;
 
-import java.util.function.Supplier;
+import net.minecraft.server.dedicated.DedicatedServer;
 
 /**
  * This is the second of four commonly called events during mod lifecycle startup.
- *
+ * <p>
  * Called before {@link InterModEnqueueEvent}
  * Called after {@link FMLCommonSetupEvent}
- *
+ * <p>
  * Called on {@link net.minecraftforge.api.distmarker.Dist#DEDICATED_SERVER} - the dedicated game server.
- *
+ * <p>
  * Alternative to {@link FMLClientSetupEvent}.
- *
+ * <p>
  * Do dedicated server specific activities with this event.
- *
+ * <p>
  * This is a parallel dispatch event.
  */
-public class FMLDedicatedServerSetupEvent extends ModLifecycleEvent
-{
-    private final Supplier<DedicatedServer> serverSupplier;
+public class FMLDedicatedServerSetupEvent extends ModLifecycleEvent {
+	private final Supplier<DedicatedServer> serverSupplier;
 
-    public FMLDedicatedServerSetupEvent(Supplier<DedicatedServer> server, ModContainer container)
-    {
-        super(container);
-        this.serverSupplier = server;
-    }
+	public FMLDedicatedServerSetupEvent(Supplier<DedicatedServer> server, ModContainer container) {
+		super(container);
+		this.serverSupplier = server;
+	}
 
-    public Supplier<DedicatedServer> getServerSupplier()
-    {
-        return serverSupplier;
-    }
+	public Supplier<DedicatedServer> getServerSupplier() {
+		return serverSupplier;
+	}
 }

@@ -20,11 +20,12 @@
 package net.minecraftforge.event;
 
 import com.mojang.brigadier.ParseResults;
-import net.minecraft.command.CommandSource;
-import net.minecraft.command.Commands;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.eventbus.api.Cancelable;
 import net.minecraftforge.eventbus.api.Event;
+
+import net.minecraft.command.CommandSource;
+import net.minecraft.command.Commands;
 
 /**
  * CommandEvent is fired after a command is parsed, but before it is executed.
@@ -41,18 +42,27 @@ import net.minecraftforge.eventbus.api.Event;
  * This event is fired on the {@link MinecraftForge#EVENT_BUS}.<br>
  **/
 @Cancelable
-public class CommandEvent extends Event
-{
-    private ParseResults<CommandSource> parse;
-    private Throwable exception;
+public class CommandEvent extends Event {
+	private ParseResults<CommandSource> parse;
+	private Throwable exception;
 
-    public CommandEvent(ParseResults<CommandSource> parse)
-    {
-        this.parse = parse;
-    }
+	public CommandEvent(ParseResults<CommandSource> parse) {
+		this.parse = parse;
+	}
 
-    public ParseResults<CommandSource> getParseResults() { return parse; }
-    public void setParseResults(ParseResults<CommandSource> parse) { this.parse = parse; }
-    public Throwable getException() { return exception; }
-    public void setException(Throwable exception) { this.exception = exception; }
+	public ParseResults<CommandSource> getParseResults() {
+		return parse;
+	}
+
+	public void setParseResults(ParseResults<CommandSource> parse) {
+		this.parse = parse;
+	}
+
+	public Throwable getException() {
+		return exception;
+	}
+
+	public void setException(Throwable exception) {
+		this.exception = exception;
+	}
 }

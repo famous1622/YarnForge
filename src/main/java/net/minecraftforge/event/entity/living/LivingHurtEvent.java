@@ -22,8 +22,9 @@ package net.minecraftforge.event.entity.living;
 import net.minecraftforge.common.ForgeHooks;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.eventbus.api.Cancelable;
-import net.minecraft.util.DamageSource;
+
 import net.minecraft.entity.LivingEntity;
+import net.minecraft.util.DamageSource;
 
 /**
  * LivingHurtEvent is fired when an Entity is set to be hurt. <br>
@@ -42,23 +43,29 @@ import net.minecraft.entity.LivingEntity;
  * This event does not have a result. {@link HasResult}<br>
  * <br>
  * This event is fired on the {@link MinecraftForge#EVENT_BUS}.
+ *
  * @see LivingDamageEvent
  **/
 @net.minecraftforge.eventbus.api.Cancelable
-public class LivingHurtEvent extends LivingEvent
-{
-    private final DamageSource source;
-    private float amount;
-    public LivingHurtEvent(LivingEntity entity, DamageSource source, float amount)
-    {
-        super(entity);
-        this.source = source;
-        this.amount = amount;
-    }
+public class LivingHurtEvent extends LivingEvent {
+	private final DamageSource source;
+	private float amount;
 
-    public DamageSource getSource() { return source; }
+	public LivingHurtEvent(LivingEntity entity, DamageSource source, float amount) {
+		super(entity);
+		this.source = source;
+		this.amount = amount;
+	}
 
-    public float getAmount() { return amount; }
+	public DamageSource getSource() {
+		return source;
+	}
 
-    public void setAmount(float amount) { this.amount = amount; }
+	public float getAmount() {
+		return amount;
+	}
+
+	public void setAmount(float amount) {
+		this.amount = amount;
+	}
 }

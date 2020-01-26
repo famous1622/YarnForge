@@ -22,4 +22,5 @@
 package net.minecraftforge.debug.block;
 
 import javax.annotation.ParametersAreNonnullByDefault;
+
 import mcp.MethodsReturnNonnullByDefault;

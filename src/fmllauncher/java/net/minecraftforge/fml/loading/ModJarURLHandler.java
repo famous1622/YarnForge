@@ -19,8 +19,7 @@
 
 package net.minecraftforge.fml.loading;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import static net.minecraftforge.fml.loading.LogMarkers.CORE;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -32,59 +31,58 @@ import java.nio.file.Path;
 import java.util.Optional;
 import java.util.jar.Manifest;
 
-import static net.minecraftforge.fml.loading.LogMarkers.CORE;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
-public class ModJarURLHandler extends URLStreamHandler
-{
-    private static final Logger LOGGER = LogManager.getLogger();
-    // modjar://modid/path/to/file
-    @Override
-    protected URLConnection openConnection(URL url) {
-        return new ModJarURLConnection(url);
-    }
+public class ModJarURLHandler extends URLStreamHandler {
+	private static final Logger LOGGER = LogManager.getLogger();
 
-    static class ModJarURLConnection extends URLConnection {
-        private Path resource;
-        private String modpath;
-        private String modid;
-        private Optional<Manifest> manifest;
+	// modjar://modid/path/to/file
+	@Override
+	protected URLConnection openConnection(URL url) {
+		return new ModJarURLConnection(url);
+	}
 
-        public ModJarURLConnection(final URL url) {
-            super(url);
-        }
+	static class ModJarURLConnection extends URLConnection {
+		private Path resource;
+		private String modpath;
+		private String modid;
+		private Optional<Manifest> manifest;
 
-        @Override
-        public void connect()
-        {
-            if (resource == null) {
-                modid = url.getHost();
-                // trim first char
-                modpath = url.getPath().substring(1);
-                resource = FMLLoader.getLoadingModList().getModFileById(modid).getFile().findResource(modpath);
-                manifest = FMLLoader.getLoadingModList().getModFileById(modid).getManifest();
-            }
-        }
+		public ModJarURLConnection(final URL url) {
+			super(url);
+		}
 
-        @Override
-        public InputStream getInputStream() throws IOException
-        {
-            connect();
-            LOGGER.trace(CORE, "Loading modjar URL {} got resource {} {}", url, resource, resource != null ? Files.exists(resource) : "missing");
-            return Files.newInputStream(resource);
-        }
+		@Override
+		public void connect() {
+			if (resource == null) {
+				modid = url.getHost();
+				// trim first char
+				modpath = url.getPath().substring(1);
+				resource = FMLLoader.getLoadingModList().getModFileById(modid).getFile().findResource(modpath);
+				manifest = FMLLoader.getLoadingModList().getModFileById(modid).getManifest();
+			}
+		}
 
-        @Override
-        public long getContentLengthLong() {
-            try {
-                connect();
-                return Files.size(resource);
-            } catch (IOException e) {
-                return -1L;
-            }
-        }
+		@Override
+		public InputStream getInputStream() throws IOException {
+			connect();
+			LOGGER.trace(CORE, "Loading modjar URL {} got resource {} {}", url, resource, resource != null ? Files.exists(resource) : "missing");
+			return Files.newInputStream(resource);
+		}
 
-        public Optional<Manifest> getManifest() {
-            return manifest;
-        }
-    }
+		@Override
+		public long getContentLengthLong() {
+			try {
+				connect();
+				return Files.size(resource);
+			} catch (IOException e) {
+				return -1L;
+			}
+		}
+
+		public Optional<Manifest> getManifest() {
+			return manifest;
+		}
+	}
 }

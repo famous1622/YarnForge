@@ -33,16 +33,15 @@ import net.minecraft.util.Direction;
 /**
  * Convenience interface with default implementation of {@link IBakedModel#getQuads(net.minecraft.block.state.IBlockState, net.minecraft.util.EnumFacing, java.util.Random)}.
  */
-public interface IDynamicBakedModel extends IBakedModel
-{
-    @Override
-    default @Nonnull List<BakedQuad> getQuads(@Nullable BlockState state, @Nullable Direction side, @Nonnull Random rand)
-    {
-        return getQuads(state, side, rand, EmptyModelData.INSTANCE);
-    }
-    
-    // Force this to be overriden otherwise this introduces a default cycle between the two overloads.
-    @Override
-    @Nonnull
-    List<BakedQuad> getQuads(@Nullable BlockState state, @Nullable Direction side, @Nonnull Random rand, @Nonnull IModelData extraData);
+public interface IDynamicBakedModel extends IBakedModel {
+	@Override
+	default @Nonnull
+	List<BakedQuad> getQuads(@Nullable BlockState state, @Nullable Direction side, @Nonnull Random rand) {
+		return getQuads(state, side, rand, EmptyModelData.INSTANCE);
+	}
+
+	// Force this to be overriden otherwise this introduces a default cycle between the two overloads.
+	@Override
+	@Nonnull
+	List<BakedQuad> getQuads(@Nullable BlockState state, @Nullable Direction side, @Nonnull Random rand, @Nonnull IModelData extraData);
 }

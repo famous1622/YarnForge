@@ -25,12 +25,11 @@ import net.minecraftforge.fml.common.Mod;
 
 @Mod("farmland_trample_test")
 @Mod.EventBusSubscriber
-public class FarmlandTrampleEventTest
-{
-    @SubscribeEvent
-    public static void onFarmlandTrampled(BlockEvent.FarmlandTrampleEvent event)
-    {
-        if(event.getEntity().isSneaking())
-            event.setCanceled(true);
-    }
+public class FarmlandTrampleEventTest {
+	@SubscribeEvent
+	public static void onFarmlandTrampled(BlockEvent.FarmlandTrampleEvent event) {
+		if (event.getEntity().isSneaking()) {
+			event.setCanceled(true);
+		}
+	}
 }

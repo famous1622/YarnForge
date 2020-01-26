@@ -19,38 +19,33 @@
 
 package net.minecraftforge.common.ticket;
 
-import net.minecraft.util.math.ChunkPos;
-
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Set;
 import java.util.WeakHashMap;
 
-public class ChunkTicketManager<T> implements ITicketGetter<T>
-{
-    private final Set<SimpleTicket<T>> tickets = Collections.newSetFromMap(new WeakHashMap<>());
-    public final ChunkPos pos;
+import net.minecraft.util.math.ChunkPos;
 
-    public ChunkTicketManager(ChunkPos pos)
-    {
-        this.pos = pos;
-    }
+public class ChunkTicketManager<T> implements ITicketGetter<T> {
+	public final ChunkPos pos;
+	private final Set<SimpleTicket<T>> tickets = Collections.newSetFromMap(new WeakHashMap<>());
 
-    @Override
-    public void add(SimpleTicket<T> ticket)
-    {
-        this.tickets.add(ticket);
-    }
+	public ChunkTicketManager(ChunkPos pos) {
+		this.pos = pos;
+	}
 
-    @Override
-    public void remove(SimpleTicket<T> ticket)
-    {
-        this.tickets.remove(ticket);
-    }
+	@Override
+	public void add(SimpleTicket<T> ticket) {
+		this.tickets.add(ticket);
+	}
 
-    @Override
-    public Collection<SimpleTicket<T>> getTickets()
-    {
-        return tickets;
-    }
+	@Override
+	public void remove(SimpleTicket<T> ticket) {
+		this.tickets.remove(ticket);
+	}
+
+	@Override
+	public Collection<SimpleTicket<T>> getTickets() {
+		return tickets;
+	}
 }

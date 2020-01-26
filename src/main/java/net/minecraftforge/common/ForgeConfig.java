@@ -22,198 +22,196 @@ package net.minecraftforge.common;
 import static net.minecraftforge.fml.Logging.CORE;
 import static net.minecraftforge.fml.loading.LogMarkers.FORGEMOD;
 
+import net.minecraftforge.common.ForgeConfigSpec.BooleanValue;
+import net.minecraftforge.common.ForgeConfigSpec.DoubleValue;
+import net.minecraftforge.common.ForgeConfigSpec.IntValue;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.config.ModConfig;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.logging.log4j.LogManager;
 
-import net.minecraftforge.common.ForgeConfigSpec.BooleanValue;
-import net.minecraftforge.common.ForgeConfigSpec.DoubleValue;
-import net.minecraftforge.common.ForgeConfigSpec.IntValue;
+public class ForgeConfig {
+	public static final Client CLIENT;
+	public static final Server SERVER;
+	static final ForgeConfigSpec clientSpec;
+	static final ForgeConfigSpec serverSpec;
 
-public class ForgeConfig
-{
-    public static class Server {
-        public final BooleanValue removeErroringEntities;
-        public final BooleanValue removeErroringTileEntities;
+	static {
+		final Pair<Client, ForgeConfigSpec> specPair = new ForgeConfigSpec.Builder().configure(Client::new);
+		clientSpec = specPair.getRight();
+		CLIENT = specPair.getLeft();
+	}
 
-        public final BooleanValue fullBoundingBoxLadders;
+	static {
+		final Pair<Server, ForgeConfigSpec> specPair = new ForgeConfigSpec.Builder().configure(Server::new);
+		serverSpec = specPair.getRight();
+		SERVER = specPair.getLeft();
+	}
 
-        public final DoubleValue zombieBaseSummonChance;
-        public final DoubleValue zombieBabyChance;
+	@SubscribeEvent
+	public static void onLoad(final ModConfig.Loading configEvent) {
+		LogManager.getLogger().debug(FORGEMOD, "Loaded forge config file {}", configEvent.getConfig().getFileName());
+	}
 
-        public final BooleanValue logCascadingWorldGeneration;
-        public final BooleanValue fixVanillaCascading;
+	@SubscribeEvent
+	public static void onFileChange(final ModConfig.ConfigReloading configEvent) {
+		LogManager.getLogger().fatal(CORE, "Forge config just got changed on the file system!");
+	}
 
-        public final IntValue dimensionUnloadQueueDelay;
+	public static class Server {
+		public final BooleanValue removeErroringEntities;
+		public final BooleanValue removeErroringTileEntities;
 
-        public final IntValue clumpingThreshold;
+		public final BooleanValue fullBoundingBoxLadders;
 
-        public final BooleanValue treatEmptyTagsAsAir;
+		public final DoubleValue zombieBaseSummonChance;
+		public final DoubleValue zombieBabyChance;
 
-        Server(ForgeConfigSpec.Builder builder) {
-            builder.comment("Server configuration settings")
-                   .push("server");
+		public final BooleanValue logCascadingWorldGeneration;
+		public final BooleanValue fixVanillaCascading;
 
-            removeErroringEntities = builder
-                    .comment("Set this to true to remove any Entity that throws an error in its update method instead of closing the server and reporting a crash log. BE WARNED THIS COULD SCREW UP EVERYTHING USE SPARINGLY WE ARE NOT RESPONSIBLE FOR DAMAGES.")
-                    .translation("forge.configgui.removeErroringEntities")
-                    .worldRestart()
-                    .define("removeErroringEntities", false);
+		public final IntValue dimensionUnloadQueueDelay;
 
-            removeErroringTileEntities = builder
-                    .comment("Set this to true to remove any TileEntity that throws an error in its update method instead of closing the server and reporting a crash log. BE WARNED THIS COULD SCREW UP EVERYTHING USE SPARINGLY WE ARE NOT RESPONSIBLE FOR DAMAGES.")
-                    .translation("forge.configgui.removeErroringTileEntities")
-                    .worldRestart()
-                    .define("removeErroringTileEntities", false);
+		public final IntValue clumpingThreshold;
 
-            fullBoundingBoxLadders = builder
-                    .comment("Set this to true to check the entire entity's collision bounding box for ladders instead of just the block they are in. Causes noticeable differences in mechanics so default is vanilla behavior. Default: false")
-                    .translation("forge.configgui.fullBoundingBoxLadders")
-                    .worldRestart()
-                    .define("fullBoundingBoxLadders", false);
+		public final BooleanValue treatEmptyTagsAsAir;
 
-            zombieBaseSummonChance = builder
-                    .comment("Base zombie summoning spawn chance. Allows changing the bonus zombie summoning mechanic.")
-                    .translation("forge.configgui.zombieBaseSummonChance")
-                    .worldRestart()
-                    .defineInRange("zombieBaseSummonChance", 0.1D, 0.0D, 1.0D);
+		Server(ForgeConfigSpec.Builder builder) {
+			builder.comment("Server configuration settings")
+					.push("server");
 
-            zombieBabyChance = builder
-                    .comment("Chance that a zombie (or subclass) is a baby. Allows changing the zombie spawning mechanic.")
-                    .translation("forge.configgui.zombieBabyChance")
-                    .worldRestart()
-                    .defineInRange("zombieBabyChance", 0.05D, 0.0D, 1.0D);
+			removeErroringEntities = builder
+					.comment("Set this to true to remove any Entity that throws an error in its update method instead of closing the server and reporting a crash log. BE WARNED THIS COULD SCREW UP EVERYTHING USE SPARINGLY WE ARE NOT RESPONSIBLE FOR DAMAGES.")
+					.translation("forge.configgui.removeErroringEntities")
+					.worldRestart()
+					.define("removeErroringEntities", false);
 
-            logCascadingWorldGeneration = builder
-                    .comment("Log cascading chunk generation issues during terrain population.")
-                    .translation("forge.configgui.logCascadingWorldGeneration")
-                    .define("logCascadingWorldGeneration", true);
+			removeErroringTileEntities = builder
+					.comment("Set this to true to remove any TileEntity that throws an error in its update method instead of closing the server and reporting a crash log. BE WARNED THIS COULD SCREW UP EVERYTHING USE SPARINGLY WE ARE NOT RESPONSIBLE FOR DAMAGES.")
+					.translation("forge.configgui.removeErroringTileEntities")
+					.worldRestart()
+					.define("removeErroringTileEntities", false);
 
-            fixVanillaCascading = builder
-                    .comment("Fix vanilla issues that cause worldgen cascading. This DOES change vanilla worldgen so DO NOT report bugs related to world differences if this flag is on.")
-                    .translation("forge.configgui.fixVanillaCascading")
-                    .define("fixVanillaCascading", false);
+			fullBoundingBoxLadders = builder
+					.comment("Set this to true to check the entire entity's collision bounding box for ladders instead of just the block they are in. Causes noticeable differences in mechanics so default is vanilla behavior. Default: false")
+					.translation("forge.configgui.fullBoundingBoxLadders")
+					.worldRestart()
+					.define("fullBoundingBoxLadders", false);
 
-            dimensionUnloadQueueDelay = builder
-                    .comment("The time in ticks the server will wait when a dimension was queued to unload. This can be useful when rapidly loading and unloading dimensions, like e.g. throwing items through a nether portal a few time per second.")
-                    .translation("forge.configgui.dimensionUnloadQueueDelay")
-                    .defineInRange("dimensionUnloadQueueDelay", 0, 0, Integer.MAX_VALUE);
+			zombieBaseSummonChance = builder
+					.comment("Base zombie summoning spawn chance. Allows changing the bonus zombie summoning mechanic.")
+					.translation("forge.configgui.zombieBaseSummonChance")
+					.worldRestart()
+					.defineInRange("zombieBaseSummonChance", 0.1D, 0.0D, 1.0D);
 
-            clumpingThreshold = builder
-                    .comment("Controls the number threshold at which Packet51 is preferred over Packet52, default and minimum 64, maximum 1024")
-                    .translation("forge.configgui.clumpingThreshold")
-                    .worldRestart()
-                    .defineInRange("clumpingThreshold", 64, 64, 1024);
+			zombieBabyChance = builder
+					.comment("Chance that a zombie (or subclass) is a baby. Allows changing the zombie spawning mechanic.")
+					.translation("forge.configgui.zombieBabyChance")
+					.worldRestart()
+					.defineInRange("zombieBabyChance", 0.05D, 0.0D, 1.0D);
 
-            treatEmptyTagsAsAir = builder
-                    .comment("Vanilla will treat crafting recipess using empty tags as air, and allow you to craft with nothing in that slot. This changes empty tags to use BARRIER as the item. To prevent crafting with air.")
-                    .translation("forge.configgui.treatEmptyTagsAsAir")
-                    .define("treatEmptyTagsAsAir", false);
+			logCascadingWorldGeneration = builder
+					.comment("Log cascading chunk generation issues during terrain population.")
+					.translation("forge.configgui.logCascadingWorldGeneration")
+					.define("logCascadingWorldGeneration", true);
 
-            builder.pop();
-        }
-    }
+			fixVanillaCascading = builder
+					.comment("Fix vanilla issues that cause worldgen cascading. This DOES change vanilla worldgen so DO NOT report bugs related to world differences if this flag is on.")
+					.translation("forge.configgui.fixVanillaCascading")
+					.define("fixVanillaCascading", false);
 
-    /**
-     * Client specific configuration - only loaded clientside from forge-client.toml
-     */
-    public static class Client {
-        public final BooleanValue zoomInMissingModelTextInGui;
+			dimensionUnloadQueueDelay = builder
+					.comment("The time in ticks the server will wait when a dimension was queued to unload. This can be useful when rapidly loading and unloading dimensions, like e.g. throwing items through a nether portal a few time per second.")
+					.translation("forge.configgui.dimensionUnloadQueueDelay")
+					.defineInRange("dimensionUnloadQueueDelay", 0, 0, Integer.MAX_VALUE);
 
-        public final BooleanValue forgeCloudsEnabled;
+			clumpingThreshold = builder
+					.comment("Controls the number threshold at which Packet51 is preferred over Packet52, default and minimum 64, maximum 1024")
+					.translation("forge.configgui.clumpingThreshold")
+					.worldRestart()
+					.defineInRange("clumpingThreshold", 64, 64, 1024);
 
-        public final BooleanValue disableStairSlabCulling;
+			treatEmptyTagsAsAir = builder
+					.comment("Vanilla will treat crafting recipess using empty tags as air, and allow you to craft with nothing in that slot. This changes empty tags to use BARRIER as the item. To prevent crafting with air.")
+					.translation("forge.configgui.treatEmptyTagsAsAir")
+					.define("treatEmptyTagsAsAir", false);
 
-        public final BooleanValue alwaysSetupTerrainOffThread;
+			builder.pop();
+		}
+	}
 
-        public final BooleanValue forgeLightPipelineEnabled;
+	/**
+	 * Client specific configuration - only loaded clientside from forge-client.toml
+	 */
+	public static class Client {
+		public final BooleanValue zoomInMissingModelTextInGui;
 
-        public final BooleanValue selectiveResourceReloadEnabled;
+		public final BooleanValue forgeCloudsEnabled;
 
-        public final BooleanValue showLoadWarnings;
+		public final BooleanValue disableStairSlabCulling;
 
-        public final BooleanValue allowEmissiveItems;
+		public final BooleanValue alwaysSetupTerrainOffThread;
 
-        Client(ForgeConfigSpec.Builder builder) {
-            builder.comment("Client only settings, mostly things related to rendering")
-                   .push("client");
+		public final BooleanValue forgeLightPipelineEnabled;
 
-            zoomInMissingModelTextInGui = builder
-                .comment("Toggle off to make missing model text in the gui fit inside the slot.")
-                .translation("forge.configgui.zoomInMissingModelTextInGui")
-                .define("zoomInMissingModelTextInGui", false);
+		public final BooleanValue selectiveResourceReloadEnabled;
 
-            forgeCloudsEnabled = builder
-                .comment("Enable uploading cloud geometry to the GPU for faster rendering.")
-                .translation("forge.configgui.forgeCloudsEnabled")
-                .define("forgeCloudsEnabled", true);
+		public final BooleanValue showLoadWarnings;
 
-            disableStairSlabCulling = builder
-                .comment("Disable culling of hidden faces next to stairs and slabs. Causes extra rendering, but may fix some resource packs that exploit this vanilla mechanic.")
-                .translation("forge.configgui.disableStairSlabCulling")
-                .define("disableStairSlabCulling", false);
+		public final BooleanValue allowEmissiveItems;
 
-            alwaysSetupTerrainOffThread = builder
-                .comment("Enable forge to queue all chunk updates to the Chunk Update thread.",
-                        "May increase FPS significantly, but may also cause weird rendering lag.",
-                        "Not recommended for computers without a significant number of cores available.")
-                .translation("forge.configgui.alwaysSetupTerrainOffThread")
-                .define("alwaysSetupTerrainOffThread", false);
+		Client(ForgeConfigSpec.Builder builder) {
+			builder.comment("Client only settings, mostly things related to rendering")
+					.push("client");
 
-            forgeLightPipelineEnabled = builder
-                .comment("Enable the forge block rendering pipeline - fixes the lighting of custom models.")
-                .translation("forge.configgui.forgeLightPipelineEnabled")
-                .define("forgeLightPipelineEnabled", true);
+			zoomInMissingModelTextInGui = builder
+					.comment("Toggle off to make missing model text in the gui fit inside the slot.")
+					.translation("forge.configgui.zoomInMissingModelTextInGui")
+					.define("zoomInMissingModelTextInGui", false);
 
-            selectiveResourceReloadEnabled = builder
-                .comment("When enabled, makes specific reload tasks such as language changing quicker to run.")
-                .translation("forge.configgui.selectiveResourceReloadEnabled")
-                .define("selectiveResourceReloadEnabled", true);
+			forgeCloudsEnabled = builder
+					.comment("Enable uploading cloud geometry to the GPU for faster rendering.")
+					.translation("forge.configgui.forgeCloudsEnabled")
+					.define("forgeCloudsEnabled", true);
 
-            showLoadWarnings = builder
-                .comment("When enabled, forge will show any warnings that occurred during loading")
-                .translation("forge.configgui.showloadwarnings")
-                .define("showLoadWarnings", true);
+			disableStairSlabCulling = builder
+					.comment("Disable culling of hidden faces next to stairs and slabs. Causes extra rendering, but may fix some resource packs that exploit this vanilla mechanic.")
+					.translation("forge.configgui.disableStairSlabCulling")
+					.define("disableStairSlabCulling", false);
 
-            allowEmissiveItems = builder
-                .comment("Allow item rendering to detect emissive quads and draw them properly. This allows glowing blocks to look the same in item form, but incurs a very slight performance hit.")
-                .translation("forge.configgui.allowEmissiveItems")
-                .define("allowEmissiveItems", true);
+			alwaysSetupTerrainOffThread = builder
+					.comment("Enable forge to queue all chunk updates to the Chunk Update thread.",
+							"May increase FPS significantly, but may also cause weird rendering lag.",
+							"Not recommended for computers without a significant number of cores available.")
+					.translation("forge.configgui.alwaysSetupTerrainOffThread")
+					.define("alwaysSetupTerrainOffThread", false);
 
-            builder.pop();
-        }
-    }
+			forgeLightPipelineEnabled = builder
+					.comment("Enable the forge block rendering pipeline - fixes the lighting of custom models.")
+					.translation("forge.configgui.forgeLightPipelineEnabled")
+					.define("forgeLightPipelineEnabled", true);
 
-    static final ForgeConfigSpec clientSpec;
-    public static final Client CLIENT;
-    static {
-        final Pair<Client, ForgeConfigSpec> specPair = new ForgeConfigSpec.Builder().configure(Client::new);
-        clientSpec = specPair.getRight();
-        CLIENT = specPair.getLeft();
-    }
+			selectiveResourceReloadEnabled = builder
+					.comment("When enabled, makes specific reload tasks such as language changing quicker to run.")
+					.translation("forge.configgui.selectiveResourceReloadEnabled")
+					.define("selectiveResourceReloadEnabled", true);
 
+			showLoadWarnings = builder
+					.comment("When enabled, forge will show any warnings that occurred during loading")
+					.translation("forge.configgui.showloadwarnings")
+					.define("showLoadWarnings", true);
 
-    static final ForgeConfigSpec serverSpec;
-    public static final Server SERVER;
-    static {
-        final Pair<Server, ForgeConfigSpec> specPair = new ForgeConfigSpec.Builder().configure(Server::new);
-        serverSpec = specPair.getRight();
-        SERVER = specPair.getLeft();
-    }
+			allowEmissiveItems = builder
+					.comment("Allow item rendering to detect emissive quads and draw them properly. This allows glowing blocks to look the same in item form, but incurs a very slight performance hit.")
+					.translation("forge.configgui.allowEmissiveItems")
+					.define("allowEmissiveItems", true);
 
-    @SubscribeEvent
-    public static void onLoad(final ModConfig.Loading configEvent) {
-        LogManager.getLogger().debug(FORGEMOD, "Loaded forge config file {}", configEvent.getConfig().getFileName());
-    }
+			builder.pop();
+		}
+	}
 
-    @SubscribeEvent
-    public static void onFileChange(final ModConfig.ConfigReloading configEvent) {
-        LogManager.getLogger().fatal(CORE, "Forge config just got changed on the file system!");
-    }
-
-    //General
-    //public static boolean disableVersionCheck = false;
-    //public static boolean logCascadingWorldGeneration = true; // see Chunk#logCascadingWorldGeneration()
-    //public static boolean fixVanillaCascading = false;
+	//General
+	//public static boolean disableVersionCheck = false;
+	//public static boolean logCascadingWorldGeneration = true; // see Chunk#logCascadingWorldGeneration()
+	//public static boolean fixVanillaCascading = false;
 }

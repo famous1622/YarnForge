@@ -19,9 +19,9 @@
 
 package net.minecraftforge.registries;
 
-import net.minecraft.util.ResourceLocation;
-
 import java.util.function.Supplier;
+
+import net.minecraft.util.ResourceLocation;
 
 
 /**
@@ -29,31 +29,32 @@ import java.util.function.Supplier;
  * These should be safe to use in things like lists though aliased items and blocks will not
  * have object identity with respect to their delegate.
  *
- * @author cpw
- *
  * @param <T> the type of thing we're holding onto
+ * @author cpw
  */
 public interface IRegistryDelegate<T> extends Supplier<T> {
-    /**
-     * Get the referent pointed at by this delegate. This will be the currently active item or block, and will change
-     * as world saves come and go. Note that item.delegate.get() may NOT be the same object as item, due to item and
-     * block substitution.
-     *
-     * @return The referred object
-     */
-    @Override
-    T get();
+	/**
+	 * Get the referent pointed at by this delegate. This will be the currently active item or block, and will change
+	 * as world saves come and go. Note that item.delegate.get() may NOT be the same object as item, due to item and
+	 * block substitution.
+	 *
+	 * @return The referred object
+	 */
+	@Override
+	T get();
 
-    /**
-     * Get the unique resource location for this delegate. Completely static after registration has completed, and
-     * will never change.
-     * @return The name
-     */
-    ResourceLocation name();
+	/**
+	 * Get the unique resource location for this delegate. Completely static after registration has completed, and
+	 * will never change.
+	 *
+	 * @return The name
+	 */
+	ResourceLocation name();
 
-    /**
-     * Get the delegate type. It will be dependent on the registry this delegate is sourced from.
-     * @return The type of delegate
-     */
-    Class<T> type();
+	/**
+	 * Get the delegate type. It will be dependent on the registry this delegate is sourced from.
+	 *
+	 * @return The type of delegate
+	 */
+	Class<T> type();
 }

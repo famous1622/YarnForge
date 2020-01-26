@@ -33,15 +33,14 @@ import java.util.UUID;
 import javax.annotation.Nullable;
 
 import com.google.common.base.Charsets;
-import net.minecraftforge.fml.loading.FMLLoader;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
 import com.google.common.collect.ImmutableMap;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonSyntaxException;
+import net.minecraftforge.fml.loading.FMLLoader;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.Marker;
 import org.apache.logging.log4j.MarkerManager;
 
@@ -55,167 +54,141 @@ import org.apache.logging.log4j.MarkerManager;
  */
 public final class UsernameCache {
 
-    private static Map<UUID, String> map = new HashMap<>();
+	private static final Path saveFile = FMLLoader.getGamePath().resolve("usernamecache.json");
+	private static final Gson gson = new GsonBuilder().setPrettyPrinting().create();
+	private static final Logger LOGGER = LogManager.getLogger(UsernameCache.class);
+	private static final Marker USRCACHE = MarkerManager.getMarker("USERNAMECACHE");
+	private static Map<UUID, String> map = new HashMap<>();
 
-    private static final Path saveFile = FMLLoader.getGamePath().resolve("usernamecache.json");
-    private static final Gson gson = new GsonBuilder().setPrettyPrinting().create();
+	private UsernameCache() {
+	}
 
-    private static final Logger LOGGER = LogManager.getLogger(UsernameCache.class);
-    private static final Marker USRCACHE = MarkerManager.getMarker("USERNAMECACHE");
+	/**
+	 * Set a player's current usernamee
+	 *
+	 * @param uuid     the player's {@link java.util.UUID UUID}
+	 * @param username the player's username
+	 */
+	protected static void setUsername(UUID uuid, String username) {
+		Objects.requireNonNull(uuid);
+		Objects.requireNonNull(username);
 
-    private UsernameCache() {}
+		if (username.equals(map.get(uuid))) return;
 
-    /**
-     * Set a player's current usernamee
-     *
-     * @param uuid
-     *            the player's {@link java.util.UUID UUID}
-     * @param username
-     *            the player's username
-     */
-    protected static void setUsername(UUID uuid, String username)
-    {
-        Objects.requireNonNull(uuid);
-        Objects.requireNonNull(username);
+		map.put(uuid, username);
+		save();
+	}
 
-        if (username.equals(map.get(uuid))) return;
+	/**
+	 * Remove a player's username from the cache
+	 *
+	 * @param uuid the player's {@link java.util.UUID UUID}
+	 * @return if the cache contained the user
+	 */
+	protected static boolean removeUsername(UUID uuid) {
+		Objects.requireNonNull(uuid);
 
-        map.put(uuid, username);
-        save();
-    }
+		if (map.remove(uuid) != null) {
+			save();
+			return true;
+		}
 
-    /**
-     * Remove a player's username from the cache
-     *
-     * @param uuid
-     *            the player's {@link java.util.UUID UUID}
-     * @return if the cache contained the user
-     */
-    protected static boolean removeUsername(UUID uuid)
-    {
-        Objects.requireNonNull(uuid);
+		return false;
+	}
 
-        if (map.remove(uuid) != null)
-        {
-            save();
-            return true;
-        }
+	/**
+	 * Get the player's last known username
+	 * <p>
+	 * <b>May be <code>null</code></b>
+	 *
+	 * @param uuid the player's {@link java.util.UUID UUID}
+	 * @return the player's last known username, or <code>null</code> if the
+	 * cache doesn't have a record of the last username
+	 */
+	@Nullable
+	public static String getLastKnownUsername(UUID uuid) {
+		Objects.requireNonNull(uuid);
+		return map.get(uuid);
+	}
 
-        return false;
-    }
+	/**
+	 * Check if the cache contains the given player's username
+	 *
+	 * @param uuid the player's {@link java.util.UUID UUID}
+	 * @return if the cache contains a username for the given player
+	 */
+	public static boolean containsUUID(UUID uuid) {
+		Objects.requireNonNull(uuid);
+		return map.containsKey(uuid);
+	}
 
-    /**
-     * Get the player's last known username
-     * <p>
-     * <b>May be <code>null</code></b>
-     *
-     * @param uuid
-     *            the player's {@link java.util.UUID UUID}
-     * @return the player's last known username, or <code>null</code> if the
-     *         cache doesn't have a record of the last username
-     */
-    @Nullable
-    public static String getLastKnownUsername(UUID uuid)
-    {
-        Objects.requireNonNull(uuid);
-        return map.get(uuid);
-    }
+	/**
+	 * Get an immutable copy of the cache's underlying map
+	 *
+	 * @return the map
+	 */
+	public static Map<UUID, String> getMap() {
+		return ImmutableMap.copyOf(map);
+	}
 
-    /**
-     * Check if the cache contains the given player's username
-     *
-     * @param uuid
-     *            the player's {@link java.util.UUID UUID}
-     * @return if the cache contains a username for the given player
-     */
-    public static boolean containsUUID(UUID uuid)
-    {
-        Objects.requireNonNull(uuid);
-        return map.containsKey(uuid);
-    }
+	/**
+	 * Save the cache to file
+	 */
+	protected static void save() {
+		new SaveThread(gson.toJson(map)).start();
+	}
 
-    /**
-     * Get an immutable copy of the cache's underlying map
-     *
-     * @return the map
-     */
-    public static Map<UUID, String> getMap()
-    {
-        return ImmutableMap.copyOf(map);
-    }
+	/**
+	 * Load the cache from file
+	 */
+	protected static void load() {
+		if (!Files.exists(saveFile)) return;
 
-    /**
-     * Save the cache to file
-     */
-    protected static void save()
-    {
-        new SaveThread(gson.toJson(map)).start();
-    }
+		try (final BufferedReader reader = Files.newBufferedReader(saveFile, Charsets.UTF_8)) {
+			@SuppressWarnings("serial")
+			Type type = new TypeToken<Map<UUID, String>>() {
+			}.getType();
+			map = gson.fromJson(reader, type);
+		} catch (JsonSyntaxException | IOException e) {
+			LOGGER.error(USRCACHE, "Could not parse username cache file as valid json, deleting file {}", saveFile, e);
+			try {
+				Files.delete(saveFile);
+			} catch (IOException e1) {
+				LOGGER.error(USRCACHE, "Could not delete file {}", saveFile.toString());
+			}
+		} finally {
+			// Can sometimes occur when the json file is malformed
+			if (map == null) {
+				map = new HashMap<>();
+			}
+		}
+	}
 
-    /**
-     * Load the cache from file
-     */
-    protected static void load()
-    {
-        if (!Files.exists(saveFile)) return;
+	/**
+	 * Used for saving the {@link com.google.gson.Gson#toJson(Object) Gson}
+	 * representation of the cache to disk
+	 */
+	private static class SaveThread extends Thread {
 
-        try (final BufferedReader reader = Files.newBufferedReader(saveFile, Charsets.UTF_8))
-        {
-            @SuppressWarnings("serial")
-            Type type = new TypeToken<Map<UUID, String>>(){}.getType();
-            map = gson.fromJson(reader, type);
-        }
-        catch (JsonSyntaxException | IOException e)
-        {
-            LOGGER.error(USRCACHE,"Could not parse username cache file as valid json, deleting file {}", saveFile, e);
-            try
-            {
-                Files.delete(saveFile);
-            }
-            catch (IOException e1)
-            {
-                LOGGER.error(USRCACHE,"Could not delete file {}", saveFile.toString());
-            }
-        }
-        finally
-        {
-            // Can sometimes occur when the json file is malformed
-            if (map == null)
-            {
-                map = new HashMap<>();
-            }
-        }
-    }
+		/**
+		 * The data that will be saved to disk
+		 */
+		private final String data;
 
-    /**
-     * Used for saving the {@link com.google.gson.Gson#toJson(Object) Gson}
-     * representation of the cache to disk
-     */
-    private static class SaveThread extends Thread {
+		public SaveThread(String data) {
+			this.data = data;
+		}
 
-        /** The data that will be saved to disk */
-        private final String data;
-
-        public SaveThread(String data)
-        {
-            this.data = data;
-        }
-
-        @Override
-        public void run()
-        {
-            try
-            {
-                // Make sure we don't save when another thread is still saving
-                synchronized (saveFile)
-                {
-                    Files.write(saveFile, data.getBytes(StandardCharsets.UTF_8));
-                }
-            }
-            catch (IOException e)
-            {
-                LOGGER.error(USRCACHE, "Failed to save username cache to file!", e);
-            }
-        }
-    }
+		@Override
+		public void run() {
+			try {
+				// Make sure we don't save when another thread is still saving
+				synchronized (saveFile) {
+					Files.write(saveFile, data.getBytes(StandardCharsets.UTF_8));
+				}
+			} catch (IOException e) {
+				LOGGER.error(USRCACHE, "Failed to save username cache to file!", e);
+			}
+		}
+	}
 }

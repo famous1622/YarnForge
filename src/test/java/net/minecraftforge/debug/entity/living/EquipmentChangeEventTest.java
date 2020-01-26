@@ -47,9 +47,9 @@ public class EquipmentChangeEventTest
 
     */
 /**
-     * the Method handling the {@link LivingEquipmentChangeEvent}
-     * Serverside only!
-     *//*
+ * the Method handling the {@link LivingEquipmentChangeEvent}
+ * Serverside only!
+ *//*
 
     @SubscribeEvent
     public void onEquipmentChange(LivingEquipmentChangeEvent event)

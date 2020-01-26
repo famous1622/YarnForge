@@ -19,8 +19,6 @@
 
 package net.minecraftforge.client.event;
 
-import net.minecraftforge.eventbus.api.Cancelable;
-import net.minecraftforge.eventbus.api.Event;
 import net.minecraft.client.renderer.WorldRenderer;
 
 /**
@@ -31,23 +29,20 @@ import net.minecraft.client.renderer.WorldRenderer;
  * TODO This may get merged in 11 with RenderSpecificHandEvent to make a generic hand rendering
  */
 @net.minecraftforge.eventbus.api.Cancelable
-public class RenderHandEvent extends net.minecraftforge.eventbus.api.Event
-{
-    private final WorldRenderer context;
-    private final float partialTicks;
-    public RenderHandEvent(WorldRenderer context, float partialTicks)
-    {
-        this.context = context;
-        this.partialTicks = partialTicks;
-    }
+public class RenderHandEvent extends net.minecraftforge.eventbus.api.Event {
+	private final WorldRenderer context;
+	private final float partialTicks;
 
-    public WorldRenderer getContext()
-    {
-        return context;
-    }
+	public RenderHandEvent(WorldRenderer context, float partialTicks) {
+		this.context = context;
+		this.partialTicks = partialTicks;
+	}
 
-    public float getPartialTicks()
-    {
-        return partialTicks;
-    }
+	public WorldRenderer getContext() {
+		return context;
+	}
+
+	public float getPartialTicks() {
+		return partialTicks;
+	}
 }

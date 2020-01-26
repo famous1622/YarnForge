@@ -19,30 +19,10 @@
 
 package net.minecraftforge.debug.block;
 
-import net.minecraft.block.Block;
-import net.minecraft.block.material.Material;
-import net.minecraft.client.renderer.model.ModelResourceLocation;
-import net.minecraft.entity.Entity;
-import net.minecraft.item.Item;
-import net.minecraft.util.ResourceLocation;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Vec3d;
-import net.minecraft.world.World;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.client.event.ModelRegistryEvent;
-import net.minecraftforge.client.model.ModelLoader;
-import net.minecraftforge.event.RegistryEvent;
-import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.fml.common.Mod.EventBusSubscriber;
-import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
-import net.minecraftforge.registries.ObjectHolder;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-
 //@Mod(MaterialFogColorTest.MODID)
 //@Mod.EventBusSubscriber
-public class MaterialFogColorTest
-{
-    static final String MODID = "fog_color_in_material_test";
+public class MaterialFogColorTest {
+	static final String MODID = "fog_color_in_material_test";
 
     /*
     static

@@ -25,9 +25,10 @@ import java.util.Collection;
 import net.minecraftforge.common.ForgeHooks;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.eventbus.api.Cancelable;
-import net.minecraft.util.DamageSource;
-import net.minecraft.entity.item.ItemEntity;
+
 import net.minecraft.entity.LivingEntity;
+import net.minecraft.entity.item.ItemEntity;
+import net.minecraft.util.DamageSource;
 
 /**
  * LivingDropsEvent is fired when an Entity's death causes dropped items to appear.<br>
@@ -49,39 +50,33 @@ import net.minecraft.entity.LivingEntity;
  * This event is fired on the {@link MinecraftForge#EVENT_BUS}.
  **/
 @net.minecraftforge.eventbus.api.Cancelable
-public class LivingDropsEvent extends LivingEvent
-{
-    private final DamageSource source;
-    private final Collection<ItemEntity> drops;
-    private final int lootingLevel;
-    private final boolean recentlyHit;
+public class LivingDropsEvent extends LivingEvent {
+	private final DamageSource source;
+	private final Collection<ItemEntity> drops;
+	private final int lootingLevel;
+	private final boolean recentlyHit;
 
-    public LivingDropsEvent(LivingEntity entity, DamageSource source, Collection<ItemEntity> drops, int lootingLevel, boolean recentlyHit)
-    {
-        super(entity);
-        this.source = source;
-        this.drops = drops;
-        this.lootingLevel = lootingLevel;
-        this.recentlyHit = recentlyHit;
-    }
+	public LivingDropsEvent(LivingEntity entity, DamageSource source, Collection<ItemEntity> drops, int lootingLevel, boolean recentlyHit) {
+		super(entity);
+		this.source = source;
+		this.drops = drops;
+		this.lootingLevel = lootingLevel;
+		this.recentlyHit = recentlyHit;
+	}
 
-    public DamageSource getSource()
-    {
-        return source;
-    }
+	public DamageSource getSource() {
+		return source;
+	}
 
-    public Collection<ItemEntity> getDrops()
-    {
-        return drops;
-    }
+	public Collection<ItemEntity> getDrops() {
+		return drops;
+	}
 
-    public int getLootingLevel()
-    {
-        return lootingLevel;
-    }
+	public int getLootingLevel() {
+		return lootingLevel;
+	}
 
-    public boolean isRecentlyHit()
-    {
-        return recentlyHit;
-    }
+	public boolean isRecentlyHit() {
+		return recentlyHit;
+	}
 }

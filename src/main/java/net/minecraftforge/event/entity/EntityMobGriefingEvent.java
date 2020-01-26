@@ -19,9 +19,10 @@
 
 package net.minecraftforge.event.entity;
 
-import net.minecraft.entity.Entity;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.eventbus.api.Event.HasResult;
+
+import net.minecraft.entity.Entity;
 
 /**
  * EntityMobGriefingEvent is fired when mob griefing is about to occur and allows an event listener to specify whether it should or not.<br>
@@ -34,10 +35,8 @@ import net.minecraftforge.eventbus.api.Event.HasResult;
  * This event is fired on the {@link MinecraftForge#EVENT_BUS}.
  */
 @HasResult
-public class EntityMobGriefingEvent extends EntityEvent
-{
-    public EntityMobGriefingEvent(Entity entity)
-    {
-        super(entity);
-    }
+public class EntityMobGriefingEvent extends EntityEvent {
+	public EntityMobGriefingEvent(Entity entity) {
+		super(entity);
+	}
 }

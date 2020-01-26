@@ -19,69 +19,61 @@
 
 package net.minecraftforge.server.permission.context;
 
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.world.World;
-
-import javax.annotation.Nullable;
 import java.util.HashMap;
 import java.util.Map;
 
-public class Context implements IContext
-{
-    private Map<ContextKey<?>, Object> map;
+import javax.annotation.Nullable;
 
-    @Override
-    @Nullable
-    public World getWorld()
-    {
-        return null;
-    }
+import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.world.World;
 
-    @Override
-    @Nullable
-    public PlayerEntity getPlayer()
-    {
-        return null;
-    }
+public class Context implements IContext {
+	private Map<ContextKey<?>, Object> map;
 
-    @Override
-    @Nullable
-    public <T> T get(ContextKey<T> key)
-    {
-        return map == null || map.isEmpty() ? null : (T) map.get(key);
-    }
+	@Override
+	@Nullable
+	public World getWorld() {
+		return null;
+	}
 
-    @Override
-    public boolean has(ContextKey<?> key)
-    {
-        return covers(key) || (map != null && !map.isEmpty() && map.containsKey(key));
-    }
+	@Override
+	@Nullable
+	public PlayerEntity getPlayer() {
+		return null;
+	}
 
-    /**
-     * Sets Context object
-     *
-     * @param key Context key
-     * @param obj Context object. Can be null
-     * @return itself, for easy context chaining
-     */
-    public <T> Context set(ContextKey<T> key, @Nullable T obj)
-    {
-        if(covers(key))
-        {
-            return this;
-        }
+	@Override
+	@Nullable
+	public <T> T get(ContextKey<T> key) {
+		return map == null || map.isEmpty() ? null : (T) map.get(key);
+	}
 
-        if(map == null)
-        {
-            map = new HashMap<ContextKey<?>, Object>();
-        }
+	@Override
+	public boolean has(ContextKey<?> key) {
+		return covers(key) || (map != null && !map.isEmpty() && map.containsKey(key));
+	}
 
-        map.put(key, obj);
-        return this;
-    }
+	/**
+	 * Sets Context object
+	 *
+	 * @param key Context key
+	 * @param obj Context object. Can be null
+	 * @return itself, for easy context chaining
+	 */
+	public <T> Context set(ContextKey<T> key, @Nullable T obj) {
+		if (covers(key)) {
+			return this;
+		}
 
-    protected boolean covers(ContextKey<?> key)
-    {
-        return false;
-    }
+		if (map == null) {
+			map = new HashMap<ContextKey<?>, Object>();
+		}
+
+		map.put(key, obj);
+		return this;
+	}
+
+	protected boolean covers(ContextKey<?> key) {
+		return false;
+	}
 }

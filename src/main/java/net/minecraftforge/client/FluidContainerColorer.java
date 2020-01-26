@@ -21,18 +21,17 @@ package net.minecraftforge.client;
 
 import javax.annotation.Nonnull;
 
-import net.minecraft.client.renderer.color.IItemColor;
-import net.minecraft.item.ItemStack;
 import net.minecraftforge.fluids.FluidUtil;
 
-public class FluidContainerColorer implements IItemColor
-{
-    @Override
-    public int getColor(@Nonnull ItemStack stack, int tintIndex)
-    {
-        if (tintIndex != 1) return 0xFFFFFFFF;
-        return FluidUtil.getFluidContained(stack)
-                .map(fstack -> fstack.getFluid().getAttributes().getColor(fstack))
-                .orElse(0xFFFFFFFF);
-    }
+import net.minecraft.client.renderer.color.IItemColor;
+import net.minecraft.item.ItemStack;
+
+public class FluidContainerColorer implements IItemColor {
+	@Override
+	public int getColor(@Nonnull ItemStack stack, int tintIndex) {
+		if (tintIndex != 1) return 0xFFFFFFFF;
+		return FluidUtil.getFluidContained(stack)
+				.map(fstack -> fstack.getFluid().getAttributes().getColor(fstack))
+				.orElse(0xFFFFFFFF);
+	}
 }

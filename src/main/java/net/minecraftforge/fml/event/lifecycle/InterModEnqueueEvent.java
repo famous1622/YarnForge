@@ -23,20 +23,18 @@ import net.minecraftforge.fml.ModContainer;
 
 /**
  * This is the third of four commonly called events during mod lifecycle startup.
- *
+ * <p>
  * Called before {@link InterModProcessEvent}
  * Called after {@link FMLClientSetupEvent} or {@link FMLDedicatedServerSetupEvent}
- *
- *
+ * <p>
+ * <p>
  * Enqueue {@link net.minecraftforge.fml.InterModComms} messages to other mods with this event.
- *
+ * <p>
  * This is a parallel dispatch event.
  */
-public class InterModEnqueueEvent extends ModLifecycleEvent
-{
+public class InterModEnqueueEvent extends ModLifecycleEvent {
 
-    public InterModEnqueueEvent(final ModContainer container)
-    {
-        super(container);
-    }
+	public InterModEnqueueEvent(final ModContainer container) {
+		super(container);
+	}
 }

@@ -19,11 +19,7 @@
 
 package net.minecraftforge.fml.loading.moddiscovery;
 
-import net.minecraftforge.forgespi.language.ModFileScanData;
-import net.minecraftforge.fml.loading.LoadingModList;
-import net.minecraftforge.forgespi.locating.IModFile;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import static net.minecraftforge.fml.loading.LogMarkers.SCAN;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -33,76 +29,77 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
-import static net.minecraftforge.fml.loading.LogMarkers.SCAN;
+import net.minecraftforge.fml.loading.LoadingModList;
+import net.minecraftforge.forgespi.language.ModFileScanData;
+import net.minecraftforge.forgespi.locating.IModFile;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
-public class BackgroundScanHandler
-{
-    private static final Logger LOGGER = LogManager.getLogger();
-    private final ExecutorService modContentScanner;
-    private final List<ModFile> pendingFiles;
-    private final List<ModFile> scannedFiles;
-    private final List<ModFile> allFiles;
-    private final Map<IModFile.Type, List<ModFile>> modFiles;
-    private LoadingModList loadingModList;
+public class BackgroundScanHandler {
+	private static final Logger LOGGER = LogManager.getLogger();
+	private final ExecutorService modContentScanner;
+	private final List<ModFile> pendingFiles;
+	private final List<ModFile> scannedFiles;
+	private final List<ModFile> allFiles;
+	private final Map<IModFile.Type, List<ModFile>> modFiles;
+	private LoadingModList loadingModList;
 
-    public BackgroundScanHandler(final Map<IModFile.Type, List<ModFile>> modFiles) {
-        this.modFiles = modFiles;
-        modContentScanner = Executors.newSingleThreadExecutor(r -> {
-            final Thread thread = Executors.defaultThreadFactory().newThread(r);
-            thread.setDaemon(true);
-            return thread;
-        });
-        scannedFiles = new ArrayList<>();
-        pendingFiles = new ArrayList<>();
-        allFiles = new ArrayList<>();
-    }
+	public BackgroundScanHandler(final Map<IModFile.Type, List<ModFile>> modFiles) {
+		this.modFiles = modFiles;
+		modContentScanner = Executors.newSingleThreadExecutor(r -> {
+			final Thread thread = Executors.defaultThreadFactory().newThread(r);
+			thread.setDaemon(true);
+			return thread;
+		});
+		scannedFiles = new ArrayList<>();
+		pendingFiles = new ArrayList<>();
+		allFiles = new ArrayList<>();
+	}
 
-    public Map<IModFile.Type, List<ModFile>> getModFiles() {
-        return modFiles;
-    }
+	public Map<IModFile.Type, List<ModFile>> getModFiles() {
+		return modFiles;
+	}
 
-    public void submitForScanning(final ModFile file) {
-        if (modContentScanner.isShutdown()) {
-            throw new IllegalStateException("Scanner has shutdown");
-        }
-        allFiles.add(file);
-        pendingFiles.add(file);
-        final CompletableFuture<ModFileScanData> future = CompletableFuture.supplyAsync(file::compileContent, modContentScanner)
-                .whenComplete(file::setScanResult)
-                .whenComplete((r,t)-> this.addCompletedFile(file,r,t));
-        file.setFutureScanResult(future);
-    }
+	public void submitForScanning(final ModFile file) {
+		if (modContentScanner.isShutdown()) {
+			throw new IllegalStateException("Scanner has shutdown");
+		}
+		allFiles.add(file);
+		pendingFiles.add(file);
+		final CompletableFuture<ModFileScanData> future = CompletableFuture.supplyAsync(file::compileContent, modContentScanner)
+				.whenComplete(file::setScanResult)
+				.whenComplete((r, t) -> this.addCompletedFile(file, r, t));
+		file.setFutureScanResult(future);
+	}
 
-    private void addCompletedFile(final ModFile file, final ModFileScanData modFileScanData, final Throwable throwable) {
-        if (throwable != null) {
-            LOGGER.error(SCAN,"An error occurred scanning file {}", file, throwable);
-        }
-        pendingFiles.remove(file);
-        scannedFiles.add(file);
-    }
+	private void addCompletedFile(final ModFile file, final ModFileScanData modFileScanData, final Throwable throwable) {
+		if (throwable != null) {
+			LOGGER.error(SCAN, "An error occurred scanning file {}", file, throwable);
+		}
+		pendingFiles.remove(file);
+		scannedFiles.add(file);
+	}
 
-    public List<ModFile> getScannedFiles() {
-        if (!pendingFiles.isEmpty()) {
-            modContentScanner.shutdown();
-            try {
-                modContentScanner.awaitTermination(Long.MAX_VALUE, TimeUnit.SECONDS);
-            } catch (InterruptedException e) {
-            }
-        }
-        return scannedFiles;
-    }
+	public List<ModFile> getScannedFiles() {
+		if (!pendingFiles.isEmpty()) {
+			modContentScanner.shutdown();
+			try {
+				modContentScanner.awaitTermination(Long.MAX_VALUE, TimeUnit.SECONDS);
+			} catch (InterruptedException e) {
+			}
+		}
+		return scannedFiles;
+	}
 
-    public List<ModFile> getAllFiles() {
-        return allFiles;
-    }
+	public List<ModFile> getAllFiles() {
+		return allFiles;
+	}
 
-    public void setLoadingModList(LoadingModList loadingModList)
-    {
-        this.loadingModList = loadingModList;
-    }
+	public LoadingModList getLoadingModList() {
+		return loadingModList;
+	}
 
-    public LoadingModList getLoadingModList()
-    {
-        return loadingModList;
-    }
+	public void setLoadingModList(LoadingModList loadingModList) {
+		this.loadingModList = loadingModList;
+	}
 }

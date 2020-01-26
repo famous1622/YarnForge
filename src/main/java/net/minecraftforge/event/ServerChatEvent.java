@@ -19,11 +19,12 @@
 
 package net.minecraftforge.event;
 
-import net.minecraft.entity.player.ServerPlayerEntity;
-import net.minecraft.util.text.ITextComponent;
 import net.minecraftforge.common.ForgeHooks;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.eventbus.api.Cancelable;
+
+import net.minecraft.entity.player.ServerPlayerEntity;
+import net.minecraft.util.text.ITextComponent;
 
 /**
  * ServerChatEvent is fired whenever a C01PacketChatMessage is processed. <br>
@@ -43,31 +44,36 @@ import net.minecraftforge.eventbus.api.Cancelable;
  * This event is fired on the {@link MinecraftForge#EVENT_BUS}.
  **/
 @Cancelable
-public class ServerChatEvent extends net.minecraftforge.eventbus.api.Event
-{
-    private final String message, username;
-    private final ServerPlayerEntity player;
-    private ITextComponent component;
-    public ServerChatEvent(ServerPlayerEntity player, String message, ITextComponent component)
-    {
-        super();
-        this.message = message;
-        this.player = player;
-        this.username = player.getGameProfile().getName();
-        this.component = component;
-    }
+public class ServerChatEvent extends net.minecraftforge.eventbus.api.Event {
+	private final String message, username;
+	private final ServerPlayerEntity player;
+	private ITextComponent component;
 
-    public void setComponent(ITextComponent e)
-    {
-        this.component = e;
-    }
+	public ServerChatEvent(ServerPlayerEntity player, String message, ITextComponent component) {
+		super();
+		this.message = message;
+		this.player = player;
+		this.username = player.getGameProfile().getName();
+		this.component = component;
+	}
 
-    public ITextComponent getComponent()
-    {
-        return this.component;
-    }
+	public ITextComponent getComponent() {
+		return this.component;
+	}
 
-    public String getMessage() { return this.message; }
-    public String getUsername() { return this.username; }
-    public ServerPlayerEntity getPlayer() { return this.player; }
+	public void setComponent(ITextComponent e) {
+		this.component = e;
+	}
+
+	public String getMessage() {
+		return this.message;
+	}
+
+	public String getUsername() {
+		return this.username;
+	}
+
+	public ServerPlayerEntity getPlayer() {
+		return this.player;
+	}
 }

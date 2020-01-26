@@ -22,4 +22,5 @@
 package net.minecraftforge.debug.chat;
 
 import javax.annotation.ParametersAreNonnullByDefault;
+
 import mcp.MethodsReturnNonnullByDefault;

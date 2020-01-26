@@ -19,12 +19,6 @@
 
 package net.minecraftforge.fml.loading;
 
-import com.google.common.collect.Streams;
-import net.minecraftforge.fml.loading.moddiscovery.BackgroundScanHandler;
-import net.minecraftforge.fml.loading.moddiscovery.ModFile;
-import net.minecraftforge.fml.loading.moddiscovery.ModFileInfo;
-import net.minecraftforge.fml.loading.moddiscovery.ModInfo;
-
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.file.Files;
@@ -35,125 +29,120 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import net.minecraftforge.fml.loading.moddiscovery.BackgroundScanHandler;
+import net.minecraftforge.fml.loading.moddiscovery.ModFile;
+import net.minecraftforge.fml.loading.moddiscovery.ModFileInfo;
+import net.minecraftforge.fml.loading.moddiscovery.ModInfo;
+
 /**
  * Master list of all mods <em>in the loading context. This class cannot refer outside the
  * loading package</em>
  */
-public class LoadingModList
-{
-    private static LoadingModList INSTANCE;
-    private final List<ModFileInfo> modFiles;
-    private final List<ModInfo> sortedList;
-    private final Map<String, ModFileInfo> fileById;
-    private BackgroundScanHandler scanner;
-    private final List<EarlyLoadingException> preLoadErrors;
-    private List<ModFile> brokenFiles;
+public class LoadingModList {
+	private static LoadingModList INSTANCE;
+	private final List<ModFileInfo> modFiles;
+	private final List<ModInfo> sortedList;
+	private final Map<String, ModFileInfo> fileById;
+	private final List<EarlyLoadingException> preLoadErrors;
+	private BackgroundScanHandler scanner;
+	private List<ModFile> brokenFiles;
 
-    private LoadingModList(final List<ModFile> modFiles, final List<ModInfo> sortedList)
-    {
-        this.modFiles = modFiles.stream()
-                .map(ModFile::getModFileInfo)
-                .map(ModFileInfo.class::cast)
-                .collect(Collectors.toList());
-        this.sortedList = sortedList.stream()
-                .map(ModInfo.class::cast)
-                .collect(Collectors.toList());
-        this.fileById = this.modFiles.stream()
-                .map(ModFileInfo::getMods)
-                .flatMap(Collection::stream)
-                .map(ModInfo.class::cast)
-                .collect(Collectors.toMap(ModInfo::getModId, ModInfo::getOwningFile));
-        this.preLoadErrors = new ArrayList<>();
-    }
+	private LoadingModList(final List<ModFile> modFiles, final List<ModInfo> sortedList) {
+		this.modFiles = modFiles.stream()
+				.map(ModFile::getModFileInfo)
+				.map(ModFileInfo.class::cast)
+				.collect(Collectors.toList());
+		this.sortedList = sortedList.stream()
+				.map(ModInfo.class::cast)
+				.collect(Collectors.toList());
+		this.fileById = this.modFiles.stream()
+				.map(ModFileInfo::getMods)
+				.flatMap(Collection::stream)
+				.map(ModInfo.class::cast)
+				.collect(Collectors.toMap(ModInfo::getModId, ModInfo::getOwningFile));
+		this.preLoadErrors = new ArrayList<>();
+	}
 
-    public static LoadingModList of(List<ModFile> modFiles, List<ModInfo> sortedList, final EarlyLoadingException earlyLoadingException)
-    {
-        INSTANCE = new LoadingModList(modFiles, sortedList);
-        if (earlyLoadingException != null)
-        {
-            INSTANCE.preLoadErrors.add(earlyLoadingException);
-        }
-        return INSTANCE;
-    }
+	public static LoadingModList of(List<ModFile> modFiles, List<ModInfo> sortedList, final EarlyLoadingException earlyLoadingException) {
+		INSTANCE = new LoadingModList(modFiles, sortedList);
+		if (earlyLoadingException != null) {
+			INSTANCE.preLoadErrors.add(earlyLoadingException);
+		}
+		return INSTANCE;
+	}
 
-    public static LoadingModList get() {
-        return INSTANCE;
-    }
-    public void addCoreMods()
-    {
-        modFiles.stream()
-                .map(ModFileInfo::getFile)
-                .map(ModFile::getCoreMods)
-                .flatMap(List::stream)
-                .forEach(FMLLoader.getCoreModProvider()::addCoreMod);
-    }
+	public static LoadingModList get() {
+		return INSTANCE;
+	}
 
-    public void addAccessTransformers()
-    {
-        modFiles.stream()
-                .map(ModFileInfo::getFile)
-                .forEach(mod -> mod.getAccessTransformer().ifPresent(path -> FMLLoader.addAccessTransformer(path, mod)));
-    }
+	public void addCoreMods() {
+		modFiles.stream()
+				.map(ModFileInfo::getFile)
+				.map(ModFile::getCoreMods)
+				.flatMap(List::stream)
+				.forEach(FMLLoader.getCoreModProvider()::addCoreMod);
+	}
 
-    public void addForScanning(BackgroundScanHandler backgroundScanHandler)
-    {
-        this.scanner = backgroundScanHandler;
-        backgroundScanHandler.setLoadingModList(this);
-        modFiles.stream()
-                .map(ModFileInfo::getFile)
-                .forEach(backgroundScanHandler::submitForScanning);
-    }
+	public void addAccessTransformers() {
+		modFiles.stream()
+				.map(ModFileInfo::getFile)
+				.forEach(mod -> mod.getAccessTransformer().ifPresent(path -> FMLLoader.addAccessTransformer(path, mod)));
+	}
 
-    public List<ModFileInfo> getModFiles()
-    {
-        return modFiles;
-    }
+	public void addForScanning(BackgroundScanHandler backgroundScanHandler) {
+		this.scanner = backgroundScanHandler;
+		backgroundScanHandler.setLoadingModList(this);
+		modFiles.stream()
+				.map(ModFileInfo::getFile)
+				.forEach(backgroundScanHandler::submitForScanning);
+	}
 
-    public Path findResource(final String className)
-    {
-        for (ModFileInfo mf : modFiles) {
-            final Path resource = mf.getFile().findResource(className);
-            if (Files.exists(resource)) return resource;
-        }
-        return null;
-    }
+	public List<ModFileInfo> getModFiles() {
+		return modFiles;
+	}
 
-    public URL findURLForResource(String resourceName) {
-        for (ModFileInfo mf : modFiles) {
-            // strip a leading slash
-            if (resourceName.startsWith("/")) resourceName = resourceName.substring(1);
+	public Path findResource(final String className) {
+		for (ModFileInfo mf : modFiles) {
+			final Path resource = mf.getFile().findResource(className);
+			if (Files.exists(resource)) return resource;
+		}
+		return null;
+	}
 
-            final Path resource = mf.getFile().findResource(resourceName);
-            if (Files.exists(resource)) {
-                try {
-                    return new URL("modjar://"+mf.getMods().get(0).getModId()+"/"+resourceName);
-                } catch (MalformedURLException e) {
-                    throw new RuntimeException(e);
-                }
-            }
-        }
-        return null;
-    }
+	public URL findURLForResource(String resourceName) {
+		for (ModFileInfo mf : modFiles) {
+			// strip a leading slash
+			if (resourceName.startsWith("/")) resourceName = resourceName.substring(1);
 
-    public ModFileInfo getModFileById(String modid)
-    {
-        return this.fileById.get(modid);
-    }
+			final Path resource = mf.getFile().findResource(resourceName);
+			if (Files.exists(resource)) {
+				try {
+					return new URL("modjar://" + mf.getMods().get(0).getModId() + "/" + resourceName);
+				} catch (MalformedURLException e) {
+					throw new RuntimeException(e);
+				}
+			}
+		}
+		return null;
+	}
 
-    public List<ModInfo> getMods()
-    {
-        return this.sortedList;
-    }
+	public ModFileInfo getModFileById(String modid) {
+		return this.fileById.get(modid);
+	}
 
-    public List<EarlyLoadingException> getErrors() {
-        return preLoadErrors;
-    }
+	public List<ModInfo> getMods() {
+		return this.sortedList;
+	}
 
-    public void setBrokenFiles(final List<ModFile> brokenFiles) {
-        this.brokenFiles = brokenFiles;
-    }
+	public List<EarlyLoadingException> getErrors() {
+		return preLoadErrors;
+	}
 
-    public List<ModFile> getBrokenFiles() {
-        return this.brokenFiles;
-    }
+	public List<ModFile> getBrokenFiles() {
+		return this.brokenFiles;
+	}
+
+	public void setBrokenFiles(final List<ModFile> brokenFiles) {
+		this.brokenFiles = brokenFiles;
+	}
 }

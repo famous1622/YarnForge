@@ -19,27 +19,25 @@
 
 package net.minecraftforge.fml.event.lifecycle;
 
-import net.minecraftforge.fml.ModContainer;
-
 import java.util.function.Predicate;
+
+import net.minecraftforge.fml.ModContainer;
 
 /**
  * This is the fourth of four commonly called events during mod lifecycle startup.
- *
+ * <p>
  * Called after {@link InterModEnqueueEvent}
- *
+ * <p>
  * Retrieve {@link net.minecraftforge.fml.InterModComms} {@link net.minecraftforge.fml.InterModComms.IMCMessage} suppliers
  * and process them as you wish with this event.
- *
+ * <p>
  * This is a parallel dispatch event.
  *
  * @see #getIMCStream()
  * @see #getIMCStream(Predicate)
  */
-public class InterModProcessEvent extends ModLifecycleEvent
-{
-    public InterModProcessEvent(final ModContainer container)
-    {
-        super(container);
-    }
+public class InterModProcessEvent extends ModLifecycleEvent {
+	public InterModProcessEvent(final ModContainer container) {
+		super(container);
+	}
 }

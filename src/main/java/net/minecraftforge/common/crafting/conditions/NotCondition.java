@@ -20,58 +20,50 @@
 package net.minecraftforge.common.crafting.conditions;
 
 import com.google.gson.JsonObject;
-import net.minecraft.util.JSONUtils;
-import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.common.crafting.CraftingHelper;
 
-public class NotCondition implements ICondition
-{
-    private static final ResourceLocation NAME = new ResourceLocation("forge", "not");
-    private final ICondition child;
+import net.minecraft.util.JSONUtils;
+import net.minecraft.util.ResourceLocation;
 
-    public NotCondition(ICondition child)
-    {
-        this.child = child;
-    }
+public class NotCondition implements ICondition {
+	private static final ResourceLocation NAME = new ResourceLocation("forge", "not");
+	private final ICondition child;
 
-    @Override
-    public ResourceLocation getID()
-    {
-        return NAME;
-    }
+	public NotCondition(ICondition child) {
+		this.child = child;
+	}
 
-    @Override
-    public boolean test()
-    {
-        return !child.test();
-    }
+	@Override
+	public ResourceLocation getID() {
+		return NAME;
+	}
 
-    @Override
-    public String toString()
-    {
-        return "!" + child;
-    }
+	@Override
+	public boolean test() {
+		return !child.test();
+	}
 
-    public static class Serializer implements IConditionSerializer<NotCondition>
-    {
-        public static final Serializer INSTANCE = new Serializer();
+	@Override
+	public String toString() {
+		return "!" + child;
+	}
 
-        @Override
-        public void write(JsonObject json, NotCondition value)
-        {
-            json.add("value", CraftingHelper.serialize(value.child));
-        }
+	public static class Serializer implements IConditionSerializer<NotCondition> {
+		public static final Serializer INSTANCE = new Serializer();
 
-        @Override
-        public NotCondition read(JsonObject json)
-        {
-            return new NotCondition(CraftingHelper.getCondition(JSONUtils.getJsonObject(json, "value")));
-        }
+		@Override
+		public void write(JsonObject json, NotCondition value) {
+			json.add("value", CraftingHelper.serialize(value.child));
+		}
 
-        @Override
-        public ResourceLocation getID()
-        {
-            return NotCondition.NAME;
-        }
-    }
+		@Override
+		public NotCondition read(JsonObject json) {
+			return new NotCondition(CraftingHelper.getCondition(JSONUtils.getJsonObject(json, "value")));
+		}
+
+		@Override
+		public ResourceLocation getID() {
+			return NotCondition.NAME;
+		}
+	}
 }

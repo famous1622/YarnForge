@@ -19,152 +19,167 @@
 
 package net.minecraftforge.common.extensions;
 
-import net.minecraft.entity.MoverType;
+import net.minecraftforge.common.IMinecartCollisionHandler;
+
 import net.minecraft.entity.item.minecart.AbstractMinecartEntity;
-import net.minecraft.item.Items;
 import net.minecraft.item.ItemStack;
+import net.minecraft.item.Items;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
-import net.minecraft.util.math.Vec3d;
-import net.minecraftforge.common.IMinecartCollisionHandler;
 
-public interface IForgeEntityMinecart
-{
-    public static float DEFAULT_MAX_SPEED_AIR_LATERAL = 0.4f;
-    public static float DEFAULT_MAX_SPEED_AIR_VERTICAL = -1.0f;
-    public static double DEFAULT_AIR_DRAG = 0.95f;
-    public static IMinecartCollisionHandler COLLISIONS = null;
+public interface IForgeEntityMinecart {
+	float DEFAULT_MAX_SPEED_AIR_LATERAL = 0.4f;
+	float DEFAULT_MAX_SPEED_AIR_VERTICAL = -1.0f;
+	double DEFAULT_AIR_DRAG = 0.95f;
+	IMinecartCollisionHandler COLLISIONS = null;
 
-    default AbstractMinecartEntity getMinecart() {
-        return (AbstractMinecartEntity)this;
-    }
+	default AbstractMinecartEntity getMinecart() {
+		return (AbstractMinecartEntity) this;
+	}
 
-    /**
-     * Gets the current global Minecart Collision handler if none
-     * is registered, returns null
-     * @return The collision handler or null
-     */
-    default IMinecartCollisionHandler getCollisionHandler() {
-        return COLLISIONS;
-    }
+	/**
+	 * Gets the current global Minecart Collision handler if none
+	 * is registered, returns null
+	 *
+	 * @return The collision handler or null
+	 */
+	default IMinecartCollisionHandler getCollisionHandler() {
+		return COLLISIONS;
+	}
 
-    /**
-     * Internal, returns the current spot to look for the attached rail.
-     */
-    default BlockPos getCurrentRailPosition()
-    {
-        int x = MathHelper.floor(getMinecart().posX);
-        int y = MathHelper.floor(getMinecart().posY);
-        int z = MathHelper.floor(getMinecart().posZ);
-        BlockPos pos = new BlockPos(x, y - 1, z);
-        if (getMinecart().world.getBlockState(pos).isIn(BlockTags.RAILS)) pos = pos.down();
-        return pos;
-    }
+	/**
+	 * Internal, returns the current spot to look for the attached rail.
+	 */
+	default BlockPos getCurrentRailPosition() {
+		int x = MathHelper.floor(getMinecart().posX);
+		int y = MathHelper.floor(getMinecart().posY);
+		int z = MathHelper.floor(getMinecart().posZ);
+		BlockPos pos = new BlockPos(x, y - 1, z);
+		if (getMinecart().world.getBlockState(pos).isIn(BlockTags.RAILS)) pos = pos.down();
+		return pos;
+	}
 
-    double getMaxSpeedWithRail();
+	double getMaxSpeedWithRail();
 
-    /**
-     * Moved to allow overrides.
-     * This code handles minecart movement and speed capping when on a rail.
-     */
-    void moveMinecartOnRail(BlockPos pos);
+	/**
+	 * Moved to allow overrides.
+	 * This code handles minecart movement and speed capping when on a rail.
+	 */
+	void moveMinecartOnRail(BlockPos pos);
 
-    /**
-     * This function returns an ItemStack that represents this cart.
-     * This should be an ItemStack that can be used by the player to place the cart,
-     * but is not necessary the item the cart drops when destroyed.
-     * @return An ItemStack that can be used to place the cart.
-     */
-    default ItemStack getCartItem()
-    {
-        switch (getMinecart().getMinecartType())
-        {
-            case FURNACE: return new ItemStack(Items.FURNACE_MINECART);
-            case CHEST:   return new ItemStack(Items.CHEST_MINECART);
-            case TNT:     return new ItemStack(Items.TNT_MINECART);
-            case HOPPER:  return new ItemStack(Items.HOPPER_MINECART);
-            case COMMAND_BLOCK: return new ItemStack(Items.COMMAND_BLOCK_MINECART);
-            default:      return new ItemStack(Items.MINECART);
-        }
-    }
+	/**
+	 * This function returns an ItemStack that represents this cart.
+	 * This should be an ItemStack that can be used by the player to place the cart,
+	 * but is not necessary the item the cart drops when destroyed.
+	 *
+	 * @return An ItemStack that can be used to place the cart.
+	 */
+	default ItemStack getCartItem() {
+		switch (getMinecart().getMinecartType()) {
+		case FURNACE:
+			return new ItemStack(Items.FURNACE_MINECART);
+		case CHEST:
+			return new ItemStack(Items.CHEST_MINECART);
+		case TNT:
+			return new ItemStack(Items.TNT_MINECART);
+		case HOPPER:
+			return new ItemStack(Items.HOPPER_MINECART);
+		case COMMAND_BLOCK:
+			return new ItemStack(Items.COMMAND_BLOCK_MINECART);
+		default:
+			return new ItemStack(Items.MINECART);
+		}
+	}
 
-    /**
-     * Returns true if this cart can currently use rails.
-     * This function is mainly used to gracefully detach a minecart from a rail.
-     * @return True if the minecart can use rails.
-     */
-    boolean canUseRail();
+	/**
+	 * Returns true if this cart can currently use rails.
+	 * This function is mainly used to gracefully detach a minecart from a rail.
+	 *
+	 * @return True if the minecart can use rails.
+	 */
+	boolean canUseRail();
 
-    /**
-     * Set whether the minecart can use rails.
-     * This function is mainly used to gracefully detach a minecart from a rail.
-     * @param use Whether the minecart can currently use rails.
-     */
-    void setCanUseRail(boolean use);
+	/**
+	 * Set whether the minecart can use rails.
+	 * This function is mainly used to gracefully detach a minecart from a rail.
+	 *
+	 * @param use Whether the minecart can currently use rails.
+	 */
+	void setCanUseRail(boolean use);
 
-    /**
-     * Return false if this cart should not call onMinecartPass() and should ignore Powered Rails.
-     * @return True if this cart should call onMinecartPass().
-     */
-    default boolean shouldDoRailFunctions() {
-        return true;
-    }
+	/**
+	 * Return false if this cart should not call onMinecartPass() and should ignore Powered Rails.
+	 *
+	 * @return True if this cart should call onMinecartPass().
+	 */
+	default boolean shouldDoRailFunctions() {
+		return true;
+	}
 
-    /**
-     * Returns true if this cart is self propelled.
-     * @return True if powered.
-     */
-    default boolean isPoweredCart() {
-        return getMinecart().getMinecartType() == AbstractMinecartEntity.Type.FURNACE;
-    }
+	/**
+	 * Returns true if this cart is self propelled.
+	 *
+	 * @return True if powered.
+	 */
+	default boolean isPoweredCart() {
+		return getMinecart().getMinecartType() == AbstractMinecartEntity.Type.FURNACE;
+	}
 
-    /**
-     * Returns true if this cart can be ridden by an Entity.
-     * @return True if this cart can be ridden.
-     */
-    default boolean canBeRidden() {
-        return getMinecart().getMinecartType() == AbstractMinecartEntity.Type.RIDEABLE;
-    }
+	/**
+	 * Returns true if this cart can be ridden by an Entity.
+	 *
+	 * @return True if this cart can be ridden.
+	 */
+	default boolean canBeRidden() {
+		return getMinecart().getMinecartType() == AbstractMinecartEntity.Type.RIDEABLE;
+	}
 
-    /**
-     * Returns the carts max speed when traveling on rails. Carts going faster
-     * than 1.1 cause issues with chunk loading. Carts cant traverse slopes or
-     * corners at greater than 0.5 - 0.6. This value is compared with the rails
-     * max speed and the carts current speed cap to determine the carts current
-     * max speed. A normal rail's max speed is 0.4.
-     *
-     * @return Carts max speed.
-     */
-    default float getMaxCartSpeedOnRail() {
-        return 1.2f;
-    }
+	/**
+	 * Returns the carts max speed when traveling on rails. Carts going faster
+	 * than 1.1 cause issues with chunk loading. Carts cant traverse slopes or
+	 * corners at greater than 0.5 - 0.6. This value is compared with the rails
+	 * max speed and the carts current speed cap to determine the carts current
+	 * max speed. A normal rail's max speed is 0.4.
+	 *
+	 * @return Carts max speed.
+	 */
+	default float getMaxCartSpeedOnRail() {
+		return 1.2f;
+	}
 
-    /**
-     * Returns the current speed cap for the cart when traveling on rails. This
-     * functions differs from getMaxCartSpeedOnRail() in that it controls
-     * current movement and cannot be overridden. The value however can never be
-     * higher than getMaxCartSpeedOnRail().
-     *
-     * @return
-     */
-    float getCurrentCartSpeedCapOnRail();
-    void setCurrentCartSpeedCapOnRail(float value);
-    float getMaxSpeedAirLateral();
-    void setMaxSpeedAirLateral(float value);
-    float getMaxSpeedAirVertical();
-    void setMaxSpeedAirVertical(float value);
-    double getDragAir();
-    void setDragAir(double value);
+	/**
+	 * Returns the current speed cap for the cart when traveling on rails. This
+	 * functions differs from getMaxCartSpeedOnRail() in that it controls
+	 * current movement and cannot be overridden. The value however can never be
+	 * higher than getMaxCartSpeedOnRail().
+	 *
+	 * @return
+	 */
+	float getCurrentCartSpeedCapOnRail();
 
-    default double getSlopeAdjustment() {
-        return 0.0078125D;
-    }
+	void setCurrentCartSpeedCapOnRail(float value);
 
-    /**
-     * Called from Detector Rails to retrieve a redstone power level for comparators.
-     */
-    default int getComparatorLevel() {
-        return -1;
-    }
+	float getMaxSpeedAirLateral();
+
+	void setMaxSpeedAirLateral(float value);
+
+	float getMaxSpeedAirVertical();
+
+	void setMaxSpeedAirVertical(float value);
+
+	double getDragAir();
+
+	void setDragAir(double value);
+
+	default double getSlopeAdjustment() {
+		return 0.0078125D;
+	}
+
+	/**
+	 * Called from Detector Rails to retrieve a redstone power level for comparators.
+	 */
+	default int getComparatorLevel() {
+		return -1;
+	}
 }

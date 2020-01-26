@@ -6,14 +6,14 @@
     "#"
   ],
   "key": {
-      "#": {
-        "type": "forge:ore_dict",
-        "ore": "stickWood"
-      },
-      "X": {
-        "item": "minecraft:beetroot"
-      }
+    "#": {
+      "type": "forge:ore_dict",
+      "ore": "stickWood"
     },
+    "X": {
+      "item": "minecraft:beetroot"
+    }
+  },
   "result": {
     "item": "minecraft:dirt",
     "data": 0

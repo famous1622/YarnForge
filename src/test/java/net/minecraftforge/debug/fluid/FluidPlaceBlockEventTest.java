@@ -35,10 +35,10 @@ import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 */
 /**
  * This test will:
- *  - Cause lava to turn into gold when touched by water.
- *  - Replace the result of a cobblestone generator with granite.
- *  - Replace the result of a stone generator with either diamond, or emerald when in a biome where emerald spawns naturally.
- *  - Prevent lava from setting surrounding blocks on fire.
+ * - Cause lava to turn into gold when touched by water.
+ * - Replace the result of a cobblestone generator with granite.
+ * - Replace the result of a stone generator with either diamond, or emerald when in a biome where emerald spawns naturally.
+ * - Prevent lava from setting surrounding blocks on fire.
  *//*
 
 //@Mod(modid = "fluidplaceblocktest", name = "FluidPlaceBlockTest", version = "0.0.0", acceptableRemoteVersions = "*")

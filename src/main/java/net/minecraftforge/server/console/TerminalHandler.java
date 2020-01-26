@@ -19,8 +19,6 @@
 
 package net.minecraftforge.server.console;
 
-import net.minecraft.server.dedicated.DedicatedServer;
-import net.minecraftforge.fml.StartupQuery;
 import net.minecrell.terminalconsole.TerminalConsoleAppender;
 import org.jline.reader.EndOfFileException;
 import org.jline.reader.LineReader;
@@ -28,64 +26,55 @@ import org.jline.reader.LineReaderBuilder;
 import org.jline.reader.UserInterruptException;
 import org.jline.terminal.Terminal;
 
-public final class TerminalHandler
-{
+import net.minecraft.server.dedicated.DedicatedServer;
 
-    private TerminalHandler()
-    {
-    }
+public final class TerminalHandler {
 
-    public static boolean handleCommands(DedicatedServer server)
-    {
-        final Terminal terminal = TerminalConsoleAppender.getTerminal();
-        if (terminal == null)
-            return false;
+	private TerminalHandler() {
+	}
 
-        LineReader reader = LineReaderBuilder.builder()
-                .appName("Forge")
-                .terminal(terminal)
-                .completer(new ConsoleCommandCompleter(server))
-                .build();
-        reader.setOpt(LineReader.Option.DISABLE_EVENT_EXPANSION);
-        reader.unsetOpt(LineReader.Option.INSERT_TAB);
+	public static boolean handleCommands(DedicatedServer server) {
+		final Terminal terminal = TerminalConsoleAppender.getTerminal();
+		if (terminal == null) {
+			return false;
+		}
 
-        TerminalConsoleAppender.setReader(reader);
+		LineReader reader = LineReaderBuilder.builder()
+				.appName("Forge")
+				.terminal(terminal)
+				.completer(new ConsoleCommandCompleter(server))
+				.build();
+		reader.setOpt(LineReader.Option.DISABLE_EVENT_EXPANSION);
+		reader.unsetOpt(LineReader.Option.INSERT_TAB);
 
-        try
-        {
-            String line;
-            while (!server.isServerStopped() && server.isServerRunning())
-            {
-                try
-                {
-                    line = reader.readLine("> ");
-                }
-                catch (EndOfFileException ignored)
-                {
-                    // Continue reading after EOT
-                    continue;
-                }
+		TerminalConsoleAppender.setReader(reader);
 
-                if (line == null)
-                    break;
+		try {
+			String line;
+			while (!server.isServerStopped() && server.isServerRunning()) {
+				try {
+					line = reader.readLine("> ");
+				} catch (EndOfFileException ignored) {
+					// Continue reading after EOT
+					continue;
+				}
 
-                line = line.trim();
-                if (!line.isEmpty())
-                {
-                    server.handleConsoleInput(line, server.getCommandSource());
-                }
-            }
-        }
-        catch (UserInterruptException e)
-        {
-            server.initiateShutdown(true);
-        }
-        finally
-        {
-            TerminalConsoleAppender.setReader(null);
-        }
+				if (line == null) {
+					break;
+				}
 
-        return true;
-    }
+				line = line.trim();
+				if (!line.isEmpty()) {
+					server.handleConsoleInput(line, server.getCommandSource());
+				}
+			}
+		} catch (UserInterruptException e) {
+			server.initiateShutdown(true);
+		} finally {
+			TerminalConsoleAppender.setReader(null);
+		}
+
+		return true;
+	}
 
 }

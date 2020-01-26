@@ -19,19 +19,19 @@
 
 package net.minecraftforge.debug.block;
 
-import net.minecraft.entity.item.FallingBlockEntity;
 import net.minecraftforge.event.world.BlockEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 
+import net.minecraft.entity.item.FallingBlockEntity;
+
 @Mod("base_block_place_event_test")
 @Mod.EventBusSubscriber
-public class BasePlaceEventTest
-{
-    @SubscribeEvent
-    public static void onBlockPlaced(BlockEvent.EntityPlaceEvent event)
-    {
-        if (event.getEntity() instanceof FallingBlockEntity)
-            event.setCanceled(true);
-    }
+public class BasePlaceEventTest {
+	@SubscribeEvent
+	public static void onBlockPlaced(BlockEvent.EntityPlaceEvent event) {
+		if (event.getEntity() instanceof FallingBlockEntity) {
+			event.setCanceled(true);
+		}
+	}
 }

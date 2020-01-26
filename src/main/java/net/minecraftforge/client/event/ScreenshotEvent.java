@@ -19,68 +19,61 @@
 
 package net.minecraftforge.client.event;
 
-import net.minecraft.client.renderer.texture.NativeImage;
-import net.minecraft.util.text.ITextComponent;
-import net.minecraft.util.text.StringTextComponent;
+import java.io.File;
+
 import net.minecraftforge.eventbus.api.Cancelable;
 import net.minecraftforge.eventbus.api.Event;
 
-import java.io.File;
+import net.minecraft.client.renderer.texture.NativeImage;
+import net.minecraft.util.text.ITextComponent;
+import net.minecraft.util.text.StringTextComponent;
 
 /**
  * This event is fired before and after a screenshot is taken
  * This event is fired on the {@link net.minecraftforge.common.MinecraftForge#EVENT_BUS}
  * This event is {@link Cancelable}
- *
+ * <p>
  * {@link #screenshotFile} contains the file the screenshot will be/was saved to
  * {@link #image} contains the {@link NativeImage} that will be saved
  * {@link #resultMessage} contains the {@link ITextComponent} to be returned. If {@code null}, the default vanilla message will be used instead
  */
 @Cancelable
-public class ScreenshotEvent extends Event
-{
+public class ScreenshotEvent extends Event {
 
-    public static final ITextComponent DEFAULT_CANCEL_REASON = new StringTextComponent("Screenshot canceled");
+	public static final ITextComponent DEFAULT_CANCEL_REASON = new StringTextComponent("Screenshot canceled");
 
-    private NativeImage image;
-    private File screenshotFile;
+	private NativeImage image;
+	private File screenshotFile;
 
-    private ITextComponent resultMessage = null;
+	private ITextComponent resultMessage = null;
 
-    public ScreenshotEvent(NativeImage image, File screenshotFile)
-    {
-        this.image = image;
-        this.screenshotFile = screenshotFile;
-    }
+	public ScreenshotEvent(NativeImage image, File screenshotFile) {
+		this.image = image;
+		this.screenshotFile = screenshotFile;
+	}
 
-    public NativeImage getImage()
-    {
-        return image;
-    }
+	public NativeImage getImage() {
+		return image;
+	}
 
-    public File getScreenshotFile()
-    {
-        return screenshotFile;
-    }
+	public File getScreenshotFile() {
+		return screenshotFile;
+	}
 
-    public void setScreenshotFile(File screenshotFile)
-    {
-        this.screenshotFile = screenshotFile;
-    }
+	public void setScreenshotFile(File screenshotFile) {
+		this.screenshotFile = screenshotFile;
+	}
 
-    public ITextComponent getResultMessage()
-    {
-        return resultMessage;
-    }
+	public ITextComponent getResultMessage() {
+		return resultMessage;
+	}
 
-    public void setResultMessage(ITextComponent resultMessage)
-    {
-        this.resultMessage = resultMessage;
-    }
+	public void setResultMessage(ITextComponent resultMessage) {
+		this.resultMessage = resultMessage;
+	}
 
-    public ITextComponent getCancelMessage()
-    {
-        return getResultMessage() != null ? getResultMessage() : DEFAULT_CANCEL_REASON;
-    }
+	public ITextComponent getCancelMessage() {
+		return getResultMessage() != null ? getResultMessage() : DEFAULT_CANCEL_REASON;
+	}
 
 }

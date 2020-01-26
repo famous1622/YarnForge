@@ -19,102 +19,86 @@
 
 package net.minecraftforge.logging;
 
+import static net.minecraftforge.client.model.ModelLoader.getInventoryVariant;
+
+import java.util.Collection;
+
 import com.google.common.base.Joiner;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
+import net.minecraftforge.client.model.ModelLoader;
+import net.minecraftforge.registries.ForgeRegistries;
+import org.apache.logging.log4j.message.SimpleMessage;
+
 import net.minecraft.block.BlockState;
 import net.minecraft.client.renderer.BlockModelShapes;
 import net.minecraft.client.renderer.model.ModelResourceLocation;
-import net.minecraft.item.Item;
-import net.minecraftforge.client.model.ModelLoader;
-import net.minecraftforge.registries.ForgeRegistries;
 
-import org.apache.logging.log4j.message.SimpleMessage;
+public class ModelLoaderErrorMessage extends SimpleMessage {
+	private static Multimap<ModelResourceLocation, BlockState> reverseBlockMap = HashMultimap.create();
+	private static Multimap<ModelResourceLocation, String> reverseItemMap = HashMultimap.create();
+	private final ModelResourceLocation resourceLocation;
+	private final Exception exception;
 
-import java.util.Collection;
-import java.util.function.Function;
+	public ModelLoaderErrorMessage(ModelResourceLocation resourceLocation, Exception exception) {
+		// if we're logging these error messages, this will get built for reference
+		buildLookups();
+		this.resourceLocation = resourceLocation;
+		this.exception = exception;
+	}
 
-import static net.minecraftforge.client.model.ModelLoader.getInventoryVariant;
+	private static void buildLookups() {
+		if (!reverseBlockMap.isEmpty()) return;
 
-public class ModelLoaderErrorMessage extends SimpleMessage
-{
-    private final ModelResourceLocation resourceLocation;
-    private final Exception exception;
+		ForgeRegistries.BLOCKS.getValues().stream()
+				.flatMap(block -> block.getStateContainer().getValidStates().stream())
+				.forEach(state -> reverseBlockMap.put(BlockModelShapes.getModelLocation(state), state));
 
-    private static Multimap<ModelResourceLocation, BlockState> reverseBlockMap = HashMultimap.create();
-    private static Multimap<ModelResourceLocation, String> reverseItemMap = HashMultimap.create();
+		ForgeRegistries.ITEMS.forEach(item ->
+		{
+			ModelResourceLocation memory = getInventoryVariant(ForgeRegistries.ITEMS.getKey(item).toString());
+			reverseItemMap.put(memory, item.getRegistryName().toString());
+		});
 
-    private static void buildLookups() {
-        if (!reverseBlockMap.isEmpty()) return;
-        
-        ForgeRegistries.BLOCKS.getValues().stream()
-        	.flatMap(block -> block.getStateContainer().getValidStates().stream())
-        	.forEach(state -> reverseBlockMap.put(BlockModelShapes.getModelLocation(state), state));
+	}
 
-        ForgeRegistries.ITEMS.forEach(item ->
-        {
-        	ModelResourceLocation memory = getInventoryVariant(ForgeRegistries.ITEMS.getKey(item).toString());
-        	reverseItemMap.put(memory, item.getRegistryName().toString());
-        });
-
-    }
-
-    public ModelLoaderErrorMessage(ModelResourceLocation resourceLocation, Exception exception)
-    {
-        // if we're logging these error messages, this will get built for reference
-        buildLookups();
-        this.resourceLocation = resourceLocation;
-        this.exception = exception;
-    }
-
-    private void stuffs() {
-        String domain = resourceLocation.getNamespace();
-        String errorMsg = "Exception loading model for variant " + resourceLocation;
-        Collection<BlockState> blocks = reverseBlockMap.get(resourceLocation);
-        if(!blocks.isEmpty())
-        {
-            if(blocks.size() == 1)
-            {
-                errorMsg += " for blockstate \"" + blocks.iterator().next() + "\"";
-            }
-            else
-            {
-                errorMsg += " for blockstates [\"" + Joiner.on("\", \"").join(blocks) + "\"]";
-            }
-        }
-        Collection<String> items = reverseItemMap.get(resourceLocation);
-        if(!items.isEmpty())
-        {
-            if(!blocks.isEmpty()) errorMsg += " and";
-            if(items.size() == 1)
-            {
-                errorMsg += " for item \"" + items.iterator().next() + "\"";
-            }
-            else
-            {
-                errorMsg += " for items [\"" + Joiner.on("\", \"").join(items) + "\"]";
-            }
-        }
-        if(exception instanceof ModelLoader.ItemLoadingException)
-        {
-            ModelLoader.ItemLoadingException ex = (ModelLoader.ItemLoadingException)exception;
+	private void stuffs() {
+		String domain = resourceLocation.getNamespace();
+		String errorMsg = "Exception loading model for variant " + resourceLocation;
+		Collection<BlockState> blocks = reverseBlockMap.get(resourceLocation);
+		if (!blocks.isEmpty()) {
+			if (blocks.size() == 1) {
+				errorMsg += " for blockstate \"" + blocks.iterator().next() + "\"";
+			} else {
+				errorMsg += " for blockstates [\"" + Joiner.on("\", \"").join(blocks) + "\"]";
+			}
+		}
+		Collection<String> items = reverseItemMap.get(resourceLocation);
+		if (!items.isEmpty()) {
+			if (!blocks.isEmpty()) errorMsg += " and";
+			if (items.size() == 1) {
+				errorMsg += " for item \"" + items.iterator().next() + "\"";
+			} else {
+				errorMsg += " for items [\"" + Joiner.on("\", \"").join(items) + "\"]";
+			}
+		}
+		if (exception instanceof ModelLoader.ItemLoadingException) {
+			ModelLoader.ItemLoadingException ex = (ModelLoader.ItemLoadingException) exception;
 //            LOGGER.error("{}, normal location exception: ", errorMsg, ex.normalException);
 //            LOGGER.error("{}, blockstate location exception: ", errorMsg, ex.blockstateException);
-        }
-        else
-        {
+		} else {
 //            LOGGER.error(errorMsg, entry.getValue());
-        }
+		}
 //        ResourceLocation blockstateLocation = new ResourceLocation(resourceLocation.getResourceDomain(), resourceLocation.getResourcePath());
 //        if(loadingExceptions.containsKey(blockstateLocation) && !printedBlockStateErrors.contains(blockstateLocation))
 //        {
 //            LOGGER.error("Exception loading blockstate for the variant {}: ", location, loadingExceptions.get(blockstateLocation));
 //            printedBlockStateErrors.add(blockstateLocation);
 //        }
-    }
-    @Override
-    public void formatTo(StringBuilder buffer)
-    {
+	}
 
-    }
+	@Override
+	public void formatTo(StringBuilder buffer) {
+
+	}
 }

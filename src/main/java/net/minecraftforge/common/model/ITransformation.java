@@ -27,11 +27,10 @@ import net.minecraft.util.Direction;
  * Replacement interface for ModelRotation to allow custom transformations of vanilla models.
  * You should probably use TRSRTransformation directly.
  */
-public interface ITransformation
-{
-    Matrix4f getMatrixVec();
+public interface ITransformation {
+	Matrix4f getMatrixVec();
 
-    Direction rotateTransform(Direction facing);
+	Direction rotateTransform(Direction facing);
 
-    int rotate(Direction facing, int vertexIndex);
+	int rotate(Direction facing, int vertexIndex);
 }

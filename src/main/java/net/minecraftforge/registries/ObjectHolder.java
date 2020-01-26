@@ -29,15 +29,14 @@ import java.lang.annotation.Target;
  * from the registry. These values can then be referred within mod code directly.
  */
 @Retention(RetentionPolicy.RUNTIME)
-@Target({ElementType.TYPE, ElementType.FIELD})
-public @interface ObjectHolder
-{
-    /**
-     * If used on a class, this represents a modid only.
-     * If used on a field, it represents a name, which can be abbreviated or complete.
-     * Abbreviated names derive their modid from an enclosing ObjectHolder at the class level.
-     *
-     * @return either a modid or a name based on the rules above
-     */
-    String value();
+@Target( {ElementType.TYPE, ElementType.FIELD})
+public @interface ObjectHolder {
+	/**
+	 * If used on a class, this represents a modid only.
+	 * If used on a field, it represents a name, which can be abbreviated or complete.
+	 * Abbreviated names derive their modid from an enclosing ObjectHolder at the class level.
+	 *
+	 * @return either a modid or a name based on the rules above
+	 */
+	String value();
 }

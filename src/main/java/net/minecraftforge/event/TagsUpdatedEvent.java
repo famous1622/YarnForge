@@ -19,8 +19,9 @@
 
 package net.minecraftforge.event;
 
-import net.minecraft.tags.NetworkTagManager;
 import net.minecraftforge.eventbus.api.Event;
+
+import net.minecraft.tags.NetworkTagManager;
 
 /**
  * Fired on the client when {@link NetworkTagManager} has all of its tags synced from the server to the client (just after a client has connected).
@@ -29,21 +30,18 @@ import net.minecraftforge.eventbus.api.Event;
  * On the client, this event fires on the Client Thread.
  * On the server, this event may be fired on the Server Thread, or an async reloader thread.
  */
-public class TagsUpdatedEvent extends Event
-{
-    
-    private final NetworkTagManager manager;
-    
-    public TagsUpdatedEvent(NetworkTagManager manager)
-    {
-        this.manager = manager;
-    }
+public class TagsUpdatedEvent extends Event {
 
-    /**
-     * @return The network tag manager that has been updated with newly received tags.
-     */
-    public NetworkTagManager getTagManager()
-    {
-        return manager;
-    }
+	private final NetworkTagManager manager;
+
+	public TagsUpdatedEvent(NetworkTagManager manager) {
+		this.manager = manager;
+	}
+
+	/**
+	 * @return The network tag manager that has been updated with newly received tags.
+	 */
+	public NetworkTagManager getTagManager() {
+		return manager;
+	}
 }

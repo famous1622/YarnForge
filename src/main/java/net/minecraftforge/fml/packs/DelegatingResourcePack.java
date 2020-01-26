@@ -18,116 +18,93 @@ import net.minecraft.resources.data.IMetadataSectionSerializer;
 import net.minecraft.resources.data.PackMetadataSection;
 import net.minecraft.util.ResourceLocation;
 
-public class DelegatingResourcePack extends ResourcePack
-{
-    private final List<DelegatableResourcePack> delegates = new ArrayList<>();
-    private final String name;
-    private final PackMetadataSection packInfo;
-    
-    public DelegatingResourcePack(String id, String name, PackMetadataSection packInfo)
-    {
-        this(id, name, packInfo, Collections.emptyList());
-    }
+public class DelegatingResourcePack extends ResourcePack {
+	private final List<DelegatableResourcePack> delegates = new ArrayList<>();
+	private final String name;
+	private final PackMetadataSection packInfo;
 
-    public DelegatingResourcePack(String id, String name, PackMetadataSection packInfo, List<DelegatableResourcePack> packs)
-    {
-        super(new File(id));
-        this.name = name;
-        this.packInfo = packInfo;
-        packs.forEach(this::addDelegate);
-    }
+	public DelegatingResourcePack(String id, String name, PackMetadataSection packInfo) {
+		this(id, name, packInfo, Collections.emptyList());
+	}
 
-    public void addDelegate(DelegatableResourcePack pack)
-    {
-        synchronized(delegates)
-        {
-            this.delegates.add(pack);
-        }
-    }
-    
-    @Override
-    public String getName()
-    {
-        return name;
-    }
-    
-    @SuppressWarnings("unchecked")
-    @Override
-    public <T> T getMetadata(IMetadataSectionSerializer<T> deserializer) throws IOException
-    {
-        if (deserializer.getSectionName().equals("pack"))
-        {
-            return (T) packInfo;
-        }
-        return null;
-    }
+	public DelegatingResourcePack(String id, String name, PackMetadataSection packInfo, List<DelegatableResourcePack> packs) {
+		super(new File(id));
+		this.name = name;
+		this.packInfo = packInfo;
+		packs.forEach(this::addDelegate);
+	}
 
-    @Override
-    public Collection<ResourceLocation> getAllResourceLocations(ResourcePackType type, String pathIn, int maxDepth, Predicate<String> filter)
-    {
-        synchronized(delegates)
-        {
-            return delegates.stream()
-                    .flatMap(r -> r.getAllResourceLocations(type, pathIn, maxDepth, filter).stream())
-                    .collect(Collectors.toList());
-        }
-    }
+	public void addDelegate(DelegatableResourcePack pack) {
+		synchronized (delegates) {
+			this.delegates.add(pack);
+		}
+	}
 
-    @Override
-    public Set<String> getResourceNamespaces(ResourcePackType type)
-    {
-        synchronized (delegates)
-        {
-            return delegates.stream()
-                    .flatMap(r -> r.getResourceNamespaces(type).stream())
-                    .collect(Collectors.toSet());
-        }
-    }
+	@Override
+	public String getName() {
+		return name;
+	}
 
-    @Override
-    public void close() throws IOException
-    {
-        synchronized(delegates)
-        {
-            for (ResourcePack pack : delegates)
-            {
-                pack.close();
-            }
-        }
-    }
+	@SuppressWarnings("unchecked")
+	@Override
+	public <T> T getMetadata(IMetadataSectionSerializer<T> deserializer) throws IOException {
+		if (deserializer.getSectionName().equals("pack")) {
+			return (T) packInfo;
+		}
+		return null;
+	}
 
-    @Override
-    protected InputStream getInputStream(String resourcePath) throws IOException
-    {
-        if (!resourcePath.equals("pack.png")) // Mods shouldn't be able to mess with the pack icon
-        {
-            synchronized (delegates)
-            {
-                for (DelegatableResourcePack pack : delegates)
-                {
-                    if (pack.resourceExists(resourcePath))
-                    {
-                        return pack.getInputStream(resourcePath);
-                    }
-                }
-            }
-        }
-        throw new ResourcePackFileNotFoundException(this.file, resourcePath);
-    }
+	@Override
+	public Collection<ResourceLocation> getAllResourceLocations(ResourcePackType type, String pathIn, int maxDepth, Predicate<String> filter) {
+		synchronized (delegates) {
+			return delegates.stream()
+					.flatMap(r -> r.getAllResourceLocations(type, pathIn, maxDepth, filter).stream())
+					.collect(Collectors.toList());
+		}
+	}
 
-    @Override
-    protected boolean resourceExists(String resourcePath)
-    {
-        synchronized (delegates)
-        {
-            for (DelegatableResourcePack pack : delegates)
-            {
-                if (pack.resourceExists(resourcePath))
-                {
-                    return true;
-                }
-            }
-        }
-        return false;
-    }
+	@Override
+	public Set<String> getResourceNamespaces(ResourcePackType type) {
+		synchronized (delegates) {
+			return delegates.stream()
+					.flatMap(r -> r.getResourceNamespaces(type).stream())
+					.collect(Collectors.toSet());
+		}
+	}
+
+	@Override
+	public void close() throws IOException {
+		synchronized (delegates) {
+			for (ResourcePack pack : delegates) {
+				pack.close();
+			}
+		}
+	}
+
+	@Override
+	protected InputStream getInputStream(String resourcePath) throws IOException {
+		if (!resourcePath.equals("pack.png")) // Mods shouldn't be able to mess with the pack icon
+		{
+			synchronized (delegates) {
+				for (DelegatableResourcePack pack : delegates) {
+					if (pack.resourceExists(resourcePath)) {
+						return pack.getInputStream(resourcePath);
+					}
+				}
+			}
+		}
+		throw new ResourcePackFileNotFoundException(this.file, resourcePath);
+	}
+
+	@Override
+	protected boolean resourceExists(String resourcePath) {
+		synchronized (delegates) {
+			for (DelegatableResourcePack pack : delegates) {
+				if (pack.resourceExists(resourcePath)) {
+					return true;
+				}
+			}
+		}
+		return false;
+	}
 }

@@ -27,65 +27,54 @@ import net.minecraft.tags.Tag;
 import net.minecraft.util.JSONUtils;
 import net.minecraft.util.ResourceLocation;
 
-public class TagEmptyCondition implements ICondition
-{
-    private static final ResourceLocation NAME = new ResourceLocation("forge", "tag_empty");
-    private final ResourceLocation tag_name;
+public class TagEmptyCondition implements ICondition {
+	private static final ResourceLocation NAME = new ResourceLocation("forge", "tag_empty");
+	private final ResourceLocation tag_name;
 
-    public TagEmptyCondition(String location)
-    {
-        this(new ResourceLocation(location));
-    }
+	public TagEmptyCondition(String location) {
+		this(new ResourceLocation(location));
+	}
 
-    public TagEmptyCondition(String namespace, String path)
-    {
-        this(new ResourceLocation(namespace, path));
-    }
+	public TagEmptyCondition(String namespace, String path) {
+		this(new ResourceLocation(namespace, path));
+	}
 
-    public TagEmptyCondition(ResourceLocation tag)
-    {
-        this.tag_name = tag;
-    }
+	public TagEmptyCondition(ResourceLocation tag) {
+		this.tag_name = tag;
+	}
 
-    @Override
-    public ResourceLocation getID()
-    {
-        return NAME;
-    }
+	@Override
+	public ResourceLocation getID() {
+		return NAME;
+	}
 
-    @Override
-    public boolean test()
-    {
-        Tag<Item> tag = ItemTags.getCollection().get(tag_name);
-        return tag == null || tag.getAllElements().isEmpty();
-    }
+	@Override
+	public boolean test() {
+		Tag<Item> tag = ItemTags.getCollection().get(tag_name);
+		return tag == null || tag.getAllElements().isEmpty();
+	}
 
-    @Override
-    public String toString()
-    {
-        return "tag_empty(\"" + tag_name + "\")";
-    }
+	@Override
+	public String toString() {
+		return "tag_empty(\"" + tag_name + "\")";
+	}
 
-    public static class Serializer implements IConditionSerializer<TagEmptyCondition>
-    {
-        public static final Serializer INSTANCE = new Serializer();
+	public static class Serializer implements IConditionSerializer<TagEmptyCondition> {
+		public static final Serializer INSTANCE = new Serializer();
 
-        @Override
-        public void write(JsonObject json, TagEmptyCondition value)
-        {
-            json.addProperty("tag", value.tag_name.toString());
-        }
+		@Override
+		public void write(JsonObject json, TagEmptyCondition value) {
+			json.addProperty("tag", value.tag_name.toString());
+		}
 
-        @Override
-        public TagEmptyCondition read(JsonObject json)
-        {
-            return new TagEmptyCondition(new ResourceLocation(JSONUtils.getString(json, "tag")));
-        }
+		@Override
+		public TagEmptyCondition read(JsonObject json) {
+			return new TagEmptyCondition(new ResourceLocation(JSONUtils.getString(json, "tag")));
+		}
 
-        @Override
-        public ResourceLocation getID()
-        {
-            return TagEmptyCondition.NAME;
-        }
-    }
+		@Override
+		public ResourceLocation getID() {
+			return TagEmptyCondition.NAME;
+		}
+	}
 }

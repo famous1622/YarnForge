@@ -19,19 +19,19 @@
 
 package net.minecraftforge.common.property;
 
-import net.minecraft.state.BooleanProperty;
 import net.minecraftforge.client.model.data.ModelProperty;
 import net.minecraftforge.common.model.IModelState;
 
-public class Properties
-{
-    /**
-     * Property indicating if the model should be rendered in the static renderer or in the TESR. AnimationTESR sets it to false.
-     */
-    public static final BooleanProperty StaticProperty = BooleanProperty.create("static");
+import net.minecraft.state.BooleanProperty;
 
-    /**
-     * Property holding the IModelState used for animating the model in the TESR.
-     */
-    public static final ModelProperty<IModelState> AnimationProperty = new ModelProperty<IModelState>();
+public class Properties {
+	/**
+	 * Property indicating if the model should be rendered in the static renderer or in the TESR. AnimationTESR sets it to false.
+	 */
+	public static final BooleanProperty StaticProperty = BooleanProperty.create("static");
+
+	/**
+	 * Property holding the IModelState used for animating the model in the TESR.
+	 */
+	public static final ModelProperty<IModelState> AnimationProperty = new ModelProperty<IModelState>();
 }

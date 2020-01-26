@@ -29,18 +29,6 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.BiConsumer;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import org.apache.logging.log4j.Marker;
-import org.apache.logging.log4j.MarkerManager;
-
-import net.minecraft.network.NetworkManager;
-import net.minecraft.network.ProtocolType;
-import net.minecraft.network.handshake.client.CHandshakePacket;
-import net.minecraft.network.login.server.SDisconnectLoginPacket;
-import net.minecraft.resources.ResourcePackInfo;
-import net.minecraft.server.MinecraftServer;
-import net.minecraft.util.text.StringTextComponent;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.fml.DistExecutor;
@@ -64,110 +52,111 @@ import net.minecraftforge.fml.network.NetworkRegistry;
 import net.minecraftforge.fml.packs.ModFileResourcePack;
 import net.minecraftforge.fml.packs.ResourcePackLoader;
 import net.minecraftforge.forgespi.language.IModInfo;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.Marker;
+import org.apache.logging.log4j.MarkerManager;
 
-public class ServerLifecycleHooks
-{
-    private static final Logger LOGGER = LogManager.getLogger();
-    private static final Marker SERVERHOOKS = MarkerManager.getMarker("SERVERHOOKS");
-    private static volatile CountDownLatch exitLatch = null;
-    private static MinecraftServer currentServer;
+import net.minecraft.network.NetworkManager;
+import net.minecraft.network.ProtocolType;
+import net.minecraft.network.handshake.client.CHandshakePacket;
+import net.minecraft.network.login.server.SDisconnectLoginPacket;
+import net.minecraft.resources.ResourcePackInfo;
+import net.minecraft.server.MinecraftServer;
+import net.minecraft.util.text.StringTextComponent;
 
-    public static boolean handleServerAboutToStart(final MinecraftServer server)
-    {
-        currentServer = server;
-        LogicalSidedProvider.setServer(()->server);
-        final Path serverConfig = server.getActiveAnvilConverter().getFile(server.getFolderName(), "serverconfig").toPath();
-        FileUtils.getOrCreateDirectory(serverConfig, "serverconfig");
-        ConfigTracker.INSTANCE.loadConfigs(ModConfig.Type.SERVER, serverConfig);
-        ResourcePackLoader.loadResourcePacks(currentServer.getResourcePacks(), ServerLifecycleHooks::buildPackFinder);
-        return !MinecraftForge.EVENT_BUS.post(new FMLServerAboutToStartEvent(server));
-    }
+public class ServerLifecycleHooks {
+	private static final Logger LOGGER = LogManager.getLogger();
+	private static final Marker SERVERHOOKS = MarkerManager.getMarker("SERVERHOOKS");
+	private static volatile CountDownLatch exitLatch = null;
+	private static MinecraftServer currentServer;
+	private static AtomicBoolean allowLogins = new AtomicBoolean(false);
 
-    public static boolean handleServerStarting(final MinecraftServer server)
-    {
-        DistExecutor.runWhenOn(Dist.DEDICATED_SERVER, ()->()->LanguageHook.loadLanguagesOnServer(server));
-        return !MinecraftForge.EVENT_BUS.post(new FMLServerStartingEvent(server));
-    }
+	public static boolean handleServerAboutToStart(final MinecraftServer server) {
+		currentServer = server;
+		LogicalSidedProvider.setServer(() -> server);
+		final Path serverConfig = server.getActiveAnvilConverter().getFile(server.getFolderName(), "serverconfig").toPath();
+		FileUtils.getOrCreateDirectory(serverConfig, "serverconfig");
+		ConfigTracker.INSTANCE.loadConfigs(ModConfig.Type.SERVER, serverConfig);
+		ResourcePackLoader.loadResourcePacks(currentServer.getResourcePacks(), ServerLifecycleHooks::buildPackFinder);
+		return !MinecraftForge.EVENT_BUS.post(new FMLServerAboutToStartEvent(server));
+	}
 
-    public static void handleServerStarted(final MinecraftServer server)
-    {
-        MinecraftForge.EVENT_BUS.post(new FMLServerStartedEvent(server));
-        allowLogins.set(true);
-    }
+	public static boolean handleServerStarting(final MinecraftServer server) {
+		DistExecutor.runWhenOn(Dist.DEDICATED_SERVER, () -> () -> LanguageHook.loadLanguagesOnServer(server));
+		return !MinecraftForge.EVENT_BUS.post(new FMLServerStartingEvent(server));
+	}
 
-    public static void handleServerStopping(final MinecraftServer server)
-    {
-        allowLogins.set(false);
-        MinecraftForge.EVENT_BUS.post(new FMLServerStoppingEvent(server));
-    }
+	public static void handleServerStarted(final MinecraftServer server) {
+		MinecraftForge.EVENT_BUS.post(new FMLServerStartedEvent(server));
+		allowLogins.set(true);
+	}
 
-    public static void expectServerStopped()
-    {
-        exitLatch = new CountDownLatch(1);
-    }
+	public static void handleServerStopping(final MinecraftServer server) {
+		allowLogins.set(false);
+		MinecraftForge.EVENT_BUS.post(new FMLServerStoppingEvent(server));
+	}
 
-    public static void handleServerStopped(final MinecraftServer server)
-    {
-        MinecraftForge.EVENT_BUS.post(new FMLServerStoppedEvent(server));
-        currentServer = null;
-        LogicalSidedProvider.setServer(null);
-        CountDownLatch latch = exitLatch;
+	public static void expectServerStopped() {
+		exitLatch = new CountDownLatch(1);
+	}
 
-        if (latch != null)
-        {
-            latch.countDown();
-            exitLatch = null;
-        }
-    }
+	public static void handleServerStopped(final MinecraftServer server) {
+		MinecraftForge.EVENT_BUS.post(new FMLServerStoppedEvent(server));
+		currentServer = null;
+		LogicalSidedProvider.setServer(null);
+		CountDownLatch latch = exitLatch;
 
-    public static MinecraftServer getCurrentServer()
-    {
-        return currentServer;
-    }
-    private static AtomicBoolean allowLogins = new AtomicBoolean(false);
+		if (latch != null) {
+			latch.countDown();
+			exitLatch = null;
+		}
+	}
 
-    public static boolean handleServerLogin(final CHandshakePacket packet, final NetworkManager manager) {
-        if (!allowLogins.get())
-        {
-            StringTextComponent text = new StringTextComponent("Server is still starting! Please wait before reconnecting.");
-            LOGGER.info(SERVERHOOKS,"Disconnecting Player (server is still starting): {}", text.getUnformattedComponentText());
-            manager.sendPacket(new SDisconnectLoginPacket(text));
-            manager.closeChannel(text);
-            return false;
-        }
+	public static MinecraftServer getCurrentServer() {
+		return currentServer;
+	}
 
-        if (packet.getRequestedState() == ProtocolType.LOGIN) {
-            final ConnectionType connectionType = ConnectionType.forVersionFlag(packet.getFMLVersion());
-            final int versionNumber = connectionType.getFMLVersionNumber(packet.getFMLVersion());
+	public static boolean handleServerLogin(final CHandshakePacket packet, final NetworkManager manager) {
+		if (!allowLogins.get()) {
+			StringTextComponent text = new StringTextComponent("Server is still starting! Please wait before reconnecting.");
+			LOGGER.info(SERVERHOOKS, "Disconnecting Player (server is still starting): {}", text.getUnformattedComponentText());
+			manager.sendPacket(new SDisconnectLoginPacket(text));
+			manager.closeChannel(text);
+			return false;
+		}
 
-            if (connectionType == ConnectionType.MODDED && versionNumber != FMLNetworkConstants.FMLNETVERSION) {
-                rejectConnection(manager, connectionType, "This modded server is not network compatible with your modded client. Please verify your Forge version closely matches the server. Got net version "+ versionNumber + " this server is net version "+FMLNetworkConstants.FMLNETVERSION);
-                return false;
-            }
+		if (packet.getRequestedState() == ProtocolType.LOGIN) {
+			final ConnectionType connectionType = ConnectionType.forVersionFlag(packet.getFMLVersion());
+			final int versionNumber = connectionType.getFMLVersionNumber(packet.getFMLVersion());
 
-            if (connectionType == ConnectionType.VANILLA && !NetworkRegistry.acceptsVanillaClientConnections()) {
-                rejectConnection(manager, connectionType, "This server has mods that require Forge to be installed on the client. Contact your server admin for more details.");
-                return false;
-            }
-        }
+			if (connectionType == ConnectionType.MODDED && versionNumber != FMLNetworkConstants.FMLNETVERSION) {
+				rejectConnection(manager, connectionType, "This modded server is not network compatible with your modded client. Please verify your Forge version closely matches the server. Got net version " + versionNumber + " this server is net version " + FMLNetworkConstants.FMLNETVERSION);
+				return false;
+			}
 
-        if (packet.getRequestedState() == ProtocolType.STATUS) return true;
+			if (connectionType == ConnectionType.VANILLA && !NetworkRegistry.acceptsVanillaClientConnections()) {
+				rejectConnection(manager, connectionType, "This server has mods that require Forge to be installed on the client. Contact your server admin for more details.");
+				return false;
+			}
+		}
 
-        NetworkHooks.registerServerLoginChannel(manager, packet);
-        return true;
+		if (packet.getRequestedState() == ProtocolType.STATUS) return true;
 
-    }
+		NetworkHooks.registerServerLoginChannel(manager, packet);
+		return true;
 
-    private static void rejectConnection(final NetworkManager manager, ConnectionType type, String message) {
-        manager.setConnectionState(ProtocolType.LOGIN);
-        LOGGER.info(SERVERHOOKS, "Disconnecting {} connection attempt: {}", type, message);
-        StringTextComponent text = new StringTextComponent(message);
-        manager.sendPacket(new SDisconnectLoginPacket(text));
-        manager.closeChannel(text);
-    }
+	}
 
-    public static void handleExit(int retVal)
-    {
+	private static void rejectConnection(final NetworkManager manager, ConnectionType type, String message) {
+		manager.setConnectionState(ProtocolType.LOGIN);
+		LOGGER.info(SERVERHOOKS, "Disconnecting {} connection attempt: {}", type, message);
+		StringTextComponent text = new StringTextComponent(message);
+		manager.sendPacket(new SDisconnectLoginPacket(text));
+		manager.closeChannel(text);
+	}
+
+	public static void handleExit(int retVal) {
 /*
         CountDownLatch latch = exitLatch;
 
@@ -192,29 +181,28 @@ public class ServerLifecycleHooks
         }
 
 */
-        System.exit(retVal);
-    }
+		System.exit(retVal);
+	}
 
-    private static <T extends ResourcePackInfo> ResourcePackLoader.IPackInfoFinder<T> buildPackFinder(Map<ModFile, ? extends ModFileResourcePack> modResourcePacks, BiConsumer<? super ModFileResourcePack, ? super T> packSetter) {
-        return (packList, factory) -> serverPackFinder(modResourcePacks, packSetter, packList, factory);
-    }
+	private static <T extends ResourcePackInfo> ResourcePackLoader.IPackInfoFinder<T> buildPackFinder(Map<ModFile, ? extends ModFileResourcePack> modResourcePacks, BiConsumer<? super ModFileResourcePack, ? super T> packSetter) {
+		return (packList, factory) -> serverPackFinder(modResourcePacks, packSetter, packList, factory);
+	}
 
-    private static <T extends ResourcePackInfo> void serverPackFinder(Map<ModFile, ? extends ModFileResourcePack> modResourcePacks, BiConsumer<? super ModFileResourcePack, ? super T> packSetter, Map<String, T> packList, ResourcePackInfo.IFactory<? extends T> factory) {
-        for (Entry<ModFile, ? extends ModFileResourcePack> e : modResourcePacks.entrySet())
-        {
-            IModInfo mod = e.getKey().getModInfos().get(0);
-            if (Objects.equals(mod.getModId(), "minecraft")) continue; // skip the minecraft "mod"
-            final String name = "mod:" + mod.getModId();
-            final T packInfo = ResourcePackInfo.createResourcePack(name, true, e::getValue, factory, ResourcePackInfo.Priority.TOP);
-            if (packInfo == null) {
-                // Vanilla only logs an error, instead of propagating, so handle null and warn that something went wrong
-                ModLoader.get().addWarning(new ModLoadingWarning(mod, ModLoadingStage.ERROR, "fml.modloading.brokenresources", e.getKey()));
-                continue;
-            }
-            packSetter.accept(e.getValue(), packInfo);
-            LOGGER.debug(CORE, "Generating PackInfo named {} for mod file {}", name, e.getKey().getFilePath());
-            packList.put(name, packInfo);
-        }
-    }
+	private static <T extends ResourcePackInfo> void serverPackFinder(Map<ModFile, ? extends ModFileResourcePack> modResourcePacks, BiConsumer<? super ModFileResourcePack, ? super T> packSetter, Map<String, T> packList, ResourcePackInfo.IFactory<? extends T> factory) {
+		for (Entry<ModFile, ? extends ModFileResourcePack> e : modResourcePacks.entrySet()) {
+			IModInfo mod = e.getKey().getModInfos().get(0);
+			if (Objects.equals(mod.getModId(), "minecraft")) continue; // skip the minecraft "mod"
+			final String name = "mod:" + mod.getModId();
+			final T packInfo = ResourcePackInfo.createResourcePack(name, true, e::getValue, factory, ResourcePackInfo.Priority.TOP);
+			if (packInfo == null) {
+				// Vanilla only logs an error, instead of propagating, so handle null and warn that something went wrong
+				ModLoader.get().addWarning(new ModLoadingWarning(mod, ModLoadingStage.ERROR, "fml.modloading.brokenresources", e.getKey()));
+				continue;
+			}
+			packSetter.accept(e.getValue(), packInfo);
+			LOGGER.debug(CORE, "Generating PackInfo named {} for mod file {}", name, e.getKey().getFilePath());
+			packList.put(name, packInfo);
+		}
+	}
 
 }

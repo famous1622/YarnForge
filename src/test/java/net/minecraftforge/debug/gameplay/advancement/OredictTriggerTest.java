@@ -49,6 +49,8 @@ import java.util.Set;
 /**
  * Most of the real work is in the advancements directory of this mod.
  * This mod tests ore-dict advancement triggers.
+ * <p>
+ * Far more work than expected…oh well.
  *//*
 
 //@Mod.EventBusSubscriber
@@ -103,8 +105,8 @@ public class OredictTriggerTest
 
     */
 /**
-     * Far more work than expected…oh well.
-     *//*
+ * Far more work than expected…oh well.
+ *//*
 
     public static class EnabledTrigger implements ICriterionTrigger<EnabledTrigger.Instance>
     {

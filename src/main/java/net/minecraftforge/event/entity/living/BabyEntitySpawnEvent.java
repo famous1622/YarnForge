@@ -19,13 +19,15 @@
 
 package net.minecraftforge.event.entity.living;
 
+import javax.annotation.Nullable;
+
+import net.minecraftforge.common.MinecraftForge;
+import net.minecraftforge.eventbus.api.Cancelable;
+
 import net.minecraft.entity.AgeableEntity;
 import net.minecraft.entity.MobEntity;
 import net.minecraft.entity.passive.AnimalEntity;
 import net.minecraft.entity.player.PlayerEntity;
-import net.minecraftforge.common.MinecraftForge;
-import net.minecraftforge.eventbus.api.Cancelable;
-import javax.annotation.Nullable;
 
 /**
  * BabyEntitySpawnEvent is fired just before a baby entity is about to be spawned. <br>
@@ -47,56 +49,48 @@ import javax.annotation.Nullable;
  * This event is fired on the {@link MinecraftForge#EVENT_BUS}.
  **/
 @Cancelable
-public class BabyEntitySpawnEvent extends net.minecraftforge.eventbus.api.Event
-{
-    private final MobEntity parentA;
-    private final MobEntity parentB;
-    private final PlayerEntity causedByPlayer;
-    private AgeableEntity child;
+public class BabyEntitySpawnEvent extends net.minecraftforge.eventbus.api.Event {
+	private final MobEntity parentA;
+	private final MobEntity parentB;
+	private final PlayerEntity causedByPlayer;
+	private AgeableEntity child;
 
-    public BabyEntitySpawnEvent(MobEntity parentA, MobEntity parentB, @Nullable AgeableEntity proposedChild)
-    {
-        //causedByPlayer calculated here to simplify the patch.
-        PlayerEntity causedByPlayer = null;
-        if (parentA instanceof AnimalEntity) {
-            causedByPlayer = ((AnimalEntity)parentA).getLoveCause();
-        }
+	public BabyEntitySpawnEvent(MobEntity parentA, MobEntity parentB, @Nullable AgeableEntity proposedChild) {
+		//causedByPlayer calculated here to simplify the patch.
+		PlayerEntity causedByPlayer = null;
+		if (parentA instanceof AnimalEntity) {
+			causedByPlayer = ((AnimalEntity) parentA).getLoveCause();
+		}
 
-        if (causedByPlayer == null && parentB instanceof AnimalEntity)
-        {
-            causedByPlayer = ((AnimalEntity)parentB).getLoveCause();
-        }
+		if (causedByPlayer == null && parentB instanceof AnimalEntity) {
+			causedByPlayer = ((AnimalEntity) parentB).getLoveCause();
+		}
 
-        this.parentA = parentA;
-        this.parentB = parentB;
-        this.causedByPlayer = causedByPlayer;
-        this.child = proposedChild;
-    }
+		this.parentA = parentA;
+		this.parentB = parentB;
+		this.causedByPlayer = causedByPlayer;
+		this.child = proposedChild;
+	}
 
-    public MobEntity getParentA()
-    {
-        return parentA;
-    }
+	public MobEntity getParentA() {
+		return parentA;
+	}
 
-    public MobEntity getParentB()
-    {
-        return parentB;
-    }
+	public MobEntity getParentB() {
+		return parentB;
+	}
 
-    @Nullable
-    public PlayerEntity getCausedByPlayer()
-    {
-        return causedByPlayer;
-    }
+	@Nullable
+	public PlayerEntity getCausedByPlayer() {
+		return causedByPlayer;
+	}
 
-    @Nullable
-    public AgeableEntity getChild()
-    {
-        return child;
-    }
+	@Nullable
+	public AgeableEntity getChild() {
+		return child;
+	}
 
-    public void setChild(AgeableEntity proposedChild)
-    {
-        child = proposedChild;
-    }
+	public void setChild(AgeableEntity proposedChild) {
+		child = proposedChild;
+	}
 }

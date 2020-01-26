@@ -19,56 +19,55 @@
 
 package net.minecraftforge.fml;
 
+import java.util.function.Supplier;
+
 import net.minecraftforge.common.ForgeConfigSpec;
 import net.minecraftforge.fml.config.ModConfig;
 
-import java.util.function.Supplier;
+public class ModLoadingContext {
+	private static ThreadLocal<ModLoadingContext> context = ThreadLocal.withInitial(ModLoadingContext::new);
+	private Object languageExtension;
+	private ModContainer activeContainer;
 
-public class ModLoadingContext
-{
-    private static ThreadLocal<ModLoadingContext> context = ThreadLocal.withInitial(ModLoadingContext::new);
-    private Object languageExtension;
+	public static ModLoadingContext get() {
+		return context.get();
+	}
 
-    public static ModLoadingContext get() {
-        return context.get();
-    }
+	public void setActiveContainer(final ModContainer container, final Object languageExtension) {
+		this.activeContainer = container;
+		this.languageExtension = languageExtension;
+	}
 
-    private ModContainer activeContainer;
+	public ModContainer getActiveContainer() {
+		return activeContainer == null ? ModList.get().getModContainerById("minecraft").orElseThrow(() -> new RuntimeException("Where is minecraft???!")) : activeContainer;
+	}
 
-    public void setActiveContainer(final ModContainer container, final Object languageExtension) {
-        this.activeContainer = container;
-        this.languageExtension = languageExtension;
-    }
+	public String getActiveNamespace() {
+		return activeContainer == null ? "minecraft" : activeContainer.getNamespace();
+	}
 
-    public ModContainer getActiveContainer() {
-        return activeContainer == null ? ModList.get().getModContainerById("minecraft").orElseThrow(()->new RuntimeException("Where is minecraft???!")) : activeContainer;
-    }
+	/**
+	 * Register an {@link ExtensionPoint} with the mod container.
+	 *
+	 * @param point     The extension point to register
+	 * @param extension An extension operator
+	 * @param <T>       The type signature of the extension operator
+	 */
+	public <T> void registerExtensionPoint(ExtensionPoint<T> point, Supplier<T> extension) {
+		getActiveContainer().registerExtensionPoint(point, extension);
+	}
 
-    public String getActiveNamespace() {
-        return activeContainer == null ? "minecraft" : activeContainer.getNamespace();
-    }
+	public void registerConfig(ModConfig.Type type, ForgeConfigSpec spec) {
+		getActiveContainer().addConfig(new ModConfig(type, spec, getActiveContainer()));
+	}
 
-    /**
-     * Register an {@link ExtensionPoint} with the mod container.
-     * @param point The extension point to register
-     * @param extension An extension operator
-     * @param <T> The type signature of the extension operator
-     */
-    public <T> void registerExtensionPoint(ExtensionPoint<T> point, Supplier<T> extension) {
-        getActiveContainer().registerExtensionPoint(point, extension);
-    }
-
-    public void registerConfig(ModConfig.Type type, ForgeConfigSpec spec) {
-        getActiveContainer().addConfig(new ModConfig(type, spec, getActiveContainer()));
-    }
-
-    public void registerConfig(ModConfig.Type type, ForgeConfigSpec spec, String fileName) {
-        getActiveContainer().addConfig(new ModConfig(type, spec, getActiveContainer(), fileName));
-    }
+	public void registerConfig(ModConfig.Type type, ForgeConfigSpec spec, String fileName) {
+		getActiveContainer().addConfig(new ModConfig(type, spec, getActiveContainer(), fileName));
+	}
 
 
-    @SuppressWarnings("unchecked")
-    public <T> T extension() {
-        return (T)languageExtension;
-    }
+	@SuppressWarnings("unchecked")
+	public <T> T extension() {
+		return (T) languageExtension;
+	}
 }

@@ -28,37 +28,31 @@ import net.minecraft.client.audio.SoundEngine;
  * If you return null from this function it will prevent the sound from being played,
  * you can return a different entry if you want to change the sound being played.
  */
-public class PlaySoundEvent extends SoundEvent
-{
-    private final String name;
-    private final ISound sound;
-    private ISound result;
+public class PlaySoundEvent extends SoundEvent {
+	private final String name;
+	private final ISound sound;
+	private ISound result;
 
-    public PlaySoundEvent(SoundEngine manager, ISound sound)
-    {
-        super(manager);
-        this.sound = sound;
-        this.name = sound.getSoundLocation().getPath();
-        this.setResultSound(sound);
-    }
+	public PlaySoundEvent(SoundEngine manager, ISound sound) {
+		super(manager);
+		this.sound = sound;
+		this.name = sound.getSoundLocation().getPath();
+		this.setResultSound(sound);
+	}
 
-    public String getName()
-    {
-        return name;
-    }
+	public String getName() {
+		return name;
+	}
 
-    public ISound getSound()
-    {
-        return sound;
-    }
+	public ISound getSound() {
+		return sound;
+	}
 
-    public ISound getResultSound()
-    {
-        return result;
-    }
+	public ISound getResultSound() {
+		return result;
+	}
 
-    public void setResultSound(ISound result)
-    {
-        this.result = result;
-    }
+	public void setResultSound(ISound result) {
+		this.result = result;
+	}
 }
