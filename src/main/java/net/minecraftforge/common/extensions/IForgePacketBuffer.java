@@ -30,15 +30,15 @@ import net.minecraftforge.registries.IForgeRegistry;
 import net.minecraftforge.registries.IForgeRegistryEntry;
 import net.minecraftforge.registries.RegistryManager;
 
-import net.minecraft.network.PacketBuffer;
-import net.minecraft.util.ResourceLocation;
+import net.minecraft.util.PacketByteBuf;
+import net.minecraft.util.Identifier;
 
 /**
  * Extension-Interface providing methods for writing registry-id's instead of their registry-names.
  */
 public interface IForgePacketBuffer {
-	default PacketBuffer getBuffer() {
-		return (PacketBuffer) this;
+	default PacketByteBuf getBuffer() {
+		return (PacketByteBuf) this;
 	}
 
 	/**
@@ -62,7 +62,7 @@ public interface IForgePacketBuffer {
 	 * @param registry The registry containing the entry represented by this key
 	 * @param entryKey The registry-name of an entry in this {@link IForgeRegistry}
 	 */
-	default void writeRegistryIdUnsafe(@Nonnull IForgeRegistry<?> registry, @Nonnull ResourceLocation entryKey) {
+	default void writeRegistryIdUnsafe(@Nonnull IForgeRegistry<?> registry, @Nonnull Identifier entryKey) {
 		ForgeRegistry<?> forgeRegistry = (ForgeRegistry<?>) registry;
 		int id = forgeRegistry.getID(entryKey);
 		getBuffer().writeVarInt(id);
@@ -95,10 +95,10 @@ public interface IForgePacketBuffer {
 		Class<T> regType = Objects.requireNonNull(entry, "Cannot write a null registry entry!").getRegistryType();
 		IForgeRegistry<T> retrievedRegistry = RegistryManager.ACTIVE.getRegistry(regType);
 		Preconditions.checkArgument(retrievedRegistry != null, "Cannot write registry id for an unknown registry type: %s", regType.getName());
-		ResourceLocation name = retrievedRegistry.getRegistryName();
+		Identifier name = retrievedRegistry.getRegistryName();
 		Preconditions.checkArgument(retrievedRegistry.containsValue(entry), "Cannot find %s in %s", entry.getRegistryName() != null ? entry.getRegistryName() : entry, name);
 		ForgeRegistry<T> reg = (ForgeRegistry<T>) retrievedRegistry;
-		getBuffer().writeResourceLocation(name); //TODO change to writing a varInt once registries use id's
+		getBuffer().writeIdentifier(name); //TODO change to writing a varInt once registries use id's
 		getBuffer().writeVarInt(reg.getID(entry));
 	}
 
@@ -110,7 +110,7 @@ public interface IForgePacketBuffer {
 	 * @throws NullPointerException if the registry could not be found.
 	 */
 	default <T extends IForgeRegistryEntry<T>> T readRegistryId() {
-		ResourceLocation location = getBuffer().readResourceLocation(); //TODO change to reading a varInt once registries use id's
+		Identifier location = getBuffer().readIdentifier(); //TODO change to reading a varInt once registries use id's
 		ForgeRegistry<T> registry = RegistryManager.ACTIVE.getRegistry(location);
 		return registry.getValue(getBuffer().readVarInt());
 	}

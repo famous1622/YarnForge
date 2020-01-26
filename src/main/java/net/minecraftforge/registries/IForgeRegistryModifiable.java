@@ -19,12 +19,12 @@
 
 package net.minecraftforge.registries;
 
-import net.minecraft.util.ResourceLocation;
+import net.minecraft.util.Identifier;
 
 public interface IForgeRegistryModifiable<V extends IForgeRegistryEntry<V>> extends IForgeRegistry<V> {
 	void clear();
 
-	V remove(ResourceLocation key);
+	V remove(Identifier key);
 
 	boolean isLocked();
 }

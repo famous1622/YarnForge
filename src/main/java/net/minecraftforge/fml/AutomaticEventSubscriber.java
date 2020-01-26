@@ -19,7 +19,6 @@
 
 package net.minecraftforge.fml;
 
-import static net.minecraftforge.fml.Logging.LOADING;
 
 import java.util.Arrays;
 import java.util.EnumSet;
@@ -28,7 +27,6 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 
 import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.loading.FMLEnvironment;
 import net.minecraftforge.fml.loading.moddiscovery.ModAnnotation;

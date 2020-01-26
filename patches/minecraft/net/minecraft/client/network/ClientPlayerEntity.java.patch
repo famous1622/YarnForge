@@ -1,0 +1,62 @@
+--- a/net/minecraft/client/network/ClientPlayerEntity.java
++++ b/net/minecraft/client/network/ClientPlayerEntity.java
+@@ -129,6 +129,7 @@
+    }
+ 
+    public boolean damage(DamageSource source, float amount) {
++      net.minecraftforge.common.ForgeHooks.onPlayerAttack(this, source, amount);
+       return false;
+    }
+ 
+@@ -448,6 +449,11 @@
+    }
+ 
+    public void playSound(SoundEvent soundIn, float volume, float pitch) {
++      net.minecraftforge.event.entity.PlaySoundAtEntityEvent event = net.minecraftforge.event.ForgeEventFactory.onPlaySoundAtEntity(this, soundIn, this.getSoundCategory(), volume, pitch);
++      if (event.isCanceled() || event.getSound() == null) return;
++      soundIn = event.getSound();
++      volume = event.getVolume();
++      pitch = event.getPitch();
+       this.world.playSound(this.x, this.y, this.z, soundIn, this.getSoundCategory(), volume, pitch, false);
+    }
+ 
+@@ -590,6 +596,7 @@
+       boolean flag2 = this.method_20623();
+       boolean flag3 = this.isInSneakingPose() || this.shouldLeaveSwimmingPose();
+       this.input.tick(flag3, this.isSpectator());
++      net.minecraftforge.client.ForgeHooksClient.onInputUpdate(this, this.input);
+       this.client.getTutorialManager().onMovement(this.input);
+       if (this.isUsingItem() && !this.hasVehicle()) {
+          this.input.movementSideways *= 0.2F;
+@@ -606,10 +613,14 @@
+ 
+       if (!this.noClip) {
+          Box axisalignedbb = this.getBoundingBox();
++         net.minecraftforge.client.event.PlayerSPPushOutOfBlocksEvent event = new net.minecraftforge.client.event.PlayerSPPushOutOfBlocksEvent(this, axisalignedbb);
++         if (!net.minecraftforge.common.MinecraftForge.EVENT_BUS.post(event)) {
++         axisalignedbb = event.getEntityBoundingBox();
+          this.pushOutOfBlocks(this.x - (double)this.getWidth() * 0.35D, axisalignedbb.minY + 0.5D, this.z + (double)this.getWidth() * 0.35D);
+          this.pushOutOfBlocks(this.x - (double)this.getWidth() * 0.35D, axisalignedbb.minY + 0.5D, this.z - (double)this.getWidth() * 0.35D);
+          this.pushOutOfBlocks(this.x + (double)this.getWidth() * 0.35D, axisalignedbb.minY + 0.5D, this.z - (double)this.getWidth() * 0.35D);
+          this.pushOutOfBlocks(this.x + (double)this.getWidth() * 0.35D, axisalignedbb.minY + 0.5D, this.z + (double)this.getWidth() * 0.35D);
++         }
+       }
+ 
+       boolean flag7 = (float)this.getHungerManager().getFoodLevel() > 6.0F || this.abilities.allowFlying;
+@@ -949,4 +960,16 @@
+          return this.isInWater;
+       }
+    }
++
++   public void updateSyncFields(ClientPlayerEntity old) {
++      this.lastX = old.lastX;
++      this.lastBaseY = old.lastBaseY;
++      this.lastZ = old.lastZ;
++      this.lastYaw = old.lastYaw;
++      this.lastPitch = old.lastPitch;
++      this.lastOnGround = old.lastOnGround;
++      this.lastIsHoldingSneakKey = old.lastIsHoldingSneakKey;
++      this.lastSprinting = old.lastSprinting;
++      this.field_3923 = old.field_3923;
++   }
+ }

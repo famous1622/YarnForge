@@ -29,12 +29,12 @@ import net.minecraftforge.common.model.IModelState;
 import net.minecraftforge.common.model.TRSRTransformation;
 import net.minecraftforge.common.model.animation.IClip;
 
-import net.minecraft.client.renderer.model.IBakedModel;
-import net.minecraft.client.renderer.model.ModelBakery;
-import net.minecraft.client.renderer.texture.ISprite;
-import net.minecraft.client.renderer.texture.TextureAtlasSprite;
-import net.minecraft.client.renderer.vertex.VertexFormat;
-import net.minecraft.util.ResourceLocation;
+import net.minecraft.client.render.model.BakedModel;
+import net.minecraft.client.render.model.ModelLoader;
+import net.minecraft.client.render.model.ModelBakeSettings;
+import net.minecraft.client.texture.Sprite;
+import net.minecraft.client.render.VertexFormat;
+import net.minecraft.util.Identifier;
 
 /**
  * General interface for any model that can be baked, superset of vanilla {@link net.minecraft.client.renderer.model.IUnbakedModel}.
@@ -47,7 +47,7 @@ public interface IModel<T extends IModel<T>> {
 	 * @param sprite       Transforms to apply while baking. Usually will be an instance of {@link IModelState}.
 	 */
 	@Nullable
-	IBakedModel bake(ModelBakery bakery, Function<ResourceLocation, TextureAtlasSprite> spriteGetter, ISprite sprite, VertexFormat format);
+	BakedModel bake(ModelLoader bakery, Function<Identifier, Sprite> spriteGetter, ModelBakeSettings sprite, VertexFormat format);
 
 	/**
 	 * Default state this model will be baked with.

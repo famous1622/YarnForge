@@ -34,7 +34,7 @@ import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.Marker;
 import org.apache.logging.log4j.MarkerManager;
 
-import net.minecraft.network.PacketBuffer;
+import net.minecraft.util.PacketByteBuf;
 
 public class IndexedMessageCodec {
 	private static final Logger LOGGER = LogManager.getLogger();
@@ -51,7 +51,7 @@ public class IndexedMessageCodec {
 		this.networkInstance = instance;
 	}
 
-	private static <M> void tryDecode(PacketBuffer payload, Supplier<NetworkEvent.Context> context, int payloadIndex, MessageHandler<M> codec) {
+	private static <M> void tryDecode(PacketByteBuf payload, Supplier<NetworkEvent.Context> context, int payloadIndex, MessageHandler<M> codec) {
 		codec.decoder.map(d -> d.apply(payload)).
 				map(p -> {
 					// Only run the loginIndex function for payloadIndexed packets (login)
@@ -62,7 +62,7 @@ public class IndexedMessageCodec {
 				}).ifPresent(m -> codec.messageConsumer.accept(m, context));
 	}
 
-	private static <M> int tryEncode(PacketBuffer target, M message, MessageHandler<M> codec) {
+	private static <M> int tryEncode(PacketByteBuf target, M message, MessageHandler<M> codec) {
 		codec.encoder.ifPresent(encoder -> {
 			target.writeByte(codec.index & 0xff);
 			encoder.accept(message, target);
@@ -80,7 +80,7 @@ public class IndexedMessageCodec {
 		return (MessageHandler<MSG>) indicies.get(i);
 	}
 
-	public <MSG> int build(MSG message, PacketBuffer target) {
+	public <MSG> int build(MSG message, PacketByteBuf target) {
 		@SuppressWarnings("unchecked")
 		MessageHandler<MSG> messageHandler = (MessageHandler<MSG>) types.get(message.getClass());
 		if (messageHandler == null) {
@@ -90,7 +90,7 @@ public class IndexedMessageCodec {
 		return tryEncode(target, message, messageHandler);
 	}
 
-	void consume(PacketBuffer payload, int payloadIndex, Supplier<NetworkEvent.Context> context) {
+	void consume(PacketByteBuf payload, int payloadIndex, Supplier<NetworkEvent.Context> context) {
 		if (payload == null) {
 			LOGGER.error(SIMPLENET, "Received empty payload on channel {}", Optional.ofNullable(networkInstance).map(NetworkInstance::getChannelName).map(Objects::toString).orElse("MISSING CHANNEL"));
 			return;
@@ -104,21 +104,21 @@ public class IndexedMessageCodec {
 		tryDecode(payload, context, payloadIndex, messageHandler);
 	}
 
-	<MSG> MessageHandler<MSG> addCodecIndex(int index, Class<MSG> messageType, BiConsumer<MSG, PacketBuffer> encoder, Function<PacketBuffer, MSG> decoder, BiConsumer<MSG, Supplier<NetworkEvent.Context>> messageConsumer) {
+	<MSG> MessageHandler<MSG> addCodecIndex(int index, Class<MSG> messageType, BiConsumer<MSG, PacketByteBuf> encoder, Function<PacketByteBuf, MSG> decoder, BiConsumer<MSG, Supplier<NetworkEvent.Context>> messageConsumer) {
 		return new MessageHandler<>(index, messageType, encoder, decoder, messageConsumer);
 	}
 
 	@SuppressWarnings("OptionalUsedAsFieldOrParameterType")
 	class MessageHandler<MSG> {
-		private final Optional<BiConsumer<MSG, PacketBuffer>> encoder;
-		private final Optional<Function<PacketBuffer, MSG>> decoder;
+		private final Optional<BiConsumer<MSG, PacketByteBuf>> encoder;
+		private final Optional<Function<PacketByteBuf, MSG>> decoder;
 		private final int index;
 		private final BiConsumer<MSG, Supplier<NetworkEvent.Context>> messageConsumer;
 		private final Class<MSG> messageType;
 		private Optional<BiConsumer<MSG, Integer>> loginIndexSetter;
 		private Optional<Function<MSG, Integer>> loginIndexGetter;
 
-		public MessageHandler(int index, Class<MSG> messageType, BiConsumer<MSG, PacketBuffer> encoder, Function<PacketBuffer, MSG> decoder, BiConsumer<MSG, Supplier<NetworkEvent.Context>> messageConsumer) {
+		public MessageHandler(int index, Class<MSG> messageType, BiConsumer<MSG, PacketByteBuf> encoder, Function<PacketByteBuf, MSG> decoder, BiConsumer<MSG, Supplier<NetworkEvent.Context>> messageConsumer) {
 			this.index = index;
 			this.messageType = messageType;
 			this.encoder = Optional.ofNullable(encoder);

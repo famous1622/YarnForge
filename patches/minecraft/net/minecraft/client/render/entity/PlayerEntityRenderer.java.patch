@@ -1,0 +1,18 @@
+--- a/net/minecraft/client/render/entity/PlayerEntityRenderer.java
++++ b/net/minecraft/client/render/entity/PlayerEntityRenderer.java
+@@ -51,6 +51,7 @@
+    public void render(AbstractClientPlayerEntity entity, double x, double y, double z, float entityYaw, float partialTicks) {
+       if (!entity.isMainPlayer() || this.renderManager.camera.getFocusedEntity() == entity) {
+          double d0 = y;
++      if (net.minecraftforge.common.MinecraftForge.EVENT_BUS.post(new net.minecraftforge.client.event.RenderPlayerEvent.Pre(entity, this, partialTicks, x, y, z))) return;
+          if (entity.isInSneakingPose()) {
+             d0 = y - 0.125D;
+          }
+@@ -60,6 +61,7 @@
+          super.render(entity, x, d0, z, entityYaw, partialTicks);
+          GlStateManager.unsetProfile(GlStateManager.RenderMode.PLAYER_SKIN);
+       }
++      net.minecraftforge.common.MinecraftForge.EVENT_BUS.post(new net.minecraftforge.client.event.RenderPlayerEvent.Post(entity, this, partialTicks, x, y, z));
+    }
+ 
+    private void setModelPose(AbstractClientPlayerEntity clientPlayer) {

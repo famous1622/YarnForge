@@ -1,0 +1,33 @@
+--- a/net/minecraft/advancement/PlayerAdvancementTracker.java
++++ b/net/minecraft/advancement/PlayerAdvancementTracker.java
+@@ -41,12 +41,12 @@
+ import net.minecraft.world.GameRules;
+ import org.apache.logging.log4j.LogManager;
+ import org.apache.logging.log4j.Logger;
++
+ import net.minecraft.advancement.criterion.Criterion;
+ import net.minecraft.advancement.criterion.CriterionConditions;
+ import net.minecraft.advancement.criterion.CriterionProgress;
+ import net.minecraft.advancement.criterion.Criterions;
+ 
+-
+ public class PlayerAdvancementTracker {
+    private static final Logger LOGGER = LogManager.getLogger();
+    private static final Gson GSON = (new GsonBuilder()).registerTypeAdapter(AdvancementProgress.class, new AdvancementProgress.Serializer()).registerTypeAdapter(Identifier.class, new Identifier.Serializer()).setPrettyPrinting().create();
+@@ -192,6 +192,8 @@
+    }
+ 
+    public boolean grantCriterion(Advancement p_192750_1_, String p_192750_2_) {
++      // Forge: don't grant advancements for fake players
++      if (this.owner instanceof net.minecraftforge.common.util.FakePlayer) return false;
+       boolean flag = false;
+       AdvancementProgress advancementprogress = this.getProgress(p_192750_1_);
+       boolean flag1 = advancementprogress.isDone();
+@@ -204,6 +206,7 @@
+             if (p_192750_1_.getDisplay() != null && p_192750_1_.getDisplay().shouldAnnounceToChat() && this.owner.world.getGameRules().getBoolean(GameRules.ANNOUNCE_ADVANCEMENTS)) {
+                this.server.getPlayerManager().sendToAll(new TranslatableText("chat.type.advancement." + p_192750_1_.getDisplay().getFrame().getId(), this.owner.getDisplayName(), p_192750_1_.toHoverableText()));
+             }
++            net.minecraftforge.common.ForgeHooks.onAdvancement(this.owner, p_192750_1_);
+          }
+       }
+ 

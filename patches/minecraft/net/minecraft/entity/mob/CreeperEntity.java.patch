@@ -1,0 +1,19 @@
+--- a/net/minecraft/entity/mob/CreeperEntity.java
++++ b/net/minecraft/entity/mob/CreeperEntity.java
+@@ -31,7 +31,6 @@
+ import net.minecraft.sound.SoundEvents;
+ import net.minecraft.util.math.MathHelper;
+ import net.minecraft.world.explosion.Explosion;
+-import net.minecraft.world.GameRules;
+ import net.minecraft.world.World;
+ import net.minecraftforge.api.distmarker.Dist;
+ import net.minecraftforge.api.distmarker.OnlyIn;
+@@ -208,7 +207,7 @@
+ 
+    private void explode() {
+       if (!this.world.isClient) {
+-         Explosion.DestructionType explosion$mode = this.world.getGameRules().getBoolean(GameRules.MOB_GRIEFING) ? Explosion.DestructionType.DESTROY : Explosion.DestructionType.NONE;
++         Explosion.DestructionType explosion$mode = net.minecraftforge.event.ForgeEventFactory.getMobGriefingEvent(this.world, this) ? Explosion.DestructionType.DESTROY : Explosion.DestructionType.NONE;
+          float f = this.isCharged() ? 2.0F : 1.0F;
+          this.dead = true;
+          this.world.createExplosion(this, this.x, this.y, this.z, (float)this.explosionRadius * f, explosion$mode);

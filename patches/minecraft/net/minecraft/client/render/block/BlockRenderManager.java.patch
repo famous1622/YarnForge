@@ -1,0 +1,68 @@
+--- a/net/minecraft/client/render/block/BlockRenderManager.java
++++ b/net/minecraft/client/render/block/BlockRenderManager.java
+@@ -5,7 +5,6 @@
+ import net.minecraft.block.BlockState;
+ import net.minecraft.client.color.block.BlockColors;
+ import net.minecraft.client.render.model.BakedModel;
+-import net.minecraft.client.render.model.BasicBakedModel;
+ import net.minecraft.client.texture.Sprite;
+ import net.minecraft.util.crash.CrashReport;
+ import net.minecraft.util.crash.CrashReportSection;
+@@ -17,10 +16,10 @@
+ import net.minecraft.world.ExtendedBlockView;
+ import net.minecraftforge.api.distmarker.Dist;
+ import net.minecraftforge.api.distmarker.OnlyIn;
++
+ import net.minecraft.client.render.BufferBuilder;
+ import net.minecraft.client.render.Tessellator;
+ 
+-
+ @OnlyIn(Dist.CLIENT)
+ public class BlockRenderManager implements SynchronousResourceReloadListener {
+    private final BlockModels models;
+@@ -31,7 +30,7 @@
+ 
+    public BlockRenderManager(BlockModels p_i46577_1_, BlockColors p_i46577_2_) {
+       this.models = p_i46577_1_;
+-      this.renderer = new BlockModelRenderer(p_i46577_2_);
++      this.renderer = new net.minecraftforge.client.model.pipeline.ForgeBlockModelRenderer(p_i46577_2_);
+       this.fluidRenderer = new FluidRenderer();
+    }
+ 
+@@ -43,12 +42,16 @@
+       if (state.getRenderType() == BlockRenderType.MODEL) {
+          BakedModel ibakedmodel = this.models.getModel(state);
+          long i = state.getRenderingSeed(pos);
+-         BakedModel ibakedmodel1 = (new BasicBakedModel.Builder(state, ibakedmodel, sprite, this.random, i)).build();
++         BakedModel ibakedmodel1 = net.minecraftforge.client.ForgeHooksClient.getDamageModel(ibakedmodel, sprite, state, reader, pos, i);
+          this.renderer.tesselate(reader, ibakedmodel1, state, pos, Tessellator.getInstance().getBufferBuilder(), true, this.random, i);
+       }
+    }
+ 
++   @Deprecated //Forge: Model parameter
+    public boolean tesselateBlock(BlockState p_215330_1_, BlockPos p_215330_2_, ExtendedBlockView p_215330_3_, BufferBuilder p_215330_4_, Random p_215330_5_) {
++      return renderBlock(p_215330_1_, p_215330_2_, p_215330_3_, p_215330_4_, p_215330_5_, net.minecraftforge.client.model.data.EmptyModelData.INSTANCE);
++   }
++   public boolean renderBlock(BlockState p_215330_1_, BlockPos p_215330_2_, ExtendedBlockView p_215330_3_, BufferBuilder p_215330_4_, Random p_215330_5_, net.minecraftforge.client.model.data.IModelData modelData) {
+       try {
+          BlockRenderType blockrendertype = p_215330_1_.getRenderType();
+          if (blockrendertype == BlockRenderType.INVISIBLE) {
+@@ -56,7 +59,7 @@
+          } else {
+             switch(blockrendertype) {
+             case MODEL:
+-               return this.renderer.tesselate(p_215330_3_, this.getModel(p_215330_1_), p_215330_1_, p_215330_2_, p_215330_4_, true, p_215330_5_, p_215330_1_.getRenderingSeed(p_215330_2_));
++               return this.renderer.renderModel(p_215330_3_, this.getModel(p_215330_1_), p_215330_1_, p_215330_2_, p_215330_4_, true, p_215330_5_, p_215330_1_.getRenderingSeed(p_215330_2_), modelData);
+             case ENTITYBLOCK_ANIMATED:
+                return false;
+             default:
+@@ -108,4 +111,9 @@
+    public void apply(ResourceManager resourceManager) {
+       this.fluidRenderer.onResourceReload();
+    }
++
++   @Override
++   public net.minecraftforge.resource.IResourceType getResourceType() {
++      return net.minecraftforge.resource.VanillaResourceType.MODELS;
++   }
+ }

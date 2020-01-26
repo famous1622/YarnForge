@@ -1,0 +1,37 @@
+--- a/net/minecraft/data/server/BlockLootTableGenerator.java
++++ b/net/minecraft/data/server/BlockLootTableGenerator.java
+@@ -188,7 +188,7 @@
+       return LootSupplier.builder();
+    }
+ 
+-   public void accept(BiConsumer<Identifier, LootSupplier.Builder> p_accept_1_) {
++   protected void addTables() {
+       this.method_16329(Blocks.GRANITE);
+       this.method_16329(Blocks.POLISHED_GRANITE);
+       this.method_16329(Blocks.DIORITE);
+@@ -962,9 +962,13 @@
+       this.method_16258(Blocks.ATTACHED_MELON_STEM, method_10395());
+       this.method_16258(Blocks.FROSTED_ICE, method_10395());
+       this.method_16258(Blocks.SPAWNER, method_10395());
++   }
++
++   public void accept(BiConsumer<Identifier, LootSupplier.Builder> p_accept_1_) {
++      this.addTables();
+       Set<Identifier> set = Sets.newHashSet();
+ 
+-      for(Block block : Registry.BLOCK) {
++      for(Block block : getKnownBlocks()) {
+          Identifier resourcelocation = block.getDropTableId();
+          if (resourcelocation != LootTables.EMPTY && set.add(resourcelocation)) {
+             LootSupplier.Builder loottable$builder = this.field_16493.remove(resourcelocation);
+@@ -981,6 +985,10 @@
+       }
+    }
+ 
++   protected Iterable<Block> getKnownBlocks() {
++       return Registry.BLOCK;
++   }
++
+    public void method_16285(Block p_218547_1_) {
+       this.method_16293(p_218547_1_, (p_218524_0_) -> {
+          return method_10389(((FlowerPotBlock)p_218524_0_).getContent());

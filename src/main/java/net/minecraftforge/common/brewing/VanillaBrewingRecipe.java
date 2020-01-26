@@ -22,7 +22,7 @@ package net.minecraftforge.common.brewing;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
-import net.minecraft.potion.PotionBrewing;
+import net.minecraft.recipe.BrewingRecipeRegistry;
 
 /**
  * Used in BrewingRecipeRegistry to maintain the vanilla behaviour.
@@ -45,7 +45,7 @@ public class VanillaBrewingRecipe implements IBrewingRecipe {
 	 */
 	@Override
 	public boolean isIngredient(ItemStack stack) {
-		return PotionBrewing.isReagent(stack);
+		return BrewingRecipeRegistry.isValidIngredient(stack);
 	}
 
 	/**
@@ -56,7 +56,7 @@ public class VanillaBrewingRecipe implements IBrewingRecipe {
 	@Override
 	public ItemStack getOutput(ItemStack input, ItemStack ingredient) {
 		if (!input.isEmpty() && !ingredient.isEmpty() && isIngredient(ingredient)) {
-			ItemStack result = PotionBrewing.doReaction(ingredient, input);
+			ItemStack result = BrewingRecipeRegistry.craft(ingredient, input);
 			if (result != input) {
 				return result;
 			}

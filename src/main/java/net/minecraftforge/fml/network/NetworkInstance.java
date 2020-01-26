@@ -29,17 +29,17 @@ import net.minecraftforge.eventbus.api.Event;
 import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.eventbus.api.IEventListener;
 
-import net.minecraft.network.NetworkManager;
-import net.minecraft.util.ResourceLocation;
+import net.minecraft.network.ClientConnection;
+import net.minecraft.util.Identifier;
 
 public class NetworkInstance {
-	private final ResourceLocation channelName;
+	private final Identifier channelName;
 	private final String networkProtocolVersion;
 	private final Predicate<String> clientAcceptedVersions;
 	private final Predicate<String> serverAcceptedVersions;
 	private final IEventBus networkEventBus;
 
-	NetworkInstance(ResourceLocation channelName, Supplier<String> networkProtocolVersion, Predicate<String> clientAcceptedVersions, Predicate<String> serverAcceptedVersions) {
+	NetworkInstance(Identifier channelName, Supplier<String> networkProtocolVersion, Predicate<String> clientAcceptedVersions, Predicate<String> serverAcceptedVersions) {
 		this.channelName = channelName;
 		this.networkProtocolVersion = networkProtocolVersion.get();
 		this.clientAcceptedVersions = clientAcceptedVersions;
@@ -47,7 +47,7 @@ public class NetworkInstance {
 		this.networkEventBus = BusBuilder.builder().setExceptionHandler(this::handleError).build();
 	}
 
-	public ResourceLocation getChannelName() {
+	public Identifier getChannelName() {
 		return channelName;
 	}
 
@@ -71,7 +71,7 @@ public class NetworkInstance {
 		this.networkEventBus.unregister(object);
 	}
 
-	boolean dispatch(final NetworkDirection side, final ICustomPacket<?> packet, final NetworkManager manager) {
+	boolean dispatch(final NetworkDirection side, final ICustomPacket<?> packet, final ClientConnection manager) {
 		final NetworkEvent.Context context = new NetworkEvent.Context(manager, side, packet.getIndex());
 		this.networkEventBus.post(side.getEvent(packet, () -> context));
 		return context.getPacketHandled();

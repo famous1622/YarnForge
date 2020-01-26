@@ -48,9 +48,6 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonParseException;
 import com.google.gson.annotations.SerializedName;
-import net.minecraftforge.client.model.animation.ModelBlockAnimation.Parameter.Interpolation;
-import net.minecraftforge.client.model.animation.ModelBlockAnimation.Parameter.Type;
-import net.minecraftforge.client.model.animation.ModelBlockAnimation.Parameter.Variable;
 import net.minecraftforge.common.animation.Event;
 import net.minecraftforge.common.model.IModelState;
 import net.minecraftforge.common.model.TRSRTransformation;
@@ -62,10 +59,10 @@ import net.minecraftforge.common.util.JsonUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import net.minecraft.client.renderer.model.BlockPart;
-import net.minecraft.resources.IResource;
-import net.minecraft.resources.IResourceManager;
-import net.minecraft.util.ResourceLocation;
+import net.minecraft.client.render.model.json.ModelElement;
+import net.minecraft.resource.Resource;
+import net.minecraft.resource.ResourceManager;
+import net.minecraft.util.Identifier;
 import net.minecraft.util.math.MathHelper;
 
 public class ModelBlockAnimation {
@@ -90,9 +87,9 @@ public class ModelBlockAnimation {
 	/**
 	 * Load armature associated with a vanilla model.
 	 */
-	public static ModelBlockAnimation loadVanillaAnimation(IResourceManager manager, ResourceLocation armatureLocation) {
+	public static ModelBlockAnimation loadVanillaAnimation(ResourceManager manager, Identifier armatureLocation) {
 		try {
-			try (IResource resource = manager.getResource(armatureLocation)) {
+			try (Resource resource = manager.getResource(armatureLocation)) {
 				ModelBlockAnimation mba = mbaGson.fromJson(new InputStreamReader(resource.getInputStream(), StandardCharsets.UTF_8), ModelBlockAnimation.class);
 				//String json = mbaGson.toJson(mba);
 				return mba;
@@ -129,7 +126,7 @@ public class ModelBlockAnimation {
 	}
 
 	@Nullable
-	public TRSRTransformation getPartTransform(IModelState state, BlockPart part, int i) {
+	public TRSRTransformation getPartTransform(IModelState state, ModelElement part, int i) {
 		ImmutableCollection<MBJointWeight> infos = getJoint(i);
 		if (!infos.isEmpty()) {
 			Matrix4f m = new Matrix4f(), tmp;

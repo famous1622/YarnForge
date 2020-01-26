@@ -27,8 +27,8 @@ import javax.annotation.Nullable;
 import com.google.common.base.Throwables;
 import net.minecraftforge.common.util.LazyOptional;
 
-import net.minecraft.nbt.INBT;
-import net.minecraft.util.Direction;
+import net.minecraft.nbt.Tag;
+import net.minecraft.util.math.Direction;
 
 /**
  * This is the core holder object Capabilities.
@@ -68,7 +68,7 @@ public class Capability<T> {
 	 * Quick access to the IStorage's readNBT.
 	 * See {@link IStorage#readNBT(Capability, Object, EnumFacing, NBTBase)}  for documentation.
 	 */
-	public void readNBT(T instance, Direction side, INBT nbt) {
+	public void readNBT(T instance, Direction side, Tag nbt) {
 		storage.readNBT(this, instance, side, nbt);
 	}
 
@@ -77,7 +77,7 @@ public class Capability<T> {
 	 * See {@link IStorage#writeNBT(Capability, Object, EnumFacing)} for documentation.
 	 */
 	@Nullable
-	public INBT writeNBT(T instance, Direction side) {
+	public Tag writeNBT(T instance, Direction side) {
 		return storage.writeNBT(this, instance, side);
 	}
 
@@ -125,7 +125,7 @@ public class Capability<T> {
 		 * @return a NBT holding the data. Null if no data needs to be stored.
 		 */
 		@Nullable
-		INBT writeNBT(Capability<T> capability, T instance, Direction side);
+		Tag writeNBT(Capability<T> capability, T instance, Direction side);
 
 		/**
 		 * Read the capability instance from a NBT tag.
@@ -146,6 +146,6 @@ public class Capability<T> {
 		 * @param side       The side of the object the instance is associated with.
 		 * @param nbt        A NBT holding the data. Must not be null, as doesn't make sense to call this function with nothing to read...
 		 */
-		void readNBT(Capability<T> capability, T instance, Direction side, INBT nbt);
+		void readNBT(Capability<T> capability, T instance, Direction side, Tag nbt);
 	}
 }

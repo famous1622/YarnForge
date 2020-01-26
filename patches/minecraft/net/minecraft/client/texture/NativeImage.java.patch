@@ -1,0 +1,38 @@
+--- a/net/minecraft/client/texture/NativeImage.java
++++ b/net/minecraft/client/texture/NativeImage.java
+@@ -172,7 +172,7 @@
+    public int getPixelRGBA(int x, int y) {
+       if (this.format != NativeImage.Format.RGBA) {
+          throw new IllegalArgumentException(String.format("getPixelRGBA only works on RGBA images; have %s", this.format));
+-      } else if (x <= this.width && y <= this.height) {
++      } else if (x >= 0 && y >= 0 && x < this.width && y < this.height) { //Fix MC-162953 bounds checks in `NativeImage`
+          this.checkAllocated();
+          return MemoryUtil.memIntBuffer(this.pointer, this.sizeBytes).get(x + y * this.width);
+       } else {
+@@ -183,7 +183,7 @@
+    public void setPixelRGBA(int x, int y, int value) {
+       if (this.format != NativeImage.Format.RGBA) {
+          throw new IllegalArgumentException(String.format("getPixelRGBA only works on RGBA images; have %s", this.format));
+-      } else if (x <= this.width && y <= this.height) {
++      } else if (x >= 0 && y >= 0 && x < this.width && y < this.height) { //Fix MC-162953 bounds checks in `NativeImage`
+          this.checkAllocated();
+          MemoryUtil.memIntBuffer(this.pointer, this.sizeBytes).put(x + y * this.width, value);
+       } else {
+@@ -194,7 +194,7 @@
+    public byte getPixelOpacity(int x, int y) {
+       if (!this.format.hasOpacityChannel()) {
+          throw new IllegalArgumentException(String.format("no luminance or alpha in %s", this.format));
+-      } else if (x <= this.width && y <= this.height) {
++      } else if (x >= 0 && y >= 0 && x < this.width && y < this.height) { //Fix MC-162953 bounds checks in `NativeImage`
+          return MemoryUtil.memByteBuffer(this.pointer, this.sizeBytes).get((x + y * this.width) * this.format.getChannelCount() + this.format.getOpacityOffset() / 8);
+       } else {
+          throw new IllegalArgumentException(String.format("(%s, %s) outside of image bounds (%s, %s)", x, y, this.width, this.height));
+@@ -328,7 +328,7 @@
+    }
+ 
+    public void makeGlyphBitmapSubpixel(STBTTFontinfo info, int glyphIndex, int widthIn, int heightIn, float scaleX, float scaleY, float shiftX, float shiftY, int x, int y) {
+-      if (x >= 0 && x + widthIn <= this.getWidth() && y >= 0 && y + heightIn <= this.getHeight()) {
++      if (x >= 0 && x + widthIn < this.getWidth() && y >= 0 && y + heightIn < this.getHeight()) { //Fix MC-162953 bounds checks in `NativeImage`
+          if (this.format.getChannelCount() != 1) {
+             throw new IllegalArgumentException("Can only write fonts into 1-component images.");
+          } else {

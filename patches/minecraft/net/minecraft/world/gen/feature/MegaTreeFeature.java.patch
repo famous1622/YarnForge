@@ -1,0 +1,46 @@
+--- a/net/minecraft/world/gen/feature/MegaTreeFeature.java
++++ b/net/minecraft/world/gen/feature/MegaTreeFeature.java
+@@ -22,6 +22,7 @@
+       this.maxExtraHeight = extraRandomHeightIn;
+       this.log = trunkIn;
+       this.leaves = leafIn;
++      setSapling((net.minecraftforge.common.IPlantable)net.minecraft.block.Blocks.OAK_SAPLING);
+    }
+ 
+    protected int getHeight(Random rand) {
+@@ -35,7 +36,7 @@
+ 
+    private boolean doesTreeFit(TestableWorld worldIn, BlockPos leavesPos, int height) {
+       boolean flag = true;
+-      if (leavesPos.getY() >= 1 && leavesPos.getY() + height + 1 <= 256) {
++      if (leavesPos.getY() >= 1 && leavesPos.getY() + height + 1 <= worldIn.getMaxHeight()) {
+          for(int i = 0; i <= 1 + height; ++i) {
+             int j = 2;
+             if (i == 0) {
+@@ -46,7 +47,7 @@
+ 
+             for(int k = -j; k <= j && flag; ++k) {
+                for(int l = -j; l <= j && flag; ++l) {
+-                  if (leavesPos.getY() + i < 0 || leavesPos.getY() + i >= 256 || !canTreeReplace(worldIn, leavesPos.add(k, i, l))) {
++                  if (leavesPos.getY() + i < 0 || leavesPos.getY() + i >= worldIn.getMaxHeight() || !canTreeReplace(worldIn, leavesPos.add(k, i, l))) {
+                      flag = false;
+                   }
+                }
+@@ -61,11 +62,12 @@
+ 
+    private boolean replaceGround(ModifiableTestableWorld worldIn, BlockPos pos) {
+       BlockPos blockpos = pos.down();
+-      if (isNaturalDirtOrGrass(worldIn, blockpos) && pos.getY() >= 2) {
+-         this.setToDirt(worldIn, blockpos);
+-         this.setToDirt(worldIn, blockpos.east());
+-         this.setToDirt(worldIn, blockpos.south());
+-         this.setToDirt(worldIn, blockpos.south().east());
++
++      if (isSoil(worldIn, blockpos, getSapling()) && pos.getY() >= 2) {
++         setDirtAt(worldIn, blockpos, pos);
++         setDirtAt(worldIn, blockpos.east(), pos);
++         setDirtAt(worldIn, blockpos.south(), pos);
++         setDirtAt(worldIn, blockpos.south().east(), pos);
+          return true;
+       } else {
+          return false;

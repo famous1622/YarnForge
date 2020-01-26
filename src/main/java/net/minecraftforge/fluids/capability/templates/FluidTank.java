@@ -27,7 +27,9 @@ import net.minecraftforge.fluids.FluidStack;
 import net.minecraftforge.fluids.IFluidTank;
 import net.minecraftforge.fluids.capability.IFluidHandler;
 
-import net.minecraft.nbt.CompoundNBT;
+import net.minecraft.nbt.CompoundTag;
+
+import net.minecraftforge.fluids.capability.IFluidHandler.FluidAction;
 
 /**
  * Flexible implementation of a Fluid Storage object. NOT REQUIRED.
@@ -83,14 +85,14 @@ public class FluidTank implements IFluidHandler, IFluidTank {
 		return fluid.getAmount();
 	}
 
-	public FluidTank readFromNBT(CompoundNBT nbt) {
+	public FluidTank readFromNBT(CompoundTag nbt) {
 
 		FluidStack fluid = FluidStack.loadFluidStackFromNBT(nbt);
 		setFluid(fluid);
 		return this;
 	}
 
-	public CompoundNBT writeToNBT(CompoundNBT nbt) {
+	public CompoundTag writeToNBT(CompoundTag nbt) {
 
 		fluid.writeToNBT(nbt);
 

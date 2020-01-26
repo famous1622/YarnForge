@@ -1,0 +1,38 @@
+--- a/net/minecraft/client/gui/screen/controls/ControlsOptionsScreen.java
++++ b/net/minecraft/client/gui/screen/controls/ControlsOptionsScreen.java
+@@ -10,10 +10,10 @@
+ import net.minecraft.text.TranslatableText;
+ import net.minecraftforge.api.distmarker.Dist;
+ import net.minecraftforge.api.distmarker.OnlyIn;
++
+ import net.minecraft.client.gui.screen.MouseOptionsScreen;
+ import net.minecraft.client.gui.screen.Screen;
+ 
+-
+ @OnlyIn(Dist.CLIENT)
+ public class ControlsOptionsScreen extends Screen {
+    private static final Option[] OPTIONS = new Option[]{Option.INVERT_MOUSE, Option.SENSITIVITY, Option.TOUCHSCREEN, Option.AUTO_JUMP};
+@@ -39,7 +39,7 @@
+       this.children.add(this.keyBindingListWidget);
+       this.resetButton = this.addButton(new ButtonWidget(this.width / 2 - 155, this.height - 29, 150, 20, I18n.translate("controls.resetAll"), (p_213125_1_) -> {
+          for(KeyBinding keybinding : this.minecraft.options.keysAll) {
+-            keybinding.setKeyCode(keybinding.getDefaultKeyCode());
++            keybinding.setToDefault();
+          }
+ 
+          KeyBinding.updateKeysByCode();
+@@ -63,11 +63,14 @@
+    public boolean keyPressed(int p_keyPressed_1_, int p_keyPressed_2_, int p_keyPressed_3_) {
+       if (this.focusedBinding != null) {
+          if (p_keyPressed_1_ == 256) {
++            this.focusedBinding.setKeyModifierAndCode(net.minecraftforge.client.settings.KeyModifier.getActiveModifier(), InputUtil.UNKNOWN_KEYCODE);
+             this.options.setKeyCode(this.focusedBinding, InputUtil.UNKNOWN_KEYCODE);
+          } else {
++            this.focusedBinding.setKeyModifierAndCode(net.minecraftforge.client.settings.KeyModifier.getActiveModifier(), InputUtil.getKeyCode(p_keyPressed_1_, p_keyPressed_2_));
+             this.options.setKeyCode(this.focusedBinding, InputUtil.getKeyCode(p_keyPressed_1_, p_keyPressed_2_));
+          }
+ 
++         if (!net.minecraftforge.client.settings.KeyModifier.isKeyCodeModifier(this.focusedBinding.getKey()))
+          this.focusedBinding = null;
+          this.time = SystemUtil.getMeasuringTimeMs();
+          KeyBinding.updateKeysByCode();

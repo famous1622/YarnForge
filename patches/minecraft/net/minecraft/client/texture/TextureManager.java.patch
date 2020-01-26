@@ -1,0 +1,19 @@
+--- a/net/minecraft/client/texture/TextureManager.java
++++ b/net/minecraft/client/texture/TextureManager.java
+@@ -49,7 +49,7 @@
+    }
+ 
+    public boolean registerTextureUpdateable(Identifier textureLocation, TickableTexture textureObj) {
+-      if (this.registerTexture(textureLocation, textureObj)) {
++      if (this.registerTexture(textureLocation, (Texture)textureObj)) { //TODO: Move to MCPConfig
+          this.tickListeners.add(textureObj);
+          return true;
+       } else {
+@@ -125,6 +125,7 @@
+    public void destroyTexture(Identifier textureLocation) {
+       Texture itextureobject = this.getTexture(textureLocation);
+       if (itextureobject != null) {
++         this.textures.remove(textureLocation); // Forge: fix MC-98707
+          TextureUtil.releaseTextureId(itextureobject.getGlId());
+       }
+ 

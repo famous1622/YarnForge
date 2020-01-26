@@ -1,0 +1,297 @@
+--- a/net/minecraft/client/gui/screen/ingame/CreativeInventoryScreen.java
++++ b/net/minecraft/client/gui/screen/ingame/CreativeInventoryScreen.java
+@@ -48,6 +48,8 @@
+ import net.minecraftforge.api.distmarker.Dist;
+ import net.minecraftforge.api.distmarker.OnlyIn;
+ 
++import net.minecraft;
++
+ @OnlyIn(Dist.CLIENT)
+ public class CreativeInventoryScreen extends AbstractInventoryScreen<CreativeInventoryScreen.CreativeContainer> {
+    private static final Identifier TEXTURE = new Identifier("textures/gui/container/creative_inventory/tabs.png");
+@@ -62,6 +64,8 @@
+    private boolean field_2888;
+    private boolean field_2887;
+    private final Map<Identifier, Tag<Item>> field_16201 = Maps.newTreeMap();
++   private static int tabPage = 0;
++   private int maxPages = 0;
+ 
+    public CreativeInventoryScreen(PlayerEntity player) {
+       super(new CreativeInventoryScreen.CreativeContainer(player), player.inventory, new LiteralText(""));
+@@ -230,6 +234,12 @@
+       if (this.minecraft.interactionManager.hasCreativeInventory()) {
+          super.init();
+          this.minecraft.keyboard.enableRepeatEvents(true);
++         int tabCount = ItemGroup.GROUPS.length;
++         if (tabCount > 12) {
++            addButton(new net.minecraft.client.gui.widget.ButtonWidget(left,              top - 50, 20, 20, "<", b -> tabPage = Math.max(tabPage - 1, 0       )));
++            addButton(new net.minecraft.client.gui.widget.ButtonWidget(left + containerWidth - 20, top - 50, 20, 20, ">", b -> tabPage = Math.min(tabPage + 1, maxPages)));
++            maxPages = (int) Math.ceil((tabCount - 12) / 10D);
++         }
+          this.searchBox = new TextFieldWidget(this.font, this.left + 82, this.top + 6, 80, 9, I18n.translate("itemGroup.search"));
+          this.searchBox.setMaxLength(50);
+          this.searchBox.setHasBorder(false);
+@@ -270,7 +280,7 @@
+    public boolean charTyped(char p_charTyped_1_, int p_charTyped_2_) {
+       if (this.field_2888) {
+          return false;
+-      } else if (selectedTab != ItemGroup.SEARCH.getIndex()) {
++      } else if (!ItemGroup.GROUPS[selectedTab].hasSearchBar()) {
+          return false;
+       } else {
+          String s = this.searchBox.getText();
+@@ -288,7 +298,7 @@
+ 
+    public boolean keyPressed(int p_keyPressed_1_, int p_keyPressed_2_, int p_keyPressed_3_) {
+       this.field_2888 = false;
+-      if (selectedTab != ItemGroup.SEARCH.getIndex()) {
++      if (!ItemGroup.GROUPS[selectedTab].hasSearchBar()) {
+          if (this.minecraft.options.keyChat.matchesKey(p_keyPressed_1_, p_keyPressed_2_)) {
+             this.field_2888 = true;
+             this.setSelectedTab(ItemGroup.SEARCH);
+@@ -324,6 +334,32 @@
+    private void method_2464() {
+       (this.container).itemList.clear();
+       this.field_16201.clear();
++
++      ItemGroup tab = ItemGroup.GROUPS[selectedTab];
++      if (tab.hasSearchBar() && tab != ItemGroup.SEARCH) {
++         tab.appendStacks(container.itemList);
++         if (!this.searchBox.getText().isEmpty()) {
++            //TODO: Make this a SearchTree not a manual search
++            String search = this.searchBox.getText().toLowerCase(Locale.ROOT);
++            java.util.Iterator<ItemStack> itr = container.itemList.iterator();
++            while (itr.hasNext()) {
++               ItemStack stack = itr.next();
++               boolean matches = false;
++               for (Text line : stack.getTooltip(this.minecraft.player, this.minecraft.options.advancedItemTooltips ? TooltipContext.Default.ADVANCED : TooltipContext.Default.NORMAL)) {
++                  if (Formatting.strip(line.getString()).toLowerCase(Locale.ROOT).contains(search)) {
++                     matches = true;
++                     break;
++                  }
++               }
++               if (!matches)
++                  itr.remove();
++            }
++         }
++         this.scrollPosition = 0.0F;
++         container.method_2473(0.0F);
++         return;
++      }
++
+       String s = this.searchBox.getText();
+       if (s.isEmpty()) {
+          for(Item item : Registry.ITEM) {
+@@ -369,9 +405,9 @@
+ 
+    protected void drawForeground(int mouseX, int mouseY) {
+       ItemGroup itemgroup = ItemGroup.GROUPS[selectedTab];
+-      if (itemgroup.hasTooltip()) {
++      if (itemgroup != null && itemgroup.hasTooltip()) {
+          GlStateManager.disableBlend();
+-         this.font.draw(I18n.translate(itemgroup.getTranslationKey()), 8.0F, 6.0F, 4210752);
++         this.font.draw(I18n.translate(itemgroup.getTranslationKey()), 8.0F, 6.0F, itemgroup.getLabelColor());
+       }
+ 
+    }
+@@ -382,7 +418,7 @@
+          double d1 = p_mouseClicked_3_ - (double)this.top;
+ 
+          for(ItemGroup itemgroup : ItemGroup.GROUPS) {
+-            if (this.isClickInTab(itemgroup, d0, d1)) {
++            if (itemgroup != null && this.isClickInTab(itemgroup, d0, d1)) {
+                return true;
+             }
+          }
+@@ -403,7 +439,7 @@
+          this.field_2892 = false;
+ 
+          for(ItemGroup itemgroup : ItemGroup.GROUPS) {
+-            if (this.isClickInTab(itemgroup, d0, d1)) {
++            if (itemgroup != null && this.isClickInTab(itemgroup, d0, d1)) {
+                this.setSelectedTab(itemgroup);
+                return true;
+             }
+@@ -414,12 +450,15 @@
+    }
+ 
+    private boolean doRenderScrollBar() {
++      if (ItemGroup.GROUPS[selectedTab] == null) return false;
+       return selectedTab != ItemGroup.INVENTORY.getIndex() && ItemGroup.GROUPS[selectedTab].hasScrollbar() && this.container.method_2474();
+    }
+ 
+    private void setSelectedTab(ItemGroup tab) {
++      if (tab == null) return;
+       int i = selectedTab;
+       selectedTab = tab.getIndex();
++      slotColor = tab.getSlotColor();
+       this.cursorDragSlots.clear();
+       (this.container).itemList.clear();
+       if (tab == ItemGroup.HOTBAR) {
+@@ -493,13 +532,15 @@
+       }
+ 
+       if (this.searchBox != null) {
+-         if (tab == ItemGroup.SEARCH) {
++         if (tab.hasSearchBar()) {
+             this.searchBox.setVisible(true);
+             this.searchBox.method_1856(false);
+             this.searchBox.method_1876(true);
+             if (i != tab.getIndex()) {
+                this.searchBox.setText("");
+             }
++            this.searchBox.setWidth(tab.getSearchbarWidth());
++            this.searchBox.x = this.left + (82 /*default left*/ + 89 /*default width*/) - this.searchBox.getWidth();
+ 
+             this.method_2464();
+          } else {
+@@ -559,16 +600,35 @@
+       this.renderBackground();
+       super.render(p_render_1_, p_render_2_, p_render_3_);
+ 
+-      for(ItemGroup itemgroup : ItemGroup.GROUPS) {
+-         if (this.method_2471(itemgroup, p_render_1_, p_render_2_)) {
++      int start = tabPage * 10;
++      int end = Math.min(ItemGroup.GROUPS.length, ((tabPage + 1) * 10) + 2);
++      if (tabPage != 0) start += 2;
++      boolean rendered = false;
++
++      for (int x = start; x < end; x++) {
++         ItemGroup itemgroup = ItemGroup.GROUPS[x];
++         if (itemgroup != null && this.method_2471(itemgroup, p_render_1_, p_render_2_)) {
++            rendered = true;
+             break;
+          }
+       }
++      if (!rendered && !method_2471(ItemGroup.SEARCH, p_render_1_, p_render_2_))
++         method_2471(ItemGroup.INVENTORY, p_render_1_, p_render_2_);
+ 
+       if (this.deleteItemSlot != null && selectedTab == ItemGroup.INVENTORY.getIndex() && this.isPointWithinBounds(this.deleteItemSlot.xPosition, this.deleteItemSlot.yPosition, 16, 16, (double)p_render_1_, (double)p_render_2_)) {
+          this.renderTooltip(I18n.translate("inventory.binSlot"), p_render_1_, p_render_2_);
+       }
+ 
++      if (maxPages != 0) {
++         String page = String.format("%d / %d", tabPage + 1, maxPages + 1);
++         GlStateManager.disableLighting();
++         this.blitOffset = 300;
++         this.itemRenderer.zOffset = 300.0F;
++         font.draw(page, left + (containerWidth / 2) - (font.getStringWidth(page) / 2), top - 44, -1);
++         this.blitOffset = 0;
++         this.itemRenderer.zOffset = 0.0F;
++      }
++
+       GlStateManager.color4f(1.0F, 1.0F, 1.0F, 1.0F);
+       GlStateManager.disableLighting();
+       this.drawMouseoverTooltip(p_render_1_, p_render_2_);
+@@ -617,7 +677,11 @@
+             }
+          }
+ 
+-         this.renderTooltip(list1, p_renderTooltip_2_, p_renderTooltip_3_);
++
++         net.minecraft.client.font.TextRenderer font = p_renderTooltip_1_.getItem().getFontRenderer(p_renderTooltip_1_);
++         net.minecraftforge.fml.client.config.GuiUtils.preItemToolTip(p_renderTooltip_1_);
++         this.renderTooltip(list1, p_renderTooltip_2_, p_renderTooltip_3_, (font == null ? this.font : font));
++         net.minecraftforge.fml.client.config.GuiUtils.postItemToolTip();
+       } else {
+          super.renderTooltip(p_renderTooltip_1_, p_renderTooltip_2_, p_renderTooltip_3_);
+       }
+@@ -629,25 +693,44 @@
+       GuiLighting.enableForItems();
+       ItemGroup itemgroup = ItemGroup.GROUPS[selectedTab];
+ 
+-      for(ItemGroup itemgroup1 : ItemGroup.GROUPS) {
+-         this.minecraft.getTextureManager().bindTexture(TEXTURE);
+-         if (itemgroup1.getIndex() != selectedTab) {
++      int start = tabPage * 10;
++      int end = Math.min(ItemGroup.GROUPS.length, ((tabPage + 1) * 10 + 2));
++      if (tabPage != 0) start += 2;
++
++      for (int idx = start; idx < end; idx++) {
++         ItemGroup itemgroup1 = ItemGroup.GROUPS[idx];
++         if (itemgroup1 != null && itemgroup1.getIndex() != selectedTab) {
++            this.minecraft.getTextureManager().bindTexture(itemgroup1.getTabsImage());
+             this.method_2468(itemgroup1);
+          }
+       }
+ 
+-      this.minecraft.getTextureManager().bindTexture(new Identifier("textures/gui/container/creative_inventory/tab_" + itemgroup.getTexture()));
++      if (tabPage != 0) {
++         if (itemgroup != ItemGroup.SEARCH) {
++            this.minecraft.getTextureManager().bindTexture(ItemGroup.SEARCH.getTabsImage());
++            method_2468(ItemGroup.SEARCH);
++         }
++         if (itemgroup != ItemGroup.INVENTORY) {
++            this.minecraft.getTextureManager().bindTexture(ItemGroup.INVENTORY.getTabsImage());
++            method_2468(ItemGroup.INVENTORY);
++         }
++      }
++
++      this.minecraft.getTextureManager().bindTexture(itemgroup.getBackgroundImage());
+       this.blit(this.left, this.top, 0, 0, this.containerWidth, this.containerHeight);
+       this.searchBox.render(mouseX, mouseY, partialTicks);
+       GlStateManager.color4f(1.0F, 1.0F, 1.0F, 1.0F);
+       int i = this.left + 175;
+       int j = this.top + 18;
+       int k = j + 112;
+-      this.minecraft.getTextureManager().bindTexture(TEXTURE);
++      this.minecraft.getTextureManager().bindTexture(itemgroup.getTabsImage());
+       if (itemgroup.hasScrollbar()) {
+          this.blit(i, j + (int)((float)(k - j - 17) * this.scrollPosition), 232 + (this.doRenderScrollBar() ? 0 : 12), 0, 12, 15);
+       }
+ 
++      if ((itemgroup == null || itemgroup.getTabPage() != tabPage) && (itemgroup != ItemGroup.SEARCH && itemgroup != ItemGroup.INVENTORY))
++         return;
++
+       this.method_2468(itemgroup);
+       if (itemgroup == ItemGroup.INVENTORY) {
+          InventoryScreen.drawEntity(this.left + 88, this.top + 45, 20, (float)(this.left + 88 - mouseX), (float)(this.top + 45 - 30 - mouseY), this.minecraft.player);
+@@ -656,6 +739,7 @@
+    }
+ 
+    protected boolean isClickInTab(ItemGroup p_195375_1_, double p_195375_2_, double p_195375_4_) {
++      if (p_195375_1_.getTabPage() != tabPage && p_195375_1_ != ItemGroup.SEARCH && p_195375_1_ != ItemGroup.INVENTORY) return false;
+       int i = p_195375_1_.getColumn();
+       int j = 28 * i;
+       int k = 0;
+@@ -725,6 +809,8 @@
+       }
+ 
+       GlStateManager.disableLighting();
++      GlStateManager.color3f(1F, 1F, 1F); //Forge: Reset color in case Items change it.
++      GlStateManager.enableBlend(); //Forge: Make sure blend is enabled else tabs show a white border.
+       this.blit(l, i1, j, k, 28, 32);
+       this.blitOffset = 100;
+       this.itemRenderer.zOffset = 100.0F;
+@@ -896,6 +982,31 @@
+       public boolean canTakeItems(PlayerEntity playerIn) {
+          return this.slot.canTakeItems(playerIn);
+       }
++
++      public Identifier getBackgroundLocation() {
++          return this.slot.getBackgroundLocation();
++      }
++
++      public void setBackgroundLocation(Identifier texture) {
++          this.slot.setBackgroundLocation(texture);
++      }
++
++      public void setBackgroundName(@Nullable String name) {
++          this.slot.setBackgroundName(name);
++      }
++
++      @Nullable
++      public net.minecraft.client.texture.Sprite getBackgroundSprite() {
++          return this.slot.getBackgroundSprite();
++      }
++
++      public int getSlotIndex() {
++         return this.slot.getSlotIndex();
++      }
++
++      public boolean isSameInventory(Slot other) {
++         return this.slot.isSameInventory(other);
++      }
+    }
+ 
+    @OnlyIn(Dist.CLIENT)

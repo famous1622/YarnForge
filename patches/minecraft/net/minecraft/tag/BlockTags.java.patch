@@ -1,0 +1,13 @@
+--- a/net/minecraft/tag/BlockTags.java
++++ b/net/minecraft/tag/BlockTags.java
+@@ -70,6 +70,10 @@
+       return container;
+    }
+ 
++   public static int getGeneration() {
++      return latestVersion;
++   }
++
+    private static Tag<Block> register(String id) {
+       return new BlockTags.CachingTag(new Identifier(id));
+    }

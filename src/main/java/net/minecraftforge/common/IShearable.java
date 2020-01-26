@@ -24,10 +24,10 @@ import java.util.List;
 import javax.annotation.Nonnull;
 
 import net.minecraft.item.ItemStack;
-import net.minecraft.util.NonNullList;
+import net.minecraft.util.DefaultedList;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.IWorld;
-import net.minecraft.world.IWorldReader;
+import net.minecraft.world.ViewableWorld;
 
 /**
  * This allows for mods to create there own Shear-like items
@@ -49,7 +49,7 @@ public interface IShearable {
 	 * @param pos   Block's position in world.
 	 * @return If this is shearable, and onSheared should be called.
 	 */
-	default boolean isShearable(@Nonnull ItemStack item, IWorldReader world, BlockPos pos) {
+	default boolean isShearable(@Nonnull ItemStack item, ViewableWorld world, BlockPos pos) {
 		return true;
 	}
 
@@ -73,6 +73,6 @@ public interface IShearable {
 	 */
 	@Nonnull
 	default List<ItemStack> onSheared(@Nonnull ItemStack item, IWorld world, BlockPos pos, int fortune) {
-		return NonNullList.create();
+		return DefaultedList.of();
 	}
 }

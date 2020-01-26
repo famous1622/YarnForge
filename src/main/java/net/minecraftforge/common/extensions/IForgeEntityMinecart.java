@@ -21,10 +21,10 @@ package net.minecraftforge.common.extensions;
 
 import net.minecraftforge.common.IMinecartCollisionHandler;
 
-import net.minecraft.entity.item.minecart.AbstractMinecartEntity;
+import net.minecraft.entity.vehicle.AbstractMinecartEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
-import net.minecraft.tags.BlockTags;
+import net.minecraft.tag.BlockTags;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
 
@@ -52,11 +52,11 @@ public interface IForgeEntityMinecart {
 	 * Internal, returns the current spot to look for the attached rail.
 	 */
 	default BlockPos getCurrentRailPosition() {
-		int x = MathHelper.floor(getMinecart().posX);
-		int y = MathHelper.floor(getMinecart().posY);
-		int z = MathHelper.floor(getMinecart().posZ);
+		int x = MathHelper.floor(getMinecart().x);
+		int y = MathHelper.floor(getMinecart().y);
+		int z = MathHelper.floor(getMinecart().z);
 		BlockPos pos = new BlockPos(x, y - 1, z);
-		if (getMinecart().world.getBlockState(pos).isIn(BlockTags.RAILS)) pos = pos.down();
+		if (getMinecart().world.getBlockState(pos).matches(BlockTags.RAILS)) pos = pos.down();
 		return pos;
 	}
 

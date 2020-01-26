@@ -19,8 +19,6 @@
 
 package net.minecraftforge.fml;
 
-import static net.minecraftforge.fml.Logging.CORE;
-import static net.minecraftforge.fml.Logging.LOADING;
 
 import java.nio.file.Path;
 import java.util.Collection;
@@ -62,7 +60,7 @@ import net.minecraftforge.versions.forge.ForgeVersion;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import net.minecraft.util.registry.Bootstrap;
+import net.minecraft.Bootstrap;
 
 /**
  * Loads mods.
@@ -270,7 +268,7 @@ public class ModLoader {
 	public void runDataGenerator(final Set<String> mods, final Path path, final Collection<Path> inputs, Collection<Path> existingPacks, final boolean serverGenerators, final boolean clientGenerators, final boolean devToolGenerators, final boolean reportsGenerator, final boolean structureValidator) {
 		if (mods.contains("minecraft") && mods.size() == 1) return;
 		LOGGER.info("Initializing Data Gatherer for mods {}", mods);
-		Bootstrap.register();
+		Bootstrap.initialize();
 		dataGeneratorConfig = new GatherDataEvent.DataGeneratorConfig(mods, path, inputs, serverGenerators, clientGenerators, devToolGenerators, reportsGenerator, structureValidator);
 		existingFileHelper = new ExistingFileHelper(existingPacks, structureValidator);
 		gatherAndInitializeMods(null);

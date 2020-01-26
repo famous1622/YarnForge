@@ -20,30 +20,30 @@
 package net.minecraftforge.fml.client.gui;
 
 import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.client.gui.widget.button.Button;
-import net.minecraft.client.multiplayer.ServerData;
-import net.minecraft.client.resources.I18n;
-import net.minecraft.util.text.TranslationTextComponent;
+import net.minecraft.client.gui.widget.ButtonWidget;
+import net.minecraft.client.options.ServerEntry;
+import net.minecraft.client.resource.language.I18n;
+import net.minecraft.text.TranslatableText;
 
 public class GuiAccessDenied extends Screen {
 	private Screen parent;
-	private ServerData data;
+	private ServerEntry data;
 
-	public GuiAccessDenied(Screen parent, ServerData data) {
-		super(new TranslationTextComponent("fml.menu.accessdenied.title"));
+	public GuiAccessDenied(Screen parent, ServerEntry data) {
+		super(new TranslatableText("fml.menu.accessdenied.title"));
 		this.parent = parent;
 		this.data = data;
 	}
 
 	@Override
 	public void init() {
-		this.buttons.add(new Button(this.width / 2 - 75, this.height - 38, 200, 20, I18n.format("gui.done"), b -> GuiAccessDenied.this.minecraft.displayGuiScreen(parent)));
+		this.buttons.add(new ButtonWidget(this.width / 2 - 75, this.height - 38, 200, 20, I18n.translate("gui.done"), b -> GuiAccessDenied.this.minecraft.openScreen(parent)));
 	}
 
 	@Override
 	public void render(int mouseX, int mouseY, float partialTicks) {
 		this.renderBackground();
-		String[] lines = I18n.format("fml.menu.accessdenied.message", data.serverName).split("\n");
+		String[] lines = I18n.translate("fml.menu.accessdenied.message", data.name).split("\n");
 		int offset = Math.max(85 - lines.length * 10, 10);
 		for (String line : lines) {
 			this.drawCenteredString(this.font, line, this.width / 2, offset, 0xFFFFFF);

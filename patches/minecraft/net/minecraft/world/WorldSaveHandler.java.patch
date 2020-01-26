@@ -1,0 +1,81 @@
+--- a/net/minecraft/world/WorldSaveHandler.java
++++ b/net/minecraft/world/WorldSaveHandler.java
+@@ -18,10 +18,10 @@
+ import net.minecraft.structure.StructureManager;
+ import org.apache.logging.log4j.LogManager;
+ import org.apache.logging.log4j.Logger;
++
+ import net.minecraft.world.level.LevelProperties;
+ import net.minecraft.world.level.storage.LevelStorage;
+ 
+-
+ public class WorldSaveHandler implements PlayerSaveHandler {
+    private static final Logger LOGGER = LogManager.getLogger();
+    private final File worldDir;
+@@ -53,6 +53,8 @@
+       CompoundTag compoundnbt1 = new CompoundTag();
+       compoundnbt1.put("Data", compoundnbt);
+ 
++      net.minecraftforge.fml.WorldPersistenceHooks.handleWorldDataSave(this, worldInformation, compoundnbt1);
++
+       try {
+          File file1 = new File(this.worldDir, "level.dat_new");
+          File file2 = new File(this.worldDir, "level.dat_old");
+@@ -120,14 +122,14 @@
+    public LevelProperties readProperties() {
+       File file1 = new File(this.worldDir, "level.dat");
+       if (file1.exists()) {
+-         LevelProperties worldinfo = LevelStorage.readLevelProperties(file1, this.dataFixer);
++         LevelProperties worldinfo = LevelStorage.getWorldData(file1, this.dataFixer, this);
+          if (worldinfo != null) {
+             return worldinfo;
+          }
+       }
+ 
+       file1 = new File(this.worldDir, "level.dat_old");
+-      return file1.exists() ? LevelStorage.readLevelProperties(file1, this.dataFixer) : null;
++      return file1.exists() ? LevelStorage.getWorldData(file1, this.dataFixer, this) : null;
+    }
+ 
+    public void saveWorld(LevelProperties worldInformation) {
+@@ -145,6 +147,7 @@
+          }
+ 
+          file1.renameTo(file2);
++         net.minecraftforge.event.ForgeEventFactory.firePlayerSavingEvent(player, playerDataDir, player.getUuid().toString());
+       } catch (Exception var5) {
+          LOGGER.warn("Failed to save player data for {}", (Object)player.getName().getString());
+       }
+@@ -168,6 +171,7 @@
+          int i = compoundnbt.containsKey("DataVersion", 3) ? compoundnbt.getInt("DataVersion") : -1;
+          player.fromTag(TagHelper.update(this.dataFixer, DataFixTypes.PLAYER, compoundnbt, i));
+       }
++      net.minecraftforge.event.ForgeEventFactory.firePlayerLoadingEvent(player, playerDataDir, player.getUuid().toString());
+ 
+       return compoundnbt;
+    }
+@@ -194,4 +198,24 @@
+    public DataFixer getDataFixer() {
+       return this.dataFixer;
+    }
++
++   public CompoundTag getPlayerNBT(net.minecraft.server.network.ServerPlayerEntity player) {
++      try {
++         File file1 = new File(this.playerDataDir, player.getUuidAsString() + ".dat");
++         if (file1.exists() && file1.isFile()) {
++            CompoundTag nbt = NbtIo.readCompressed(new FileInputStream(file1));
++            if (nbt != null) {
++               nbt = TagHelper.update(this.dataFixer, DataFixTypes.PLAYER, nbt, nbt.containsKey("DataVersion", 3) ? nbt.getInt("DataVersion") : -1);
++            }
++            return nbt;
++         }
++      } catch (Exception exception) {
++         LOGGER.warn("Failed to load player data for " + player.getName());
++      }
++      return null;
++   }
++
++   public File getPlayerFolder() {
++      return playerDataDir;
++   }
+ }

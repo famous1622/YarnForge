@@ -23,8 +23,8 @@ import javax.annotation.Nonnull;
 
 import net.minecraftforge.eventbus.api.Cancelable;
 
-import net.minecraft.client.renderer.entity.ItemFrameRenderer;
-import net.minecraft.entity.item.ItemFrameEntity;
+import net.minecraft.client.render.entity.ItemFrameEntityRenderer;
+import net.minecraft.entity.decoration.ItemFrameEntity;
 import net.minecraft.item.ItemStack;
 
 /**
@@ -36,10 +36,10 @@ import net.minecraft.item.ItemStack;
 public class RenderItemInFrameEvent extends net.minecraftforge.eventbus.api.Event {
 	private final ItemStack item;
 	private final ItemFrameEntity entityItemFrame;
-	private final ItemFrameRenderer renderer;
+	private final ItemFrameEntityRenderer renderer;
 
-	public RenderItemInFrameEvent(ItemFrameEntity itemFrame, ItemFrameRenderer renderItemFrame) {
-		item = itemFrame.getDisplayedItem();
+	public RenderItemInFrameEvent(ItemFrameEntity itemFrame, ItemFrameEntityRenderer renderItemFrame) {
+		item = itemFrame.getHeldItemStack();
 		entityItemFrame = itemFrame;
 		renderer = renderItemFrame;
 	}
@@ -53,7 +53,7 @@ public class RenderItemInFrameEvent extends net.minecraftforge.eventbus.api.Even
 		return entityItemFrame;
 	}
 
-	public ItemFrameRenderer getRenderer() {
+	public ItemFrameEntityRenderer getRenderer() {
 		return renderer;
 	}
 }

@@ -1,0 +1,21 @@
+--- a/net/minecraft/entity/thrown/ThrownEntity.java
++++ b/net/minecraft/entity/thrown/ThrownEntity.java
+@@ -22,8 +22,8 @@
+ import net.minecraft.server.world.ServerWorld;
+ import net.minecraftforge.api.distmarker.Dist;
+ import net.minecraftforge.api.distmarker.OnlyIn;
+-import net.minecraft.entity.ProjectileUtil;
+ 
++import net.minecraft.entity.ProjectileUtil;
+ 
+ public abstract class ThrownEntity extends Entity implements Projectile {
+    private int blockX = -1;
+@@ -135,7 +135,7 @@
+       if (raytraceresult.getType() != HitResult.Type.MISS) {
+          if (raytraceresult.getType() == HitResult.Type.BLOCK && this.world.getBlockState(((BlockHitResult)raytraceresult).getBlockPos()).getBlock() == Blocks.NETHER_PORTAL) {
+             this.setInPortal(((BlockHitResult)raytraceresult).getBlockPos());
+-         } else {
++         } else if (!net.minecraftforge.event.ForgeEventFactory.onProjectileImpact(this, raytraceresult)){
+             this.onCollision(raytraceresult);
+          }
+       }

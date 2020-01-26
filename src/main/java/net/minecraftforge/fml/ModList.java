@@ -19,7 +19,6 @@
 
 package net.minecraftforge.fml;
 
-import static net.minecraftforge.fml.Logging.LOADING;
 
 import java.util.Collection;
 import java.util.Collections;

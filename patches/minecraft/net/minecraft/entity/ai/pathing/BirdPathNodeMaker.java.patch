@@ -1,0 +1,31 @@
+--- a/net/minecraft/entity/ai/pathing/BirdPathNodeMaker.java
++++ b/net/minecraft/entity/ai/pathing/BirdPathNodeMaker.java
+@@ -11,8 +11,8 @@
+ import net.minecraft.util.math.MathHelper;
+ import net.minecraft.world.BlockView;
+ import net.minecraft.world.ViewableWorld;
+-import net.minecraft.class_4459;
+ 
++import net.minecraft.class_4459;
+ 
+ public class BirdPathNodeMaker extends LandPathNodeMaker {
+    public void init(ViewableWorld sourceIn, MobEntity mob) {
+@@ -209,7 +209,9 @@
+       EnumSet<PathNodeType> enumset = EnumSet.noneOf(PathNodeType.class);
+       PathNodeType pathnodetype = PathNodeType.BLOCKED;
+       BlockPos blockpos = new BlockPos(entitylivingIn);
++      this.currentEntity = entitylivingIn;
+       pathnodetype = this.method_64(blockaccessIn, x, y, z, xSize, ySize, zSize, canBreakDoorsIn, canEnterDoorsIn, enumset, pathnodetype, blockpos);
++      this.currentEntity = null;
+       if (enumset.contains(PathNodeType.FENCE)) {
+          return PathNodeType.FENCE;
+       } else {
+@@ -241,6 +243,8 @@
+          if (pathnodetype1 != PathNodeType.DAMAGE_FIRE && block != Blocks.MAGMA_BLOCK && pathnodetype1 != PathNodeType.LAVA && block != Blocks.CAMPFIRE) {
+             if (pathnodetype1 == PathNodeType.DAMAGE_CACTUS) {
+                pathnodetype = PathNodeType.DAMAGE_CACTUS;
++            } else if (pathnodetype1 == PathNodeType.DAMAGE_OTHER) { // Forge: consider modded damage types
++               pathnodetype = PathNodeType.DAMAGE_OTHER;
+             } else if (pathnodetype1 == PathNodeType.DAMAGE_OTHER) {
+                pathnodetype = PathNodeType.DAMAGE_OTHER;
+             } else {

@@ -34,11 +34,11 @@ import net.minecraftforge.registries.IForgeRegistryEntry;
 import net.minecraftforge.registries.ObjectHolderRegistry;
 import net.minecraftforge.registries.RegistryManager;
 
-import net.minecraft.util.ResourceLocation;
+import net.minecraft.util.Identifier;
 
 public final class RegistryObject<T extends IForgeRegistryEntry<? super T>> implements Supplier<T> {
 	private static RegistryObject<?> EMPTY = new RegistryObject<>();
-	private final ResourceLocation name;
+	private final Identifier name;
 	@Nullable
 	private T value;
 
@@ -46,12 +46,12 @@ public final class RegistryObject<T extends IForgeRegistryEntry<? super T>> impl
 		this.name = null;
 	}
 
-	private <V extends IForgeRegistryEntry<V>> RegistryObject(ResourceLocation name, Supplier<Class<? super V>> registryType) {
+	private <V extends IForgeRegistryEntry<V>> RegistryObject(Identifier name, Supplier<Class<? super V>> registryType) {
 		this(name, RegistryManager.ACTIVE.<V>getRegistry(registryType.get()));
 	}
 
 	@SuppressWarnings("unchecked")
-	private <V extends IForgeRegistryEntry<V>> RegistryObject(ResourceLocation name, IForgeRegistry<V> registry) {
+	private <V extends IForgeRegistryEntry<V>> RegistryObject(Identifier name, IForgeRegistry<V> registry) {
 		if (registry == null) {
 			throw new IllegalArgumentException("Invalid registry argument, must not be null");
 		}
@@ -66,19 +66,19 @@ public final class RegistryObject<T extends IForgeRegistryEntry<? super T>> impl
 
 	@Deprecated
 	public static <T extends IForgeRegistryEntry<T>, U extends T> RegistryObject<U> of(final String name, Supplier<Class<? super T>> registryType) {
-		return of(new ResourceLocation(name), registryType);
+		return of(new Identifier(name), registryType);
 	}
 
-	public static <T extends IForgeRegistryEntry<T>, U extends T> RegistryObject<U> of(final ResourceLocation name, Supplier<Class<? super T>> registryType) {
+	public static <T extends IForgeRegistryEntry<T>, U extends T> RegistryObject<U> of(final Identifier name, Supplier<Class<? super T>> registryType) {
 		return new RegistryObject<>(name, registryType);
 	}
 
 	@Deprecated
 	public static <T extends IForgeRegistryEntry<T>, U extends T> RegistryObject<U> of(final String name, IForgeRegistry<T> registry) {
-		return of(new ResourceLocation(name), registry);
+		return of(new Identifier(name), registry);
 	}
 
-	public static <T extends IForgeRegistryEntry<T>, U extends T> RegistryObject<U> of(final ResourceLocation name, IForgeRegistry<T> registry) {
+	public static <T extends IForgeRegistryEntry<T>, U extends T> RegistryObject<U> of(final Identifier name, IForgeRegistry<T> registry) {
 		return new RegistryObject<>(name, registry);
 	}
 
@@ -101,7 +101,7 @@ public final class RegistryObject<T extends IForgeRegistryEntry<? super T>> impl
 		this.value = registry.getValue(getId());
 	}
 
-	public ResourceLocation getId() {
+	public Identifier getId() {
 		return this.name;
 	}
 

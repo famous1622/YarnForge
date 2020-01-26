@@ -1,0 +1,44 @@
+--- a/net/minecraft/predicate/item/ItemPredicate.java
++++ b/net/minecraft/predicate/item/ItemPredicate.java
+@@ -23,11 +23,13 @@
+ import net.minecraft.util.JsonHelper;
+ import net.minecraft.util.Identifier;
+ import net.minecraft.util.registry.Registry;
++
+ import net.minecraft.predicate.NbtPredicate;
+ import net.minecraft.util.NumberRange;
+ 
+-
+ public class ItemPredicate {
++   private static final Map<Identifier, java.util.function.Function<JsonObject, ItemPredicate>> custom_predicates = new java.util.HashMap<>();
++   private static final Map<Identifier, java.util.function.Function<JsonObject, ItemPredicate>> unmod_predicates = java.util.Collections.unmodifiableMap(custom_predicates);
+    public static final ItemPredicate ANY = new ItemPredicate();
+    @Nullable
+    private final Tag<Item> tag;
+@@ -96,6 +98,11 @@
+    public static ItemPredicate deserialize(@Nullable JsonElement element) {
+       if (element != null && !element.isJsonNull()) {
+          JsonObject jsonobject = JsonHelper.asObject(element, "item");
++         if (jsonobject.has("type")) {
++            final Identifier rl = new Identifier(JsonHelper.getString(jsonobject, "type"));
++            if (custom_predicates.containsKey(rl)) return custom_predicates.get(rl).apply(jsonobject);
++            else throw new JsonSyntaxException("There is no ItemPredicate of type "+rl);
++         }
+          NumberRange.IntRange minmaxbounds$intbound = NumberRange.IntRange.fromJson(jsonobject.get("count"));
+          NumberRange.IntRange minmaxbounds$intbound1 = NumberRange.IntRange.fromJson(jsonobject.get("durability"));
+          if (jsonobject.has("data")) {
+@@ -184,6 +191,14 @@
+       }
+    }
+ 
++   public static void register(Identifier name, java.util.function.Function<JsonObject, ItemPredicate> deserializer) {
++      custom_predicates.put(name, deserializer);
++   }
++
++   public static Map<Identifier, java.util.function.Function<JsonObject, ItemPredicate>> getPredicates() {
++      return unmod_predicates;
++   }
++
+    public static class Builder {
+       private final List<EnchantmentPredicate> enchantments = Lists.newArrayList();
+       @Nullable

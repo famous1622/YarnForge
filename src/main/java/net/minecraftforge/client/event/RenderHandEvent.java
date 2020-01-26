@@ -19,7 +19,7 @@
 
 package net.minecraftforge.client.event;
 
-import net.minecraft.client.renderer.WorldRenderer;
+import net.minecraft.client.render.WorldRenderer;
 
 /**
  * This event is fired on {@link net.minecraftforge.common.MinecraftForge#EVENT_BUS}

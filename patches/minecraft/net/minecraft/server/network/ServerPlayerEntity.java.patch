@@ -1,0 +1,195 @@
+--- a/net/minecraft/server/network/ServerPlayerEntity.java
++++ b/net/minecraft/server/network/ServerPlayerEntity.java
+@@ -14,7 +14,6 @@
+ import net.minecraft.block.Block;
+ import net.minecraft.block.BlockState;
+ import net.minecraft.block.Blocks;
+-import net.minecraft.block.FenceGateBlock;
+ import net.minecraft.command.arguments.EntityAnchorArgumentType;
+ import net.minecraft.util.crash.CrashReport;
+ import net.minecraft.util.crash.CrashReportSection;
+@@ -82,7 +81,6 @@
+ import net.minecraft.stat.ServerStatHandler;
+ import net.minecraft.stat.Stat;
+ import net.minecraft.stat.Stats;
+-import net.minecraft.tag.BlockTags;
+ import net.minecraft.block.entity.CommandBlockBlockEntity;
+ import net.minecraft.block.entity.SignBlockEntity;
+ import net.minecraft.block.entity.BlockEntity;
+@@ -115,10 +113,10 @@
+ import net.minecraft.world.level.LevelProperties;
+ import org.apache.logging.log4j.LogManager;
+ import org.apache.logging.log4j.Logger;
++
+ import net.minecraft.client.options.ChatVisibility;
+ import net.minecraft.entity.player.PlayerEntity;
+ 
+-
+ public class ServerPlayerEntity extends PlayerEntity implements ContainerListener {
+    private static final Logger LOGGER = LogManager.getLogger();
+    private String clientLanguage = "en_US";
+@@ -435,6 +433,7 @@
+    }
+ 
+    public void onDeath(DamageSource cause) {
++      if (net.minecraftforge.common.ForgeHooks.onLivingDeath(this, cause)) return;
+       boolean flag = this.world.getGameRules().getBoolean(GameRules.SHOW_DEATH_MESSAGES);
+       if (flag) {
+          Text itextcomponent = this.getDamageTracker().getDeathMessage();
+@@ -476,7 +475,7 @@
+          livingentity.updateKilledAdvancementCriterion(this, this.field_6232, cause);
+          if (!this.world.isClient && livingentity instanceof WitherEntity) {
+             boolean flag1 = false;
+-            if (this.world.getGameRules().getBoolean(GameRules.MOB_GRIEFING)) {
++            if (net.minecraftforge.event.ForgeEventFactory.getMobGriefingEvent(this.world, this)) {
+                BlockPos blockpos = new BlockPos(this.x, this.y, this.z);
+                BlockState blockstate = Blocks.WITHER_ROSE.getDefaultState();
+                if (this.world.getBlockState(blockpos).isAir() && blockstate.canPlaceAt(this.world, blockpos)) {
+@@ -567,8 +566,10 @@
+       return this.server.isPvpEnabled();
+    }
+ 
++   @Override
+    @Nullable
+    public Entity changeDimension(DimensionType destination) {
++      if (!net.minecraftforge.common.ForgeHooks.onTravelToDimension(this, destination)) return null;
+       this.inTeleportationState = true;
+       DimensionType dimensiontype = this.dimension;
+       if (dimensiontype == DimensionType.THE_END && destination == DimensionType.OVERWORLD) {
+@@ -586,12 +587,13 @@
+          this.dimension = destination;
+          ServerWorld serverworld1 = this.server.getWorld(destination);
+          LevelProperties worldinfo = this.world.getLevelProperties();
++         net.minecraftforge.fml.network.NetworkHooks.sendDimensionDataPacket(this.networkHandler.client, this);
+          this.networkHandler.sendPacket(new PlayerRespawnS2CPacket(destination, worldinfo.getGeneratorType(), this.interactionManager.getGameMode()));
+          this.networkHandler.sendPacket(new DifficultyS2CPacket(worldinfo.getDifficulty(), worldinfo.isDifficultyLocked()));
+          PlayerManager playerlist = this.server.getPlayerManager();
+          playerlist.sendCommandTree(this);
+-         serverworld.removePlayer(this);
+-         this.removed = false;
++         serverworld.removeEntity(this, true); //Forge: the player entity is moved to the new world, NOT cloned. So keep the data alive with no matching invalidate call.
++         this.revive();
+          double d0 = this.x;
+          double d1 = this.y;
+          double d2 = this.z;
+@@ -600,13 +602,11 @@
+          double d3 = 8.0D;
+          float f2 = f1;
+          serverworld.getProfiler().push("moving");
++         double moveFactor = serverworld.getDimension().getMovementFactor() / serverworld1.getDimension().getMovementFactor();
++         d0 *= moveFactor;
++         d2 *= moveFactor;
+          if (dimensiontype == DimensionType.OVERWORLD && destination == DimensionType.THE_NETHER) {
+             this.enteredNetherPos = new Vec3d(this.x, this.y, this.z);
+-            d0 /= 8.0D;
+-            d2 /= 8.0D;
+-         } else if (dimensiontype == DimensionType.THE_NETHER && destination == DimensionType.OVERWORLD) {
+-            d0 *= 8.0D;
+-            d2 *= 8.0D;
+          } else if (dimensiontype == DimensionType.OVERWORLD && destination == DimensionType.THE_END) {
+             BlockPos blockpos = serverworld1.getForcedSpawnPoint();
+             d0 = (double)blockpos.getX();
+@@ -670,6 +670,7 @@
+          this.field_13978 = -1;
+          this.field_13997 = -1.0F;
+          this.field_13979 = -1;
++         net.minecraftforge.fml.hooks.BasicEventHooks.firePlayerChangedDimensionEvent(this, dimensiontype, destination);
+          return this;
+       }
+    }
+@@ -775,11 +776,11 @@
+       BlockPos blockpos = new BlockPos(i, j, k);
+       if (this.world.isBlockLoaded(blockpos)) {
+          BlockState blockstate = this.world.getBlockState(blockpos);
+-         if (blockstate.isAir()) {
++         if (blockstate.isAir(world, blockpos)) {
+             BlockPos blockpos1 = blockpos.down();
+             BlockState blockstate1 = this.world.getBlockState(blockpos1);
+             Block block = blockstate1.getBlock();
+-            if (block.matches(BlockTags.FENCES) || block.matches(BlockTags.WALLS) || block instanceof FenceGateBlock) {
++            if (blockstate.collisionExtendsVertically(this.world, blockpos, this)) {
+                blockpos = blockpos1;
+                blockstate = blockstate1;
+             }
+@@ -818,6 +819,7 @@
+             this.networkHandler.sendPacket(new OpenContainerPacket(container.syncId, container.getType(), p_213829_1_.getDisplayName()));
+             container.addListener(this);
+             this.container = container;
++            net.minecraftforge.common.MinecraftForge.EVENT_BUS.post(new net.minecraftforge.event.entity.player.PlayerContainerEvent.Open(this, this.container));
+             return OptionalInt.of(this.containerSyncId);
+          }
+       }
+@@ -836,6 +838,7 @@
+       this.networkHandler.sendPacket(new GuiOpenS2CPacket(this.containerSyncId, inventoryIn.getInvSize(), horse.getEntityId()));
+       this.container = new HorseContainer(this.containerSyncId, this.inventory, inventoryIn, horse);
+       this.container.addListener(this);
++      net.minecraftforge.common.MinecraftForge.EVENT_BUS.post(new net.minecraftforge.event.entity.player.PlayerContainerEvent.Open(this, this.container));
+    }
+ 
+    public void openEditBookScreen(ItemStack stack, Hand hand) {
+@@ -893,6 +896,7 @@
+ 
+    public void method_14247() {
+       this.container.close(this);
++      net.minecraftforge.common.MinecraftForge.EVENT_BUS.post(new net.minecraftforge.event.entity.player.PlayerContainerEvent.Close(this, this.container));
+       this.container = this.playerContainer;
+    }
+ 
+@@ -1019,6 +1023,20 @@
+       this.enteredNetherPos = that.enteredNetherPos;
+       this.setShoulderEntityLeft(that.getShoulderEntityLeft());
+       this.setShoulderEntityRight(that.getShoulderEntityRight());
++
++      this.spawnPosMap = that.spawnPosMap;
++      this.spawnForcedMap = that.spawnForcedMap;
++      if(that.dimension != DimensionType.OVERWORLD) {
++          this.spawnPosition = that.spawnPosition;
++          this.spawnForced = that.spawnForced;
++      }
++
++      //Copy over a section of the Entity Data from the old player.
++      //Allows mods to specify data that persists after players respawn.
++      CompoundTag old = that.getPersistentData();
++      if (old.containsKey(PERSISTED_NBT_TAG))
++          getPersistentData().put(PERSISTED_NBT_TAG, old.getTag(PERSISTED_NBT_TAG));
++      net.minecraftforge.event.ForgeEventFactory.onPlayerClone(this, that, !keepEverything);
+    }
+ 
+    protected void method_6020(StatusEffectInstance id) {
+@@ -1241,15 +1259,16 @@
+       this.stopRiding();
+       if (p_200619_1_ == this.world) {
+          this.networkHandler.requestTeleport(x, y, z, yaw, pitch);
+-      } else {
++      } else if (net.minecraftforge.common.ForgeHooks.onTravelToDimension(this, p_200619_1_.dimension.getType())) {
+          ServerWorld serverworld = this.getServerWorld();
+          this.dimension = p_200619_1_.dimension.getType();
+          LevelProperties worldinfo = p_200619_1_.getLevelProperties();
++         net.minecraftforge.fml.network.NetworkHooks.sendDimensionDataPacket(this.networkHandler.client, this);
+          this.networkHandler.sendPacket(new PlayerRespawnS2CPacket(this.dimension, worldinfo.getGeneratorType(), this.interactionManager.getGameMode()));
+          this.networkHandler.sendPacket(new DifficultyS2CPacket(worldinfo.getDifficulty(), worldinfo.isDifficultyLocked()));
+          this.server.getPlayerManager().sendCommandTree(this);
+-         serverworld.removePlayer(this);
+-         this.removed = false;
++         serverworld.removePlayer(this, true); //Forge: The player entity itself is moved, and not cloned. So we need to keep the data alive with no matching invalidate call later.
++         this.revive();
+          this.setPositionAndAngles(x, y, z, yaw, pitch);
+          this.setWorld(p_200619_1_);
+          p_200619_1_.method_18207(this);
+@@ -1258,6 +1277,7 @@
+          this.interactionManager.setWorld(p_200619_1_);
+          this.server.getPlayerManager().sendWorldInfo(this, p_200619_1_);
+          this.server.getPlayerManager().method_14594(this);
++         net.minecraftforge.fml.hooks.BasicEventHooks.firePlayerChangedDimensionEvent(this, p_200619_1_.dimension.getType(), this.dimension);
+       }
+ 
+    }
+@@ -1292,6 +1312,8 @@
+       if (itementity == null) {
+          return null;
+       } else {
++         if (captureDrops() != null) captureDrops().add(itementity);
++         else
+          this.world.spawnEntity(itementity);
+          ItemStack itemstack = itementity.getStack();
+          if (traceItem) {

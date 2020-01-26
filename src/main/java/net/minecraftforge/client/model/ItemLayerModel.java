@@ -38,20 +38,19 @@ import net.minecraftforge.client.model.pipeline.UnpackedBakedQuad;
 import net.minecraftforge.common.model.TRSRTransformation;
 import net.minecraftforge.versions.forge.ForgeVersion;
 
-import net.minecraft.client.renderer.model.BakedQuad;
-import net.minecraft.client.renderer.model.BlockModel;
-import net.minecraft.client.renderer.model.IBakedModel;
-import net.minecraft.client.renderer.model.IUnbakedModel;
-import net.minecraft.client.renderer.model.ItemCameraTransforms.TransformType;
-import net.minecraft.client.renderer.model.ItemModelGenerator;
-import net.minecraft.client.renderer.model.ItemOverrideList;
-import net.minecraft.client.renderer.model.ModelBakery;
-import net.minecraft.client.renderer.texture.ISprite;
-import net.minecraft.client.renderer.texture.TextureAtlasSprite;
-import net.minecraft.client.renderer.vertex.VertexFormat;
-import net.minecraft.resources.IResourceManager;
-import net.minecraft.util.Direction;
-import net.minecraft.util.ResourceLocation;
+import net.minecraft.client.render.model.BakedQuad;
+import net.minecraft.client.render.model.json.JsonUnbakedModel;
+import net.minecraft.client.render.model.BakedModel;
+import net.minecraft.client.render.model.UnbakedModel;
+import net.minecraft.client.render.model.json.ModelTransformation.Type;
+import net.minecraft.client.render.model.json.ModelItemPropertyOverrideList;
+import net.minecraft.client.render.model.ModelLoader;
+import net.minecraft.client.render.model.ModelBakeSettings;
+import net.minecraft.client.texture.Sprite;
+import net.minecraft.client.render.VertexFormat;
+import net.minecraft.resource.ResourceManager;
+import net.minecraft.util.math.Direction;
+import net.minecraft.util.Identifier;
 
 /**
  * Forge reimplementation of vanilla {@link ItemModelGenerator}, i.e. builtin/generated models,
@@ -61,37 +60,37 @@ import net.minecraft.util.ResourceLocation;
  * - Various fixes in the baking logic.
  * - Not limited to 4 layers maximum.
  */
-public final class ItemLayerModel implements IUnbakedModel {
+public final class ItemLayerModel implements UnbakedModel {
 	public static final ItemLayerModel INSTANCE = new ItemLayerModel(ImmutableList.of());
 
 	private static final Direction[] HORIZONTALS = {Direction.UP, Direction.DOWN};
 	private static final Direction[] VERTICALS = {Direction.WEST, Direction.EAST};
 
-	private final ImmutableList<ResourceLocation> textures;
-	private final ItemOverrideList overrides;
+	private final ImmutableList<Identifier> textures;
+	private final ModelItemPropertyOverrideList overrides;
 
-	public ItemLayerModel(ImmutableList<ResourceLocation> textures) {
-		this(textures, ItemOverrideList.EMPTY);
+	public ItemLayerModel(ImmutableList<Identifier> textures) {
+		this(textures, ModelItemPropertyOverrideList.EMPTY);
 	}
 
-	public ItemLayerModel(ImmutableList<ResourceLocation> textures, ItemOverrideList overrides) {
+	public ItemLayerModel(ImmutableList<Identifier> textures, ModelItemPropertyOverrideList overrides) {
 		this.textures = textures;
 		this.overrides = overrides;
 	}
 
-	public ItemLayerModel(ModelBakery bakery, BlockModel model, VertexFormat format) {
+	public ItemLayerModel(ModelLoader bakery, JsonUnbakedModel model, VertexFormat format) {
 		this(getTextures(model), model.getOverrides(bakery, model, ModelLoader.defaultTextureGetter(), format));
 	}
 
-	private static ImmutableList<ResourceLocation> getTextures(BlockModel model) {
-		ImmutableList.Builder<ResourceLocation> builder = ImmutableList.builder();
-		for (int i = 0; model.isTexturePresent("layer" + i); i++) {
-			builder.add(new ResourceLocation(model.resolveTextureName("layer" + i)));
+	private static ImmutableList<Identifier> getTextures(JsonUnbakedModel model) {
+		ImmutableList.Builder<Identifier> builder = ImmutableList.builder();
+		for (int i = 0; model.textureExists("layer" + i); i++) {
+			builder.add(new Identifier(model.resolveTexture("layer" + i)));
 		}
 		return builder.build();
 	}
 
-	public static ImmutableList<BakedQuad> getQuadsForSprite(int tint, TextureAtlasSprite sprite, VertexFormat format, Optional<TRSRTransformation> transform) {
+	public static ImmutableList<BakedQuad> getQuadsForSprite(int tint, Sprite sprite, VertexFormat format, Optional<TRSRTransformation> transform) {
 		ImmutableList.Builder<BakedQuad> builder = ImmutableList.builder();
 
 		int uMax = sprite.getWidth();
@@ -241,7 +240,7 @@ public final class ItemLayerModel implements IUnbakedModel {
 		return builder.build();
 	}
 
-	private static BakedQuad buildSideQuad(VertexFormat format, Optional<TRSRTransformation> transform, Direction side, int tint, TextureAtlasSprite sprite, int u, int v, int size) {
+	private static BakedQuad buildSideQuad(VertexFormat format, Optional<TRSRTransformation> transform, Direction side, int tint, Sprite sprite, int u, int v, int size) {
 		final float eps = 1e-2f;
 
 		int width = sprite.getWidth();
@@ -269,8 +268,8 @@ public final class ItemLayerModel implements IUnbakedModel {
 			throw new IllegalArgumentException("can't handle z-oriented side");
 		}
 
-		float dx = side.getDirectionVec().getX() * eps / width;
-		float dy = side.getDirectionVec().getY() * eps / height;
+		float dx = side.getVector().getX() * eps / width;
+		float dy = side.getVector().getY() * eps / height;
 
 		float u0 = 16f * (x0 - dx);
 		float u1 = 16f * (x1 - dx);
@@ -279,10 +278,10 @@ public final class ItemLayerModel implements IUnbakedModel {
 
 		return buildQuad(
 				format, transform, remap(side), sprite, tint,
-				x0, y0, z0, sprite.getInterpolatedU(u0), sprite.getInterpolatedV(v0),
-				x1, y1, z0, sprite.getInterpolatedU(u1), sprite.getInterpolatedV(v1),
-				x1, y1, z1, sprite.getInterpolatedU(u1), sprite.getInterpolatedV(v1),
-				x0, y0, z1, sprite.getInterpolatedU(u0), sprite.getInterpolatedV(v0)
+				x0, y0, z0, sprite.getU(u0), sprite.getV(v0),
+				x1, y1, z0, sprite.getU(u1), sprite.getV(v1),
+				x1, y1, z1, sprite.getU(u1), sprite.getV(v1),
+				x0, y0, z1, sprite.getU(u0), sprite.getV(v0)
 		);
 	}
 
@@ -292,7 +291,7 @@ public final class ItemLayerModel implements IUnbakedModel {
 	}
 
 	private static BakedQuad buildQuad(
-			VertexFormat format, Optional<TRSRTransformation> transform, Direction side, TextureAtlasSprite sprite, int tint,
+			VertexFormat format, Optional<TRSRTransformation> transform, Direction side, Sprite sprite, int tint,
 			float x0, float y0, float z0, float u0, float v0,
 			float x1, float y1, float z1, float u1, float v1,
 			float x2, float y2, float z2, float u2, float v2,
@@ -316,7 +315,7 @@ public final class ItemLayerModel implements IUnbakedModel {
 
 	private static void putVertex(IVertexConsumer consumer, VertexFormat format, Direction side, float x, float y, float z, float u, float v) {
 		for (int e = 0; e < format.getElementCount(); e++) {
-			switch (format.getElement(e).getUsage()) {
+			switch (format.getElement(e).getType()) {
 			case POSITION:
 				consumer.put(e, x, y, z, 1f);
 				break;
@@ -324,9 +323,9 @@ public final class ItemLayerModel implements IUnbakedModel {
 				consumer.put(e, 1f, 1f, 1f, 1f);
 				break;
 			case NORMAL:
-				float offX = (float) side.getXOffset();
-				float offY = (float) side.getYOffset();
-				float offZ = (float) side.getZOffset();
+				float offX = (float) side.getOffsetX();
+				float offY = (float) side.getOffsetY();
+				float offZ = (float) side.getOffsetZ();
 				consumer.put(e, offX, offY, offZ, 0f);
 				break;
 			case UV:
@@ -343,21 +342,21 @@ public final class ItemLayerModel implements IUnbakedModel {
 	}
 
 	@Override
-	public Collection<ResourceLocation> getTextures(Function<ResourceLocation, IUnbakedModel> modelGetter, Set<String> missingTextureErrors) {
+	public Collection<Identifier> getTextureDependencies(Function<Identifier, UnbakedModel> modelGetter, Set<String> missingTextureErrors) {
 		return textures;
 	}
 
 	@Override
-	public Collection<ResourceLocation> getDependencies() {
+	public Collection<Identifier> getModelDependencies() {
 		return Collections.emptyList();
 	}
 
 	@Override
 	public ItemLayerModel retexture(ImmutableMap<String, String> textures) {
-		ImmutableList.Builder<ResourceLocation> builder = ImmutableList.builder();
+		ImmutableList.Builder<Identifier> builder = ImmutableList.builder();
 		for (int i = 0; i < textures.size() + this.textures.size(); i++) {
 			if (textures.containsKey("layer" + i)) {
-				builder.add(new ResourceLocation(textures.get("layer" + i)));
+				builder.add(new Identifier(textures.get("layer" + i)));
 			} else if (i < this.textures.size()) {
 				builder.add(this.textures.get(i));
 			}
@@ -367,16 +366,16 @@ public final class ItemLayerModel implements IUnbakedModel {
 
 	@Nullable
 	@Override
-	public IBakedModel bake(ModelBakery bakery, Function<ResourceLocation, TextureAtlasSprite> spriteGetter, ISprite sprite, VertexFormat format) {
+	public BakedModel bake(ModelLoader bakery, Function<Identifier, Sprite> spriteGetter, ModelBakeSettings sprite, VertexFormat format) {
 		ImmutableList.Builder<BakedQuad> builder = ImmutableList.builder();
 		Optional<TRSRTransformation> transform = sprite.getState().apply(Optional.empty());
 		boolean identity = !transform.isPresent() || transform.get().isIdentity();
 		for (int i = 0; i < textures.size(); i++) {
-			TextureAtlasSprite tas = spriteGetter.apply(textures.get(i));
+			Sprite tas = spriteGetter.apply(textures.get(i));
 			builder.addAll(getQuadsForSprite(i, tas, format, transform));
 		}
-		TextureAtlasSprite particle = spriteGetter.apply(textures.isEmpty() ? new ResourceLocation("missingno") : textures.get(0));
-		ImmutableMap<TransformType, TRSRTransformation> map = PerspectiveMapWrapper.getTransforms(sprite.getState());
+		Sprite particle = spriteGetter.apply(textures.isEmpty() ? new Identifier("missingno") : textures.get(0));
+		ImmutableMap<Type, TRSRTransformation> map = PerspectiveMapWrapper.getTransforms(sprite.getState());
 		return new BakedItemModel(builder.build(), particle, map, overrides, identity);
 	}
 
@@ -384,11 +383,11 @@ public final class ItemLayerModel implements IUnbakedModel {
 		INSTANCE;
 
 		@Override
-		public void onResourceManagerReload(IResourceManager resourceManager) {
+		public void apply(ResourceManager resourceManager) {
 		}
 
 		@Override
-		public boolean accepts(ResourceLocation modelLocation) {
+		public boolean accepts(Identifier modelLocation) {
 			return modelLocation.getNamespace().equals(ForgeVersion.MOD_ID) && (
 					modelLocation.getPath().equals("item-layer") ||
 							modelLocation.getPath().equals("models/block/item-layer") ||
@@ -396,7 +395,7 @@ public final class ItemLayerModel implements IUnbakedModel {
 		}
 
 		@Override
-		public IUnbakedModel loadModel(ResourceLocation modelLocation) {
+		public UnbakedModel loadModel(Identifier modelLocation) {
 			return ItemLayerModel.INSTANCE;
 		}
 	}

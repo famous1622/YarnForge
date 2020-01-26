@@ -1,0 +1,11 @@
+--- a/net/minecraft/client/network/ServerEntryNetworkPart.java
++++ b/net/minecraft/client/network/ServerEntryNetworkPart.java
+@@ -120,6 +120,8 @@
+                   server.setIcon((String)null);
+                }
+ 
++               net.minecraftforge.fml.client.ClientHooks.processForgeListPingData(serverstatusresponse, server);
++
+                this.field_3772 = SystemUtil.getMeasuringTimeMs();
+                networkmanager.send(new QueryPingC2SPacket(this.field_3772));
+                this.field_3775 = true;

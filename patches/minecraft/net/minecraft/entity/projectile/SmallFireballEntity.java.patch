@@ -1,11 +1,19 @@
 --- a/net/minecraft/entity/projectile/SmallFireballEntity.java
 +++ b/net/minecraft/entity/projectile/SmallFireballEntity.java
-@@ -40,7 +40,7 @@
-                   entity.func_223308_g(i);
+@@ -10,7 +10,6 @@
+ import net.minecraft.util.hit.BlockHitResult;
+ import net.minecraft.util.hit.EntityHitResult;
+ import net.minecraft.util.hit.HitResult;
+-import net.minecraft.world.GameRules;
+ import net.minecraft.world.World;
+ 
+ public class SmallFireballEntity extends AbstractFireballEntity {
+@@ -40,7 +39,7 @@
+                   entity.method_20803(i);
                 }
              }
--         } else if (this.field_70235_a == null || !(this.field_70235_a instanceof MobEntity) || this.field_70170_p.func_82736_K().func_223586_b(GameRules.field_223599_b)) {
-+         } else if (this.field_70235_a == null || !(this.field_70235_a instanceof MobEntity) || net.minecraftforge.event.ForgeEventFactory.getMobGriefingEvent(this.field_70170_p, this.field_70235_a)) {
-             BlockRayTraceResult blockraytraceresult = (BlockRayTraceResult)p_70227_1_;
-             BlockPos blockpos = blockraytraceresult.func_216350_a().func_177972_a(blockraytraceresult.func_216354_b());
-             if (this.field_70170_p.func_175623_d(blockpos)) {
+-         } else if (this.owner == null || !(this.owner instanceof MobEntity) || this.world.getGameRules().getBoolean(GameRules.MOB_GRIEFING)) {
++         } else if (this.owner == null || !(this.owner instanceof MobEntity) || net.minecraftforge.event.ForgeEventFactory.getMobGriefingEvent(this.world, this.owner)) {
+             BlockHitResult blockraytraceresult = (BlockHitResult)result;
+             BlockPos blockpos = blockraytraceresult.getBlockPos().offset(blockraytraceresult.getSide());
+             if (this.world.isAir(blockpos)) {

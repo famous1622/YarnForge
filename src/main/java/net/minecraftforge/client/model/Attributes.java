@@ -19,10 +19,10 @@
 
 package net.minecraftforge.client.model;
 
-import net.minecraft.client.renderer.vertex.VertexFormat;
-import net.minecraft.client.renderer.vertex.VertexFormatElement;
-import net.minecraft.client.renderer.vertex.VertexFormatElement.Type;
-import net.minecraft.client.renderer.vertex.VertexFormatElement.Usage;
+import net.minecraft.client.render.VertexFormat;
+import net.minecraft.client.render.VertexFormatElement;
+import net.minecraft.client.render.VertexFormatElement.Format;
+import net.minecraft.client.render.VertexFormatElement.Type;
 
 public class Attributes {
 	/*
@@ -32,23 +32,23 @@ public class Attributes {
 
 	static {
 		DEFAULT_BAKED_FORMAT = new VertexFormat();
-		DEFAULT_BAKED_FORMAT.addElement(new VertexFormatElement(0, Type.FLOAT, Usage.POSITION, 3));
-		DEFAULT_BAKED_FORMAT.addElement(new VertexFormatElement(0, Type.UBYTE, Usage.COLOR, 4));
-		DEFAULT_BAKED_FORMAT.addElement(new VertexFormatElement(0, Type.FLOAT, Usage.UV, 2));
-		DEFAULT_BAKED_FORMAT.addElement(new VertexFormatElement(0, Type.BYTE, Usage.PADDING, 4));
+		DEFAULT_BAKED_FORMAT.add(new VertexFormatElement(0, Format.FLOAT, Type.POSITION, 3));
+		DEFAULT_BAKED_FORMAT.add(new VertexFormatElement(0, Format.UBYTE, Type.COLOR, 4));
+		DEFAULT_BAKED_FORMAT.add(new VertexFormatElement(0, Format.FLOAT, Type.UV, 2));
+		DEFAULT_BAKED_FORMAT.add(new VertexFormatElement(0, Format.BYTE, Type.PADDING, 4));
 	}
 
 	/*
 	 * Can first format be used where second is expected
 	 */
 	public static boolean moreSpecific(VertexFormat first, VertexFormat second) {
-		int size = first.getSize();
-		if (size != second.getSize()) return false;
+		int size = first.getVertexSize();
+		if (size != second.getVertexSize()) return false;
 
 		int padding = 0;
 		int j = 0;
 		for (VertexFormatElement firstAttr : first.getElements()) {
-			while (j < second.getElementCount() && second.getElement(j).getUsage() == Usage.PADDING) {
+			while (j < second.getElementCount() && second.getElement(j).getType() == Type.PADDING) {
 				padding += second.getElement(j++).getSize();
 			}
 			if (j >= second.getElementCount() && padding == 0) {
@@ -60,9 +60,9 @@ public class Attributes {
 				VertexFormatElement secondAttr = second.getElement(j++);
 				if (
 						firstAttr.getIndex() != secondAttr.getIndex() ||
-								firstAttr.getElementCount() != secondAttr.getElementCount() ||
-								firstAttr.getType() != secondAttr.getType() ||
-								firstAttr.getUsage() != secondAttr.getUsage()) {
+								firstAttr.getCount() != secondAttr.getCount() ||
+								firstAttr.getFormat() != secondAttr.getFormat() ||
+								firstAttr.getType() != secondAttr.getType()) {
 					return false;
 				}
 			} else {

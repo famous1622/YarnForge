@@ -1,0 +1,11 @@
+--- a/net/minecraft/world/gen/decorator/Decorator.java
++++ b/net/minecraft/world/gen/decorator/Decorator.java
+@@ -13,7 +13,7 @@
+ import net.minecraft.world.gen.feature.ConfiguredFeature;
+ import net.minecraft.world.gen.feature.FeatureConfig;
+ 
+-public abstract class Decorator<DC extends DecoratorConfig> {
++public abstract class Decorator<DC extends DecoratorConfig> extends net.minecraftforge.registries.ForgeRegistryEntry<Decorator<?>> {
+    public static final Decorator<CountDecoratorConfig> COUNT_HEIGHTMAP = register("count_heightmap", new CountHeightmapDecorator(CountDecoratorConfig::deserialize));
+    public static final Decorator<CountDecoratorConfig> COUNT_TOP_SOLID = register("count_top_solid", new CountTopSolidDecorator(CountDecoratorConfig::deserialize));
+    public static final Decorator<CountDecoratorConfig> COUNT_HEIGHTMAP_32 = register("count_heightmap_32", new CountHeightmap32Decorator(CountDecoratorConfig::deserialize));

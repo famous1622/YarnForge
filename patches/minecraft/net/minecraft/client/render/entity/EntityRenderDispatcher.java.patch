@@ -1,0 +1,13 @@
+--- a/net/minecraft/client/render/entity/EntityRenderDispatcher.java
++++ b/net/minecraft/client/render/entity/EntityRenderDispatcher.java
+@@ -257,6 +257,10 @@
+       this.modelRenderers.put("slim", new PlayerEntityRenderer(this, true));
+    }
+ 
++   public Map<String, PlayerEntityRenderer> getSkinMap() {
++       return (Map<String, PlayerEntityRenderer>) java.util.Collections.unmodifiableMap(modelRenderers);
++   }
++
+    public void setRenderPosition(double renderPosXIn, double renderPosYIn, double renderPosZIn) {
+       this.renderPosX = renderPosXIn;
+       this.renderPosY = renderPosYIn;

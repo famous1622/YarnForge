@@ -1,0 +1,60 @@
+--- a/net/minecraft/client/texture/Sprite.java
++++ b/net/minecraft/client/texture/Sprite.java
+@@ -16,11 +16,11 @@
+ import net.minecraft.util.SystemUtil;
+ import net.minecraftforge.api.distmarker.Dist;
+ import net.minecraftforge.api.distmarker.OnlyIn;
+-import net.minecraft.client.util.PngFile;
+ 
++import net.minecraft.client.util.PngFile;
+ 
+ @OnlyIn(Dist.CLIENT)
+-public class Sprite {
++public class Sprite implements net.minecraftforge.client.extensions.IForgeTextureAtlasSprite {
+    private final Identifier id;
+    protected final int width;
+    protected final int height;
+@@ -105,7 +105,10 @@
+                anativeimage[k1] = this.images[k1];
+             } else {
+                NativeImage nativeimage1 = anativeimage[k1 - 1];
+-               NativeImage nativeimage = new NativeImage(nativeimage1.getWidth() >> 1, nativeimage1.getHeight() >> 1, false);
++               int width = nativeimage1.getWidth() >> 1;
++               int height = nativeimage1.getHeight() >> 1;
++               if (width > 0 && height > 0) { // FORGE force higher mipmap levels when a texture is not square
++               NativeImage nativeimage = new NativeImage(width, height, false);
+                int k = nativeimage.getWidth();
+                int l = nativeimage.getHeight();
+ 
+@@ -114,8 +117,11 @@
+                      nativeimage.setPixelRGBA(i1, j1, blendPixels(nativeimage1.getPixelRGBA(i1 * 2 + 0, j1 * 2 + 0), nativeimage1.getPixelRGBA(i1 * 2 + 1, j1 * 2 + 0), nativeimage1.getPixelRGBA(i1 * 2 + 0, j1 * 2 + 1), nativeimage1.getPixelRGBA(i1 * 2 + 1, j1 * 2 + 1), flag));
+                   }
+                }
+-
++               
+                anativeimage[k1] = nativeimage;
++               } else {
++                   anativeimage[k1] = nativeimage1;
++               }
+             }
+          }
+ 
+@@ -211,6 +217,7 @@
+ 
+    private void upload(int xOffsetIn, int yOffsetIn, NativeImage[] framesIn) {
+       for(int i = 0; i < this.images.length; ++i) {
++         if ((this.width >> i <= 0) || (this.height >> i <= 0)) break;
+          framesIn[i].upload(i, this.x >> i, this.y >> i, xOffsetIn >> i, yOffsetIn >> i, this.width >> i, this.height >> i, this.images.length > 1);
+       }
+ 
+@@ -466,4 +473,10 @@
+    public void upload() {
+       this.upload(0);
+    }
++   
++   // Forge Start
++   
++   public int getPixelRGBA(int frameIndex, int x, int y) {
++       return this.images[frameIndex].getPixelRGBA(x + this.frameXs[frameIndex] * this.width, y + this.frameYs[frameIndex] * this.height);
++   }
+ }

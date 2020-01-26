@@ -19,7 +19,6 @@
 
 package net.minecraftforge.server.console;
 
-import static com.google.common.base.Preconditions.checkNotNull;
 
 import java.util.List;
 import java.util.concurrent.ExecutionException;
@@ -35,14 +34,14 @@ import org.jline.reader.Completer;
 import org.jline.reader.LineReader;
 import org.jline.reader.ParsedLine;
 
-import net.minecraft.command.CommandSource;
-import net.minecraft.server.dedicated.DedicatedServer;
+import net.minecraft.server.command.ServerCommandSource;
+import net.minecraft.server.dedicated.MinecraftDedicatedServer;
 
 final class ConsoleCommandCompleter implements Completer {
 	private static final Logger logger = LogManager.getLogger();
-	private final DedicatedServer server;
+	private final MinecraftDedicatedServer server;
 
-	public ConsoleCommandCompleter(DedicatedServer server) {
+	public ConsoleCommandCompleter(MinecraftDedicatedServer server) {
 		this.server = checkNotNull(server, "server");
 	}
 
@@ -65,7 +64,7 @@ final class ConsoleCommandCompleter implements Completer {
 		}
 
 		try {
-			ParseResults<CommandSource> results = this.server.getCommandManager().getDispatcher().parse(stringReader, this.server.getCommandSource());
+			ParseResults<ServerCommandSource> results = this.server.getCommandManager().getDispatcher().parse(stringReader, this.server.getCommandSource());
 			Suggestions tabComplete = this.server.getCommandManager().getDispatcher().getCompletionSuggestions(results).get();
 			for (Suggestion suggestion : tabComplete.getList()) {
 				String completion = suggestion.getText();

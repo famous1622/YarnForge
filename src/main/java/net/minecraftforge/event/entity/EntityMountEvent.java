@@ -19,7 +19,6 @@
 
 package net.minecraftforge.event.entity;
 
-import net.minecraftforge.common.MinecraftForge;
 
 import net.minecraft.entity.Entity;
 import net.minecraft.world.World;

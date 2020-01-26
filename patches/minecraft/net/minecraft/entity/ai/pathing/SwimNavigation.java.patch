@@ -1,0 +1,12 @@
+--- a/net/minecraft/entity/ai/pathing/SwimNavigation.java
++++ b/net/minecraft/entity/ai/pathing/SwimNavigation.java
+@@ -68,7 +68,8 @@
+ 
+          int i = 6;
+          Vec3d vec3d2 = this.currentPath.getCurrentPosition();
+-         if (Math.abs(this.entity.x - (vec3d2.x + 0.5D)) < (double)f1 && Math.abs(this.entity.z - (vec3d2.z + 0.5D)) < (double)f1 && Math.abs(this.entity.y - vec3d2.y) < (double)(f1 * 2.0F)) {
++         // Forge: fix MC-94054
++         if (Math.abs(this.entity.x - (vec3d2.x + (this.entity.getWidth() + 1) / 2D)) < (double)f1 && Math.abs(this.entity.z - (vec3d2.z + (this.entity.getWidth() + 1) / 2D)) < (double)f1 && Math.abs(this.entity.y - vec3d2.y) < (double)(f1 * 2.0F)) {
+             this.currentPath.next();
+          }
+ 

@@ -21,18 +21,16 @@ package net.minecraftforge.event.brewing;
 
 import javax.annotation.Nonnull;
 
-import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.eventbus.api.Event;
 
 import net.minecraft.item.ItemStack;
-import net.minecraft.tileentity.BrewingStandTileEntity;
-import net.minecraft.util.NonNullList;
+import net.minecraft.util.DefaultedList;
 
 
 public class PotionBrewEvent extends Event {
-	private NonNullList<ItemStack> stacks;
+	private DefaultedList<ItemStack> stacks;
 
-	protected PotionBrewEvent(NonNullList<ItemStack> stacks) {
+	protected PotionBrewEvent(DefaultedList<ItemStack> stacks) {
 		this.stacks = stacks;
 	}
 
@@ -71,7 +69,7 @@ public class PotionBrewEvent extends Event {
 	 **/
 	@net.minecraftforge.eventbus.api.Cancelable
 	public static class Pre extends PotionBrewEvent {
-		public Pre(NonNullList<ItemStack> stacks) {
+		public Pre(DefaultedList<ItemStack> stacks) {
 			super(stacks);
 		}
 	}
@@ -90,7 +88,7 @@ public class PotionBrewEvent extends Event {
 	 * This event is fired on the {@link MinecraftForge#EVENT_BUS}.<br>
 	 **/
 	public static class Post extends PotionBrewEvent {
-		public Post(NonNullList<ItemStack> stacks) {
+		public Post(DefaultedList<ItemStack> stacks) {
 			super(stacks);
 		}
 	}

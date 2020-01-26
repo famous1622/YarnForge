@@ -27,7 +27,7 @@ import net.minecraftforge.fluids.capability.templates.FluidHandlerItemStack;
 
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.CompoundNBT;
+import net.minecraft.nbt.CompoundTag;
 
 /**
  * A simple fluid container, to replace the functionality of the old FluidContainerRegistry and IFluidContainerItem.
@@ -40,13 +40,13 @@ public class ItemFluidContainer extends Item {
 	/**
 	 * @param capacity The maximum capacity of this fluid container.
 	 */
-	public ItemFluidContainer(Item.Properties properties, int capacity) {
+	public ItemFluidContainer(Item.Settings properties, int capacity) {
 		super(properties);
 		this.capacity = capacity;
 	}
 
 	@Override
-	public ICapabilityProvider initCapabilities(@Nonnull ItemStack stack, @Nullable CompoundNBT nbt) {
+	public ICapabilityProvider initCapabilities(@Nonnull ItemStack stack, @Nullable CompoundTag nbt) {
 		return new FluidHandlerItemStack(stack, capacity);
 	}
 }

@@ -1,0 +1,103 @@
+--- a/net/minecraft/world/storage/RegionFile.java
++++ b/net/minecraft/world/storage/RegionFile.java
+@@ -19,13 +19,19 @@
+ import net.minecraft.util.math.ChunkPos;
+ 
+ public class RegionFile implements AutoCloseable {
++   // Minecraft is limited to 256 sections per chunk. So 1MB. This can easily be override.
++   // So we extend this to use the REAL size when the count is maxed by seeking to that section and reading the length.
++   private static final boolean FORGE_ENABLE_EXTENDED_SAVE = Boolean.parseBoolean(System.getProperty("forge.enableExtendedSave", "true"));
++   private static final org.apache.logging.log4j.Logger LOGGER = org.apache.logging.log4j.LogManager.getLogger();
+    private static final byte[] EMPTY_SECTOR = new byte[4096];
+    private final RandomAccessFile file;
+    private final int[] offsets = new int[1024];
+    private final int[] chunkTimestamps = new int[1024];
+    private final List<Boolean> sectorFree;
++   private final File filepath;
+ 
+    public RegionFile(File fileNameIn) throws IOException {
++      this.filepath = fileNameIn;
+       this.file = new RandomAccessFile(fileNameIn, "rw");
+       if (this.file.length() < 4096L) {
+          this.file.write(EMPTY_SECTOR);
+@@ -52,11 +58,21 @@
+       for(int j1 = 0; j1 < 1024; ++j1) {
+          int k = this.file.readInt();
+          this.offsets[j1] = k;
+-         if (k != 0 && (k >> 8) + (k & 255) <= this.sectorFree.size()) {
+-            for(int l = 0; l < (k & 255); ++l) {
++         int length = k & 255;
++         if (length == 255) {
++            if ((k >> 8) <= this.sectorFree.size()) { // We're maxed out, so we need to read the proper length from the section
++               this.file.seek((k >> 8) * 4096);
++               length = (this.file.readInt() + 4) / 4096 + 1;
++               this.file.seek(j1 * 4 + 4); //Go back to where we were
++            }
++         }
++         if (k != 0 && (k >> 8) + length <= this.sectorFree.size()) {
++            for (int l = 0; l < length; ++l) {
+                this.sectorFree.set((k >> 8) + l, false);
+             }
+          }
++         else if (length > 0)
++            LOGGER.warn("Invalid chunk: ({}, {}) Offset: {} Length: {} runs off end file. {}", j1 % 32, (int)(j1 / 32), k >> 8, length, fileNameIn);
+       }
+ 
+       for(int k1 = 0; k1 < 1024; ++k1) {
+@@ -74,14 +90,20 @@
+       } else {
+          int j = i >> 8;
+          int k = i & 255;
++         if (k == 255) {
++            this.file.seek(j * 4096);
++            k = (this.file.readInt() + 4) / 4096 + 1;
++         }
+          if (j + k > this.sectorFree.size()) {
+             return null;
+          } else {
+             this.file.seek((long)(j * 4096));
+             int l = this.file.readInt();
+             if (l > 4096 * k) {
++               LOGGER.warn("Invalid chunk: ({}, {}) Offset: {} Invalid Size: {}>{} {}", pos.x, pos.z, j, l, k * 4096, filepath);
+                return null;
+             } else if (l <= 0) {
++               LOGGER.warn("Invalid chunk: ({}, {}) Offset: {} Invalid Size: {} {}", pos.x, pos.z, j, l, filepath);
+                return null;
+             } else {
+                byte b0 = this.file.readByte();
+@@ -134,10 +156,16 @@
+       int i = this.getOffset(p_222664_1_);
+       int j = i >> 8;
+       int k = i & 255;
++      if (k == 255) {
++         this.file.seek(j * 4096);
++         k = (this.file.readInt() + 4) / 4096 + 1;
++      }
+       int l = (p_222664_3_ + 5) / 4096 + 1;
+-      if (l >= 256) {
++      if (l >= 256 && !FORGE_ENABLE_EXTENDED_SAVE) {
+          throw new RuntimeException(String.format("Too big to save, %d > 1048576", p_222664_3_));
+       } else {
++         if (l >= 256) LOGGER.warn("Large Chunk Detected: ({}, {}) Size: {} {}", p_222664_1_.x, p_222664_1_.z, l, filepath);
++
+          if (j != 0 && k == l) {
+             this.write(j, p_222664_2_, p_222664_3_);
+          } else {
+@@ -168,7 +196,7 @@
+ 
+             if (j1 >= l) {
+                j = l1;
+-               this.setOffset(p_222664_1_, l1 << 8 | l);
++               this.setOffset(p_222664_1_, l1 << 8 | (l > 255 ? 255 : l));
+ 
+                for(int i2 = 0; i2 < l; ++i2) {
+                   this.sectorFree.set(j + i2, false);
+@@ -185,7 +213,7 @@
+                }
+ 
+                this.write(j, p_222664_2_, p_222664_3_);
+-               this.setOffset(p_222664_1_, j << 8 | l);
++               this.setOffset(p_222664_1_, j << 8 | (l > 255 ? 255 : l));
+             }
+          }
+ 

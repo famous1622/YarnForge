@@ -1,0 +1,50 @@
+--- a/net/minecraft/resource/ResourcePackContainer.java
++++ b/net/minecraft/resource/ResourcePackContainer.java
+@@ -30,6 +30,7 @@
+    private final ResourcePackContainer.InsertionPosition position;
+    private final boolean notSorting;
+    private final boolean positionFixed;
++   private final boolean hidden; // Forge: Allow packs to be hidden from the UI entirely
+ 
+    @Nullable
+    public static <T extends ResourcePackContainer> T of(String nameIn, boolean p_195793_1_, Supplier<ResourcePack> p_195793_2_, ResourcePackContainer.Factory<T> factory, ResourcePackContainer.InsertionPosition p_195793_4_) {
+@@ -53,7 +54,12 @@
+       return (T)null;
+    }
+ 
++   @Deprecated
+    public ResourcePackContainer(String nameIn, boolean p_i47907_2_, Supplier<ResourcePack> resourcePackSupplierIn, Text p_i47907_4_, Text p_i47907_5_, ResourcePackCompatibility p_i47907_6_, ResourcePackContainer.InsertionPosition p_i47907_7_, boolean p_i47907_8_) {
++      this(nameIn, p_i47907_2_, resourcePackSupplierIn, p_i47907_4_, p_i47907_5_, p_i47907_6_, p_i47907_7_, p_i47907_8_, false);
++   }
++
++   public ResourcePackContainer(String nameIn, boolean p_i47907_2_, Supplier<ResourcePack> resourcePackSupplierIn, Text p_i47907_4_, Text p_i47907_5_, ResourcePackCompatibility p_i47907_6_, ResourcePackContainer.InsertionPosition p_i47907_7_, boolean p_i47907_8_, boolean hidden) {
+       this.name = nameIn;
+       this.packCreator = resourcePackSupplierIn;
+       this.displayName = p_i47907_4_;
+@@ -62,10 +68,16 @@
+       this.notSorting = p_i47907_2_;
+       this.position = p_i47907_7_;
+       this.positionFixed = p_i47907_8_;
++      this.hidden = hidden;
+    }
+ 
++   @Deprecated
+    public ResourcePackContainer(String p_i47908_1_, boolean p_i47908_2_, Supplier<ResourcePack> p_i47908_3_, ResourcePack p_i47908_4_, PackResourceMetadata p_i47908_5_, ResourcePackContainer.InsertionPosition p_i47908_6_) {
+-      this(p_i47908_1_, p_i47908_2_, p_i47908_3_, new LiteralText(p_i47908_4_.getName()), p_i47908_5_.getDescription(), ResourcePackCompatibility.from(p_i47908_5_.getPackFormat()), p_i47908_6_, false);
++      this(p_i47908_1_, p_i47908_2_, p_i47908_3_, p_i47908_4_, p_i47908_5_, p_i47908_6_, false);
++   }
++
++   public ResourcePackContainer(String p_i47908_1_, boolean p_i47908_2_, Supplier<ResourcePack> p_i47908_3_, ResourcePack p_i47908_4_, PackResourceMetadata p_i47908_5_, ResourcePackContainer.InsertionPosition p_i47908_6_, boolean hidden) {
++      this(p_i47908_1_, p_i47908_2_, p_i47908_3_, new LiteralText(p_i47908_4_.getName()), p_i47908_5_.getDescription(), ResourcePackCompatibility.from(p_i47908_5_.getPackFormat()), p_i47908_6_, hidden, hidden);
+    }
+ 
+    @OnlyIn(Dist.CLIENT)
+@@ -107,6 +119,8 @@
+    public ResourcePackContainer.InsertionPosition getInitialPosition() {
+       return this.position;
+    }
++   
++   public boolean isHidden() { return hidden; }
+ 
+    public boolean equals(Object p_equals_1_) {
+       if (this == p_equals_1_) {

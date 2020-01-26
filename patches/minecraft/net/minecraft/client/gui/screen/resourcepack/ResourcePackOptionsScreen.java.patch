@@ -1,0 +1,27 @@
+--- a/net/minecraft/client/gui/screen/resourcepack/ResourcePackOptionsScreen.java
++++ b/net/minecraft/client/gui/screen/resourcepack/ResourcePackOptionsScreen.java
+@@ -11,8 +11,8 @@
+ import net.minecraft.text.TranslatableText;
+ import net.minecraftforge.api.distmarker.Dist;
+ import net.minecraftforge.api.distmarker.OnlyIn;
+-import net.minecraft.client.gui.screen.Screen;
+ 
++import net.minecraft.client.gui.screen.Screen;
+ 
+ @OnlyIn(Dist.CLIENT)
+ public class ResourcePackOptionsScreen extends Screen {
+@@ -83,11 +83,14 @@
+          resourcepacklist.callCreators();
+          List<ClientResourcePackContainer> list = Lists.newArrayList(resourcepacklist.getAlphabeticallyOrderedContainers());
+          list.removeAll(resourcepacklist.getEnabledContainers());
++         list.removeIf(net.minecraft.resource.ResourcePackContainer::isHidden); // Forge: Hide some resource packs from the UI entirely
+ 
+          for(ClientResourcePackContainer clientresourcepackinfo : list) {
+             this.availableList.addEntry(new ResourcePackListWidget.ResourcePackEntry(this.availableList, this, clientresourcepackinfo));
+          }
+ 
++         java.util.Collection<ClientResourcePackContainer> enabledList = resourcepacklist.getEnabledContainers();
++         enabledList.removeIf(net.minecraft.resource.ResourcePackContainer::isHidden); // Forge: Hide some resource packs from the UI entirely
+          for(ClientResourcePackContainer clientresourcepackinfo1 : Lists.reverse(Lists.newArrayList(resourcepacklist.getEnabledContainers()))) {
+             this.selectedList.addEntry(new ResourcePackListWidget.ResourcePackEntry(this.selectedList, this, clientresourcepackinfo1));
+          }

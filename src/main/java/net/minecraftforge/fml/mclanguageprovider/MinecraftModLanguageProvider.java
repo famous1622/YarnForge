@@ -19,7 +19,6 @@
 
 package net.minecraftforge.fml.mclanguageprovider;
 
-import static net.minecraftforge.fml.Logging.LOADING;
 
 import java.lang.reflect.InvocationTargetException;
 import java.util.Collections;
@@ -34,6 +33,8 @@ import net.minecraftforge.forgespi.language.IModLanguageProvider;
 import net.minecraftforge.forgespi.language.ModFileScanData;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+
+import net.minecraftforge.forgespi.language.IModLanguageProvider.IModLanguageLoader;
 
 public class MinecraftModLanguageProvider implements IModLanguageProvider {
 	private static final Logger LOGGER = LogManager.getLogger();

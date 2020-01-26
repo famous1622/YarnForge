@@ -25,18 +25,18 @@ import net.minecraftforge.resource.IResourceType;
 import net.minecraftforge.resource.ISelectiveResourceReloadListener;
 import net.minecraftforge.resource.VanillaResourceType;
 
-import net.minecraft.client.renderer.model.IUnbakedModel;
-import net.minecraft.resources.IResourceManager;
-import net.minecraft.util.ResourceLocation;
+import net.minecraft.client.render.model.UnbakedModel;
+import net.minecraft.resource.ResourceManager;
+import net.minecraft.util.Identifier;
 
 public interface ICustomModelLoader extends ISelectiveResourceReloadListener {
 	@Override
-	void onResourceManagerReload(IResourceManager resourceManager);
+	void apply(ResourceManager resourceManager);
 
 	@Override
-	default void onResourceManagerReload(IResourceManager resourceManager, Predicate<IResourceType> resourcePredicate) {
+	default void onResourceManagerReload(ResourceManager resourceManager, Predicate<IResourceType> resourcePredicate) {
 		if (resourcePredicate.test(VanillaResourceType.MODELS)) {
-			onResourceManagerReload(resourceManager);
+			apply(resourceManager);
 		}
 	}
 
@@ -46,13 +46,13 @@ public interface ICustomModelLoader extends ISelectiveResourceReloadListener {
 	 *
 	 * @param modelLocation The path, either to an actual file or a {@link net.minecraft.client.renderer.model.ModelResourceLocation}.
 	 */
-	boolean accepts(ResourceLocation modelLocation);
+	boolean accepts(Identifier modelLocation);
 
 	/**
 	 * @param modelLocation The model to (re)load, either path to an
 	 *                      actual file or a {@link net.minecraft.client.renderer.model.ModelResourceLocation}.
 	 */
-	IUnbakedModel loadModel(ResourceLocation modelLocation) throws Exception;
+	UnbakedModel loadModel(Identifier modelLocation) throws Exception;
 
 
 	@Override

@@ -22,23 +22,23 @@ package net.minecraftforge.items.wrapper;
 import javax.annotation.Nonnull;
 
 import net.minecraft.entity.player.PlayerInventory;
-import net.minecraft.inventory.EquipmentSlotType;
+import net.minecraft.entity.EquipmentSlot;
 import net.minecraft.item.ItemStack;
 
 public class PlayerArmorInvWrapper extends RangedWrapper {
 	private final PlayerInventory inventoryPlayer;
 
 	public PlayerArmorInvWrapper(PlayerInventory inv) {
-		super(new InvWrapper(inv), inv.mainInventory.size(), inv.mainInventory.size() + inv.armorInventory.size());
+		super(new InvWrapper(inv), inv.main.size(), inv.main.size() + inv.armor.size());
 		inventoryPlayer = inv;
 	}
 
 	@Override
 	@Nonnull
 	public ItemStack insertItem(int slot, @Nonnull ItemStack stack, boolean simulate) {
-		EquipmentSlotType equ = null;
-		for (EquipmentSlotType s : EquipmentSlotType.values()) {
-			if (s.getSlotType() == EquipmentSlotType.Group.ARMOR && s.getIndex() == slot) {
+		EquipmentSlot equ = null;
+		for (EquipmentSlot s : EquipmentSlot.values()) {
+			if (s.getType() == EquipmentSlot.Type.ARMOR && s.getEntitySlotId() == slot) {
 				equ = s;
 				break;
 			}

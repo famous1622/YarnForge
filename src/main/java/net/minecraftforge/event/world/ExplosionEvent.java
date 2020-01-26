@@ -21,13 +21,12 @@ package net.minecraftforge.event.world;
 
 import java.util.List;
 
-import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.eventbus.api.Cancelable;
 import net.minecraftforge.eventbus.api.Event;
 
 import net.minecraft.entity.Entity;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.Explosion;
+import net.minecraft.world.explosion.Explosion;
 import net.minecraft.world.World;
 
 /**
@@ -91,7 +90,7 @@ public class ExplosionEvent extends Event {
 		 * return the list of blocks affected by the explosion.
 		 */
 		public List<BlockPos> getAffectedBlocks() {
-			return getExplosion().getAffectedBlockPositions();
+			return getExplosion().getAffectedBlocks();
 		}
 
 		/**

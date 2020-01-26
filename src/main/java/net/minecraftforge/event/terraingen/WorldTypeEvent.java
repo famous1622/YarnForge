@@ -19,13 +19,10 @@
 
 package net.minecraftforge.event.terraingen;
 
-import net.minecraftforge.common.MinecraftForge;
-import net.minecraftforge.eventbus.api.Cancelable;
 import net.minecraftforge.eventbus.api.Event;
 
-import net.minecraft.world.WorldType;
-import net.minecraft.world.biome.provider.BiomeProvider;
-import net.minecraft.world.gen.layer.Layer;
+import net.minecraft.world.level.LevelGeneratorType;
+import net.minecraft.world.biome.layer.BiomeLayerSampler;
 
 /**
  * WorldTypeEvent is fired when an event involving the world occurs.<br>
@@ -37,13 +34,13 @@ import net.minecraft.world.gen.layer.Layer;
  * All children of this event are fired on the {@link MinecraftForge#TERRAIN_GEN_BUS}.<br>
  **/
 public class WorldTypeEvent extends Event {
-	private final WorldType worldType;
+	private final LevelGeneratorType worldType;
 
-	public WorldTypeEvent(WorldType worldType) {
+	public WorldTypeEvent(LevelGeneratorType worldType) {
 		this.worldType = worldType;
 	}
 
-	public WorldType getWorldType() {
+	public LevelGeneratorType getWorldType() {
 		return worldType;
 	}
 
@@ -66,7 +63,7 @@ public class WorldTypeEvent extends Event {
 		private final int originalSize;
 		private int newSize;
 
-		public BiomeSize(WorldType worldType, int original) {
+		public BiomeSize(LevelGeneratorType worldType, int original) {
 			super(worldType);
 			originalSize = original;
 			setNewSize(original);
@@ -103,10 +100,10 @@ public class WorldTypeEvent extends Event {
 	 **/
 	public static class InitBiomeGens extends WorldTypeEvent {
 		private final long seed;
-		private final Layer[] originalBiomeGens;
-		private Layer[] newBiomeGens;
+		private final BiomeLayerSampler[] originalBiomeGens;
+		private BiomeLayerSampler[] newBiomeGens;
 
-		public InitBiomeGens(WorldType worldType, long seed, Layer[] original) {
+		public InitBiomeGens(LevelGeneratorType worldType, long seed, BiomeLayerSampler[] original) {
 			super(worldType);
 			this.seed = seed;
 			originalBiomeGens = original;
@@ -117,15 +114,15 @@ public class WorldTypeEvent extends Event {
 			return seed;
 		}
 
-		public Layer[] getOriginalBiomeGens() {
+		public BiomeLayerSampler[] getOriginalBiomeGens() {
 			return originalBiomeGens;
 		}
 
-		public Layer[] getNewBiomeGens() {
+		public BiomeLayerSampler[] getNewBiomeGens() {
 			return newBiomeGens;
 		}
 
-		public void setNewBiomeGens(Layer[] newBiomeGens) {
+		public void setNewBiomeGens(BiomeLayerSampler[] newBiomeGens) {
 			this.newBiomeGens = newBiomeGens;
 		}
 	}

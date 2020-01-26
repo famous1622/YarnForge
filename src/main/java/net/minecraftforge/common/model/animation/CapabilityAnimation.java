@@ -28,8 +28,8 @@ import net.minecraftforge.common.capabilities.CapabilityManager;
 import net.minecraftforge.common.capabilities.ICapabilityProvider;
 import net.minecraftforge.common.util.LazyOptional;
 
-import net.minecraft.nbt.INBT;
-import net.minecraft.util.Direction;
+import net.minecraft.nbt.Tag;
+import net.minecraft.util.math.Direction;
 
 public class CapabilityAnimation {
 	@CapabilityInject(IAnimationStateMachine.class)
@@ -38,12 +38,12 @@ public class CapabilityAnimation {
 	public static void register() {
 		CapabilityManager.INSTANCE.register(IAnimationStateMachine.class, new Capability.IStorage<IAnimationStateMachine>() {
 			@Override
-			public INBT writeNBT(Capability<IAnimationStateMachine> capability, IAnimationStateMachine instance, Direction side) {
+			public Tag writeNBT(Capability<IAnimationStateMachine> capability, IAnimationStateMachine instance, Direction side) {
 				return null;
 			}
 
 			@Override
-			public void readNBT(Capability<IAnimationStateMachine> capability, IAnimationStateMachine instance, Direction side, INBT nbt) {
+			public void readNBT(Capability<IAnimationStateMachine> capability, IAnimationStateMachine instance, Direction side, Tag nbt) {
 			}
 		}, AnimationStateMachine::getMissing);
 	}

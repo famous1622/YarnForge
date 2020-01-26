@@ -19,10 +19,6 @@
 
 package net.minecraftforge.test;
 
-import static net.minecraftforge.common.util.TextTable.column;
-import static org.junit.jupiter.api.Assertions.assertArrayEquals;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotEquals;
 
 import com.google.common.collect.Lists;
 import net.minecraftforge.common.util.TextTable;

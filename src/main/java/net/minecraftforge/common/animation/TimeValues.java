@@ -34,13 +34,13 @@ import com.google.gson.reflect.TypeToken;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonWriter;
 
-import net.minecraft.util.IStringSerializable;
+import net.minecraft.util.StringIdentifiable;
 
 /**
  * Various implementations of ITimeValue.
  */
 public final class TimeValues {
-	public enum IdentityValue implements ITimeValue, IStringSerializable {
+	public enum IdentityValue implements ITimeValue, StringIdentifiable {
 		INSTANCE;
 
 		@Override
@@ -49,7 +49,7 @@ public final class TimeValues {
 		}
 
 		@Override
-		public String getName() {
+		public String asString() {
 			return "identity";
 		}
 	}
@@ -91,8 +91,8 @@ public final class TimeValues {
 						write(out, p.g);
 						write(out, p.f);
 						out.endArray();
-					} else if (parameter instanceof IStringSerializable) {
-						out.value("#" + ((IStringSerializable) parameter).getName());
+					} else if (parameter instanceof StringIdentifiable) {
+						out.value("#" + ((StringIdentifiable) parameter).asString());
 					}
 				}
 
@@ -318,7 +318,7 @@ public final class TimeValues {
 		}
 	}
 
-	public static final class ParameterValue implements ITimeValue, IStringSerializable {
+	public static final class ParameterValue implements ITimeValue, StringIdentifiable {
 		private final String parameterName;
 		private final Function<String, ITimeValue> valueResolver;
 		private ITimeValue parameter;
@@ -329,7 +329,7 @@ public final class TimeValues {
 		}
 
 		@Override
-		public String getName() {
+		public String asString() {
 			return parameterName;
 		}
 

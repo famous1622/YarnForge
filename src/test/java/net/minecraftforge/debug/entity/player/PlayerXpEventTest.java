@@ -29,7 +29,7 @@ public class PlayerXpEventTest {
 	@SubscribeEvent
 	public static void onPlayerPickupXp(PlayerXpEvent.PickupXp event) {
 		if (!ENABLE) return;
-		logger.info("{} picked up an experience orb worth {}", event.getPlayer().getName().getString(), event.getOrb().getXpValue());
+		logger.info("{} picked up an experience orb worth {}", event.getPlayer().getName().getString(), event.getOrb().getExperienceAmount());
 	}
 
 	@SubscribeEvent

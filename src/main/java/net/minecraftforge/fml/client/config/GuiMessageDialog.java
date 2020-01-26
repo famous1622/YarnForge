@@ -23,14 +23,14 @@ import javax.annotation.Nullable;
 
 import net.minecraft.client.gui.screen.DisconnectedScreen;
 import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.client.resources.I18n;
-import net.minecraft.util.text.ITextComponent;
+import net.minecraft.client.resource.language.I18n;
+import net.minecraft.text.Text;
 
 public class GuiMessageDialog extends DisconnectedScreen {
 	protected String buttonText;
 
-	public GuiMessageDialog(@Nullable Screen nextScreen, String title, ITextComponent message, String buttonText) {
+	public GuiMessageDialog(@Nullable Screen nextScreen, String title, Text message, String buttonText) {
 		super(nextScreen, title, message);
-		this.buttonText = I18n.format(buttonText);
+		this.buttonText = I18n.translate(buttonText);
 	}
 }

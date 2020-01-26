@@ -30,22 +30,22 @@ import net.minecraftforge.fml.network.NetworkHooks;
 import net.minecraftforge.registries.ObjectHolder;
 
 import net.minecraft.block.Blocks;
-import net.minecraft.client.gui.ScreenManager;
-import net.minecraft.client.gui.screen.inventory.ContainerScreen;
+import net.minecraft.client.gui.screen.Screens;
+import net.minecraft.client.gui.screen.ingame.AbstractContainerScreen;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.PlayerInventory;
-import net.minecraft.entity.player.ServerPlayerEntity;
-import net.minecraft.inventory.Inventory;
-import net.minecraft.inventory.container.Container;
-import net.minecraft.inventory.container.ContainerType;
-import net.minecraft.inventory.container.INamedContainerProvider;
-import net.minecraft.inventory.container.Slot;
+import net.minecraft.server.network.ServerPlayerEntity;
+import net.minecraft.inventory.BasicInventory;
+import net.minecraft.container.Container;
+import net.minecraft.container.ContainerType;
+import net.minecraft.container.NameableContainerProvider;
+import net.minecraft.container.Slot;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
-import net.minecraft.network.PacketBuffer;
+import net.minecraft.util.PacketByteBuf;
 import net.minecraft.util.Hand;
-import net.minecraft.util.text.ITextComponent;
-import net.minecraft.util.text.StringTextComponent;
+import net.minecraft.text.Text;
+import net.minecraft.text.LiteralText;
 
 @Mod("containertypetest")
 public class ContainerTypeTest {
@@ -63,26 +63,26 @@ public class ContainerTypeTest {
 	}
 
 	private void setup(FMLClientSetupEvent event) {
-		ScreenManager.registerFactory(TYPE, TestGui::new);
+		Screens.register(TYPE, TestGui::new);
 	}
 
 	private void onRightClick(PlayerInteractEvent.RightClickBlock event) {
-		if (!event.getWorld().isRemote && event.getHand() == Hand.MAIN_HAND) {
+		if (!event.getWorld().isClient && event.getHand() == Hand.MAIN_HAND) {
 			if (event.getWorld().getBlockState(event.getPos()).getBlock() == Blocks.SPONGE) {
 				String text = "Hello World!";
-				NetworkHooks.openGui((ServerPlayerEntity) event.getEntityPlayer(), new INamedContainerProvider() {
+				NetworkHooks.openGui((ServerPlayerEntity) event.getEntityPlayer(), new NameableContainerProvider() {
 					@Override
 					public Container createMenu(int p_createMenu_1_, PlayerInventory p_createMenu_2_, PlayerEntity p_createMenu_3_) {
-						Inventory inv = new Inventory(9);
-						for (int i = 0; i < inv.getSizeInventory(); i++) {
-							inv.setInventorySlotContents(i, new ItemStack(Items.DIAMOND));
+						BasicInventory inv = new BasicInventory(9);
+						for (int i = 0; i < inv.getInvSize(); i++) {
+							inv.setInvStack(i, new ItemStack(Items.DIAMOND));
 						}
 						return new TestContainer(p_createMenu_1_, inv, text);
 					}
 
 					@Override
-					public ITextComponent getDisplayName() {
-						return new StringTextComponent("Test");
+					public Text getDisplayName() {
+						return new LiteralText("Test");
 					}
 				}, extraData -> {
 					extraData.writeString(text);
@@ -94,11 +94,11 @@ public class ContainerTypeTest {
 	public class TestContainer extends Container {
 		private final String text;
 
-		protected TestContainer(int windowId, PlayerInventory playerInv, PacketBuffer extraData) {
-			this(windowId, new Inventory(9), extraData.readString(128));
+		protected TestContainer(int windowId, PlayerInventory playerInv, PacketByteBuf extraData) {
+			this(windowId, new BasicInventory(9), extraData.readString(128));
 		}
 
-		public TestContainer(int windowId, Inventory inv, String text) {
+		public TestContainer(int windowId, BasicInventory inv, String text) {
 			super(TYPE, windowId);
 			this.text = text;
 			for (int i = 0; i < 9; i++) {
@@ -107,18 +107,18 @@ public class ContainerTypeTest {
 		}
 
 		@Override
-		public boolean canInteractWith(PlayerEntity playerIn) {
+		public boolean canUse(PlayerEntity playerIn) {
 			return true;
 		}
 	}
 
-	public class TestGui extends ContainerScreen<TestContainer> {
-		public TestGui(TestContainer container, PlayerInventory inv, ITextComponent name) {
+	public class TestGui extends AbstractContainerScreen<TestContainer> {
+		public TestGui(TestContainer container, PlayerInventory inv, Text name) {
 			super(container, inv, name);
 		}
 
 		@Override
-		protected void drawGuiContainerBackgroundLayer(float partialTicks, int mouseX, int mouseY) {
+		protected void drawBackground(float partialTicks, int mouseX, int mouseY) {
 			drawString(this.font, getContainer().text, mouseX, mouseY, -1);
 		}
 	}

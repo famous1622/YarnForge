@@ -21,7 +21,7 @@ package net.minecraftforge.event.entity.item;
 
 import net.minecraftforge.event.entity.EntityEvent;
 
-import net.minecraft.entity.item.ItemEntity;
+import net.minecraft.entity.ItemEntity;
 
 /**
  * Base class for all EntityItem events. Contains a reference to the

@@ -8,7 +8,7 @@
 +   public static float lastBrightnessX = 0.0f;
 +   public static float lastBrightnessY = 0.0f;
 +
-    public static void populateSnooperWithOpenGL(IDataHolder p_populateSnooperWithOpenGL_0_) {
+    public static void populateSnooperWithOpenGL(Snooper p_populateSnooperWithOpenGL_0_) {
        p_populateSnooperWithOpenGL_0_.setFixedData("opengl_version", GlStateManager.getString(7938));
        p_populateSnooperWithOpenGL_0_.setFixedData("opengl_vendor", GlStateManager.getString(7936));
 @@ -913,6 +917,10 @@

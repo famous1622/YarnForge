@@ -19,7 +19,6 @@
 
 package net.minecraftforge.fml.event.lifecycle;
 
-import java.util.function.Consumer;
 
 import net.minecraftforge.fml.ModContainer;
 

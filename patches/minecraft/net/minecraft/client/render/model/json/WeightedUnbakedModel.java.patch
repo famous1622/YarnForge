@@ -1,0 +1,35 @@
+--- a/net/minecraft/client/render/model/json/WeightedUnbakedModel.java
++++ b/net/minecraft/client/render/model/json/WeightedUnbakedModel.java
+@@ -18,12 +18,13 @@
+ import net.minecraft.util.Identifier;
+ import net.minecraftforge.api.distmarker.Dist;
+ import net.minecraftforge.api.distmarker.OnlyIn;
++
++import net.minecraft;
+ import net.minecraft.client.render.model.BakedModel;
+ import net.minecraft.client.render.model.ModelLoader;
+ import net.minecraft.client.render.model.UnbakedModel;
+ import net.minecraft.client.render.model.WeightedBakedModel;
+ 
+-
+ @OnlyIn(Dist.CLIENT)
+ public class WeightedUnbakedModel implements UnbakedModel {
+    private final List<ModelVariant> variants;
+@@ -62,14 +63,15 @@
+    }
+ 
+    @Nullable
+-   public BakedModel bake(ModelLoader p_217641_1_, Function<Identifier, Sprite> p_217641_2_, ModelBakeSettings p_217641_3_) {
++   @Override
++   public BakedModel bake(ModelLoader p_217641_1_, Function<Identifier, Sprite> p_217641_2_, ModelBakeSettings p_217641_3_, net.minecraft.client.render.VertexFormat format) {
+       if (this.getVariants().isEmpty()) {
+          return null;
+       } else {
+          WeightedBakedModel.Builder weightedbakedmodel$builder = new WeightedBakedModel.Builder();
+ 
+          for(ModelVariant variant : this.getVariants()) {
+-            BakedModel ibakedmodel = p_217641_1_.bake(variant.getLocation(), variant);
++            BakedModel ibakedmodel = p_217641_1_.getBakedModel(variant.getLocation(), variant, p_217641_2_, format);
+             weightedbakedmodel$builder.add(ibakedmodel, variant.getWeight());
+          }
+ 

@@ -1,0 +1,85 @@
+--- a/net/minecraft/entity/effect/StatusEffectInstance.java
++++ b/net/minecraft/entity/effect/StatusEffectInstance.java
+@@ -8,7 +8,7 @@
+ import org.apache.logging.log4j.LogManager;
+ import org.apache.logging.log4j.Logger;
+ 
+-public class StatusEffectInstance implements Comparable<StatusEffectInstance> {
++public class StatusEffectInstance implements Comparable<StatusEffectInstance>, net.minecraftforge.common.extensions.IForgeEffectInstance {
+    private static final Logger LOGGER = LogManager.getLogger();
+    private final StatusEffect type;
+    private int duration;
+@@ -52,6 +52,7 @@
+       this.ambient = other.ambient;
+       this.showParticles = other.showParticles;
+       this.showIcon = other.showIcon;
++      this.curativeItems = other.curativeItems == null ? null : new java.util.ArrayList<net.minecraft.item.ItemStack>(other.curativeItems);
+    }
+ 
+    public boolean upgrade(StatusEffectInstance other) {
+@@ -88,7 +89,7 @@
+    }
+ 
+    public StatusEffect getEffectType() {
+-      return this.type;
++      return this.type == null ? null : this.type.delegate.get();
+    }
+ 
+    public int getDuration() {
+@@ -188,11 +189,12 @@
+       nbt.putBoolean("Ambient", this.isAmbient());
+       nbt.putBoolean("ShowParticles", this.shouldShowParticles());
+       nbt.putBoolean("ShowIcon", this.shouldShowIcon());
++      writeCurativeItems(nbt);
+       return nbt;
+    }
+ 
+    public static StatusEffectInstance deserialize(CompoundTag nbt) {
+-      int i = nbt.getByte("Id");
++      int i = nbt.getByte("Id") & 0xFF;
+       StatusEffect effect = StatusEffect.byRawId(i);
+       if (effect == null) {
+          return null;
+@@ -210,7 +212,7 @@
+             flag2 = nbt.getBoolean("ShowIcon");
+          }
+ 
+-         return new StatusEffectInstance(effect, k, j < 0 ? 0 : j, flag, flag1, flag2);
++         return readCurativeItems(new StatusEffectInstance(effect, k, j < 0 ? 0 : j, flag, flag1, flag2), nbt);
+       }
+    }
+ 
+@@ -226,6 +228,32 @@
+ 
+    public int compareTo(StatusEffectInstance p_compareTo_1_) {
+       int i = 32147;
+-      return (this.getDuration() <= 32147 || p_compareTo_1_.getDuration() <= 32147) && (!this.isAmbient() || !p_compareTo_1_.isAmbient()) ? ComparisonChain.start().compare(this.isAmbient(), p_compareTo_1_.isAmbient()).compare(this.getDuration(), p_compareTo_1_.getDuration()).compare(this.getEffectType().getColor(), p_compareTo_1_.getEffectType().getColor()).result() : ComparisonChain.start().compare(this.isAmbient(), p_compareTo_1_.isAmbient()).compare(this.getEffectType().getColor(), p_compareTo_1_.getEffectType().getColor()).result();
++      return (this.getDuration() <= 32147 || p_compareTo_1_.getDuration() <= 32147) && (!this.isAmbient() || !p_compareTo_1_.isAmbient()) ? ComparisonChain.start().compare(this.isAmbient(), p_compareTo_1_.isAmbient()).compare(this.getDuration(), p_compareTo_1_.getDuration()).compare(this.getEffectType().getGuiSortColor(this), p_compareTo_1_.getEffectType().getGuiSortColor(this)).result() : ComparisonChain.start().compare(this.isAmbient(), p_compareTo_1_.isAmbient()).compare(this.getEffectType().getGuiSortColor(this), p_compareTo_1_.getEffectType().getGuiSortColor(this)).result();
++   }
++
++   //======================= FORGE START ===========================
++   private java.util.List<net.minecraft.item.ItemStack> curativeItems;
++
++   @Override
++   public java.util.List<net.minecraft.item.ItemStack> getCurativeItems() {
++      if (this.curativeItems == null) //Lazy load this so that we don't create a circular dep on Items.
++         this.curativeItems = getEffectType().getCurativeItems();
++      return this.curativeItems;
++   }
++   @Override
++   public void setCurativeItems(java.util.List<net.minecraft.item.ItemStack> curativeItems) {
++      this.curativeItems = curativeItems;
++   }
++   private static StatusEffectInstance readCurativeItems(StatusEffectInstance effect, CompoundTag nbt) {
++      if (nbt.containsKey("CurativeItems", net.minecraftforge.common.util.Constants.NBT.TAG_LIST)) {
++         java.util.List<net.minecraft.item.ItemStack> items = new java.util.ArrayList<net.minecraft.item.ItemStack>();
++         net.minecraft.nbt.ListTag list = nbt.getList("CurativeItems", net.minecraftforge.common.util.Constants.NBT.TAG_COMPOUND);
++         for (int i = 0; i < list.size(); i++) {
++            items.add(net.minecraft.item.ItemStack.fromTag(list.getCompoundTag(i)));
++         }
++         effect.setCurativeItems(items);
++      }
++
++      return effect;
+    }
+ }

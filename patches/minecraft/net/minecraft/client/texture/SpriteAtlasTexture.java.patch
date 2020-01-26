@@ -1,0 +1,138 @@
+--- a/net/minecraft/client/texture/SpriteAtlasTexture.java
++++ b/net/minecraft/client/texture/SpriteAtlasTexture.java
+@@ -30,8 +30,8 @@
+ import org.apache.commons.io.IOUtils;
+ import org.apache.logging.log4j.LogManager;
+ import org.apache.logging.log4j.Logger;
+-import net.minecraft.client.util.PngFile;
+ 
++import net.minecraft.client.util.PngFile;
+ 
+ @OnlyIn(Dist.CLIENT)
+ public class SpriteAtlasTexture extends AbstractTexture implements TickableTexture {
+@@ -81,6 +81,7 @@
+          }
+       }
+ 
++      net.minecraftforge.client.ForgeHooksClient.onTextureStitchedPost(this);
+    }
+ 
+    public SpriteAtlasTexture.Data stitch(ResourceManager p_215254_1_, Iterable<Identifier> p_215254_2_, Profiler p_215254_3_) {
+@@ -93,6 +94,7 @@
+             set.add(p_215253_1_);
+          }
+       });
++      net.minecraftforge.client.ForgeHooksClient.onTextureStitchedPre(this, set);
+       int i = this.maxTextureSize;
+       TextureStitcher stitcher = new TextureStitcher(i, i, this.mipLevel);
+       int j = Integer.MAX_VALUE;
+@@ -112,6 +114,7 @@
+ 
+       int i1 = Math.min(j, k);
+       int j1 = MathHelper.log2(i1);
++      if (false) // FORGE: do not lower the mipmap level
+       if (j1 < this.mipLevel) {
+          LOGGER.warn("{}: dropping miplevel from {} to {}, because of minimum power of two: {}", this.atlasPath, this.mipLevel, j1, i1);
+          this.mipLevel = j1;
+@@ -199,6 +202,7 @@
+ 
+       label62: {
+          boolean flag;
++         if (sprite.hasCustomLoader(manager, resourcelocation)) break label62;
+          try {
+             iresource = manager.getResource(resourcelocation);
+             sprite.load(iresource, this.mipLevel + 1);
+@@ -276,6 +280,93 @@
+       this.animatedSprites.clear();
+    }
+ 
++   //===================================================================================================
++   //                                           Forge Start
++   //===================================================================================================
++
++   private final java.util.Deque<Identifier> loadingSprites = new java.util.ArrayDeque<>();
++   private final java.util.Set<Identifier> loadedSprites = new java.util.HashSet<>();
++
++   public String getBasePath()
++   {
++       return atlasPath;
++   }
++
++   public int getMipmapLevels()
++   {
++       return mipLevel;
++   }
++
++   private int loadTexture(TextureStitcher stitcher, ResourceManager manager, Identifier resourcelocation, int j, int k)
++   {
++      if (loadedSprites.contains(resourcelocation))
++      {
++         return j;
++      }
++      Sprite textureatlassprite;
++      Identifier resourcelocation1 = this.getTexturePath(resourcelocation);
++      for (Identifier loading : loadingSprites)
++      {
++         if (resourcelocation1.equals(loading))
++         {
++            final String error = "circular model dependencies, stack: [" + com.google.common.base.Joiner.on(", ").join(loadingSprites) + "]";
++            net.minecraftforge.fml.client.ClientHooks.trackBrokenTexture(resourcelocation, error);
++         }
++      }
++      loadingSprites.addLast(resourcelocation1);
++      try (Resource iresource = manager.getResource(resourcelocation1))
++      {
++         PngFile pngsizeinfo = new PngFile(iresource.toString(), iresource.getInputStream());
++         AnimationResourceMetadata animationmetadatasection = iresource.getMetadata(AnimationResourceMetadata.READER);
++         textureatlassprite = new Sprite(resourcelocation, pngsizeinfo, animationmetadatasection);
++
++         for (Identifier dependency : textureatlassprite.getDependencies())
++         {
++            if (!spritesToLoad.contains(dependency))
++            {
++               this.spritesToLoad.add(dependency);
++            }
++            j = loadTexture(stitcher, manager, dependency, j, k);
++         }
++         if (textureatlassprite.hasCustomLoader(manager, resourcelocation))
++         {
++            if (textureatlassprite.load(manager, resourcelocation, sprites::get))
++            {
++               return j;
++            }
++         }
++         j = Math.min(j, Math.min(textureatlassprite.getWidth(), textureatlassprite.getHeight()));
++         int j1 = Math.min(Integer.lowestOneBit(textureatlassprite.getWidth()), Integer.lowestOneBit(textureatlassprite.getHeight()));
++         if (j1 < k)
++         {
++            // FORGE: do not lower the mipmap level, just log the problematic textures
++            LOGGER.warn("Texture {} with size {}x{} will have visual artifacts at mip level {}, it can only support level {}." +
++                    "Please report to the mod author that the texture should be some multiple of 16x16.",
++                    resourcelocation1, textureatlassprite.getWidth(), textureatlassprite.getHeight(), MathHelper.log2(k), MathHelper.log2(j1));
++         }
++         if (loadSprite(manager, textureatlassprite))
++         {
++            stitcher.add(textureatlassprite);
++         }
++         return j;
++      }
++      catch (RuntimeException runtimeexception)
++      {
++         net.minecraftforge.fml.client.ClientHooks.trackBrokenTexture(resourcelocation, runtimeexception.getMessage());
++         return j;
++      }
++      catch (IOException ioexception)
++      {
++         net.minecraftforge.fml.client.ClientHooks.trackMissingTexture(resourcelocation);
++         return j;
++      }
++      finally
++      {
++         loadingSprites.removeLast();
++         spritesToLoad.add(resourcelocation1);
++      }
++   }
++
+    @OnlyIn(Dist.CLIENT)
+    public static class Data {
+       final Set<Identifier> spriteIds;

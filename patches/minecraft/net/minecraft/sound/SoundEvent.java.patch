@@ -1,0 +1,15 @@
+--- a/net/minecraft/sound/SoundEvent.java
++++ b/net/minecraft/sound/SoundEvent.java
+@@ -2,10 +2,10 @@
+ 
+ import net.minecraftforge.api.distmarker.Dist;
+ import net.minecraftforge.api.distmarker.OnlyIn;
+-import net.minecraft.util.Identifier;
+ 
++import net.minecraft.util.Identifier;
+ 
+-public class SoundEvent {
++public class SoundEvent extends net.minecraftforge.registries.ForgeRegistryEntry<SoundEvent> {
+    private final Identifier id;
+ 
+    public SoundEvent(Identifier name) {

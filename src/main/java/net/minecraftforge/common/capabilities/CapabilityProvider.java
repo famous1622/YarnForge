@@ -27,8 +27,8 @@ import mcp.MethodsReturnNonnullByDefault;
 import net.minecraftforge.common.util.LazyOptional;
 import net.minecraftforge.event.ForgeEventFactory;
 
-import net.minecraft.nbt.CompoundNBT;
-import net.minecraft.util.Direction;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.util.math.Direction;
 
 @MethodsReturnNonnullByDefault
 @ParametersAreNonnullByDefault
@@ -74,7 +74,7 @@ public abstract class CapabilityProvider<B extends CapabilityProvider<B>> implem
 	}
 
 	protected final @Nullable
-	CompoundNBT serializeCaps() {
+	CompoundTag serializeCaps() {
 		final CapabilityDispatcher disp = getCapabilities();
 		if (disp != null) {
 			return disp.serializeNBT();
@@ -82,7 +82,7 @@ public abstract class CapabilityProvider<B extends CapabilityProvider<B>> implem
 		return null;
 	}
 
-	protected final void deserializeCaps(CompoundNBT tag) {
+	protected final void deserializeCaps(CompoundTag tag) {
 		final CapabilityDispatcher disp = getCapabilities();
 		if (disp != null) {
 			disp.deserializeNBT(tag);

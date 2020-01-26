@@ -22,11 +22,11 @@ package net.minecraftforge.common.crafting.conditions;
 import com.google.gson.JsonObject;
 import net.minecraftforge.common.crafting.CraftingHelper;
 
-import net.minecraft.util.JSONUtils;
-import net.minecraft.util.ResourceLocation;
+import net.minecraft.util.JsonHelper;
+import net.minecraft.util.Identifier;
 
 public class NotCondition implements ICondition {
-	private static final ResourceLocation NAME = new ResourceLocation("forge", "not");
+	private static final Identifier NAME = new Identifier("forge", "not");
 	private final ICondition child;
 
 	public NotCondition(ICondition child) {
@@ -34,7 +34,7 @@ public class NotCondition implements ICondition {
 	}
 
 	@Override
-	public ResourceLocation getID() {
+	public Identifier getID() {
 		return NAME;
 	}
 
@@ -58,11 +58,11 @@ public class NotCondition implements ICondition {
 
 		@Override
 		public NotCondition read(JsonObject json) {
-			return new NotCondition(CraftingHelper.getCondition(JSONUtils.getJsonObject(json, "value")));
+			return new NotCondition(CraftingHelper.getCondition(JsonHelper.getObject(json, "value")));
 		}
 
 		@Override
-		public ResourceLocation getID() {
+		public Identifier getID() {
 			return NotCondition.NAME;
 		}
 	}

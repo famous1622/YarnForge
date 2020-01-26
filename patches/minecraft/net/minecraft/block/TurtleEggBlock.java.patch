@@ -1,11 +1,19 @@
 --- a/net/minecraft/block/TurtleEggBlock.java
 +++ b/net/minecraft/block/TurtleEggBlock.java
-@@ -146,7 +146,7 @@
-       if (p_212570_2_ instanceof TurtleEntity) {
+@@ -19,7 +19,6 @@
+ import net.minecraft.util.math.BlockPos;
+ import net.minecraft.entity.EntityContext;
+ import net.minecraft.util.shape.VoxelShape;
+-import net.minecraft.world.GameRules;
+ import net.minecraft.world.BlockView;
+ import net.minecraft.world.World;
+ 
+@@ -145,7 +144,7 @@
+       if (trampler instanceof TurtleEntity) {
           return false;
        } else {
--         return p_212570_2_ instanceof LivingEntity && !(p_212570_2_ instanceof PlayerEntity) ? p_212570_1_.func_82736_K().func_223586_b(GameRules.field_223599_b) : true;
-+         return p_212570_2_ instanceof LivingEntity && !(p_212570_2_ instanceof PlayerEntity) ? net.minecraftforge.event.ForgeEventFactory.getMobGriefingEvent(p_212570_1_, p_212570_2_) : true;
+-         return trampler instanceof LivingEntity && !(trampler instanceof PlayerEntity) ? worldIn.getGameRules().getBoolean(GameRules.MOB_GRIEFING) : true;
++         return trampler instanceof LivingEntity && !(trampler instanceof PlayerEntity) ? net.minecraftforge.event.ForgeEventFactory.getMobGriefingEvent(worldIn, trampler) : true;
        }
     }
  }

@@ -1,0 +1,11 @@
+--- a/net/minecraft/world/dimension/TheNetherDimension.java
++++ b/net/minecraft/world/dimension/TheNetherDimension.java
+@@ -82,8 +82,4 @@
+          }
+       };
+    }
+-
+-   public DimensionType getType() {
+-      return DimensionType.THE_NETHER;
+-   }
+ }

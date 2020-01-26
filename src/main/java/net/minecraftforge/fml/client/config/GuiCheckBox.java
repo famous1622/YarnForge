@@ -19,18 +19,18 @@
 
 package net.minecraftforge.fml.client.config;
 
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.widget.button.Button;
+import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.gui.widget.ButtonWidget;
 
 /**
  * This class provides a checkbox style control.
  */
-public class GuiCheckBox extends Button {
+public class GuiCheckBox extends ButtonWidget {
 	private boolean isChecked;
 	private int boxWidth;
 
 	public GuiCheckBox(int xPos, int yPos, String displayString, boolean isChecked) {
-		super(xPos, yPos, Minecraft.getInstance().fontRenderer.getStringWidth(displayString) + 2 + 11, 11, displayString, b -> {
+		super(xPos, yPos, MinecraftClient.getInstance().textRenderer.getStringWidth(displayString) + 2 + 11, 11, displayString, b -> {
 		});
 		this.isChecked = isChecked;
 	}
@@ -39,7 +39,7 @@ public class GuiCheckBox extends Button {
 	public void renderButton(int mouseX, int mouseY, float partial) {
 		super.renderButton(mouseX, mouseY, partial);
 		if (this.isChecked) {
-			this.drawCenteredString(Minecraft.getInstance().fontRenderer, "x", this.x + this.boxWidth / 2 + 1, this.y + 1, 14737632);
+			this.drawCenteredString(MinecraftClient.getInstance().textRenderer, "x", this.x + this.boxWidth / 2 + 1, this.y + 1, 14737632);
 		}
 	}
 

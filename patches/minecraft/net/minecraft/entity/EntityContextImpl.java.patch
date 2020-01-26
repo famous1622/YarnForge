@@ -1,0 +1,45 @@
+--- a/net/minecraft/entity/EntityContextImpl.java
++++ b/net/minecraft/entity/EntityContextImpl.java
+@@ -4,8 +4,8 @@
+ import net.minecraft.item.Items;
+ import net.minecraft.util.math.Direction;
+ import net.minecraft.util.math.BlockPos;
+-import net.minecraft.util.shape.VoxelShape;
+ 
++import net.minecraft.util.shape.VoxelShape;
+ 
+ public class EntityContextImpl implements EntityContext {
+    protected static final EntityContext ABSENT = new EntityContextImpl(false, -Double.MAX_VALUE, Items.AIR) {
+@@ -18,6 +18,11 @@
+    private final Item heldItem;
+ 
+    protected EntityContextImpl(boolean sneaking, double p_i51181_2_, Item itemIn) {
++      this(null, sneaking, p_i51181_2_, itemIn);
++   }
++
++   protected EntityContextImpl(@javax.annotation.Nullable Entity entityIn, boolean sneaking, double p_i51181_2_, Item itemIn) {
++      this.entity = entityIn;
+       this.sneaking = sneaking;
+       this.minY = p_i51181_2_;
+       this.heldItem = itemIn;
+@@ -25,7 +30,7 @@
+ 
+    @Deprecated
+    protected EntityContextImpl(Entity entityIn) {
+-      this(entityIn.isSneaking(), entityIn.getBoundingBox().minY, entityIn instanceof LivingEntity ? ((LivingEntity)entityIn).getMainHandStack().getItem() : Items.AIR);
++      this(entityIn, entityIn.isSneaking(), entityIn.getBoundingBox().minY, entityIn instanceof LivingEntity ? ((LivingEntity)entityIn).getMainHandStack().getItem() : Items.AIR);
+    }
+ 
+    public boolean isHolding(Item itemIn) {
+@@ -39,4 +44,11 @@
+    public boolean isAbove(VoxelShape shape, BlockPos pos, boolean p_216378_3_) {
+       return this.minY > (double)pos.getY() + shape.getMaximum(Direction.Axis.Y) - (double)1.0E-5F;
+    }
++
++   private final @javax.annotation.Nullable Entity entity;
++
++   @Override
++   public @javax.annotation.Nullable Entity getEntity() {
++      return entity;
++   }
+ }

@@ -1,0 +1,80 @@
+--- a/net/minecraft/client/render/entity/ItemEntityRenderer.java
++++ b/net/minecraft/client/render/entity/ItemEntityRenderer.java
+@@ -36,7 +36,7 @@
+          boolean flag = p_177077_9_.hasDepthInGui();
+          int i = this.getRenderedAmount(itemstack);
+          float f = 0.25F;
+-         float f1 = MathHelper.sin(((float)itemIn.getAge() + p_177077_8_) / 10.0F + itemIn.hoverHeight) * 0.1F + 0.1F;
++         float f1 = shouldBob() ? MathHelper.sin(((float)itemIn.getAge() + p_177077_8_) / 10.0F + itemIn.hoverHeight) * 0.1F + 0.1F : 0;
+          float f2 = p_177077_9_.getTransformation().getTransformation(ModelTransformation.Type.GROUND).scale.getY();
+          GlStateManager.translatef((float)p_177077_2_, (float)p_177077_4_ + f1 + 0.25F * f2, (float)p_177077_6_);
+          if (flag || this.renderManager.gameOptions != null) {
+@@ -82,14 +82,11 @@
+       GlStateManager.pushMatrix();
+       BakedModel ibakedmodel = this.itemRenderer.getModel(itemstack, entity.world, (LivingEntity)null);
+       int j = this.method_3997(entity, x, y, z, partialTicks, ibakedmodel);
+-      float f = ibakedmodel.getTransformation().ground.scale.getX();
+-      float f1 = ibakedmodel.getTransformation().ground.scale.getY();
+-      float f2 = ibakedmodel.getTransformation().ground.scale.getZ();
+       boolean flag1 = ibakedmodel.hasDepthInGui();
+       if (!flag1) {
+-         float f3 = -0.0F * (float)(j - 1) * 0.5F * f;
+-         float f4 = -0.0F * (float)(j - 1) * 0.5F * f1;
+-         float f5 = -0.09375F * (float)(j - 1) * 0.5F * f2;
++         float f3 = -0.0F * (float)(j - 1) * 0.5F;
++         float f4 = -0.0F * (float)(j - 1) * 0.5F;
++         float f5 = -0.09375F * (float)(j - 1) * 0.5F;
+          GlStateManager.translatef(f3, f4, f5);
+       }
+ 
+@@ -105,11 +102,11 @@
+                float f7 = (this.random.nextFloat() * 2.0F - 1.0F) * 0.15F;
+                float f9 = (this.random.nextFloat() * 2.0F - 1.0F) * 0.15F;
+                float f6 = (this.random.nextFloat() * 2.0F - 1.0F) * 0.15F;
+-               GlStateManager.translatef(f7, f9, f6);
++               GlStateManager.translatef(shouldSpreadItems() ? f7 : 0, shouldSpreadItems() ? f9 : 0, f6);
+             }
+ 
+-            ibakedmodel.getTransformation().applyGl(ModelTransformation.Type.GROUND);
+-            this.itemRenderer.renderItemAndGlow(itemstack, ibakedmodel);
++            BakedModel transformedModel = net.minecraftforge.client.ForgeHooksClient.handleCameraTransforms(ibakedmodel, ModelTransformation.Type.GROUND, false);
++            this.itemRenderer.renderItemAndGlow(itemstack, transformedModel);
+             GlStateManager.popMatrix();
+          } else {
+             GlStateManager.pushMatrix();
+@@ -119,10 +116,10 @@
+                GlStateManager.translatef(f8, f10, 0.0F);
+             }
+ 
+-            ibakedmodel.getTransformation().applyGl(ModelTransformation.Type.GROUND);
+-            this.itemRenderer.renderItemAndGlow(itemstack, ibakedmodel);
++            BakedModel transformedModel = net.minecraftforge.client.ForgeHooksClient.handleCameraTransforms(ibakedmodel, ModelTransformation.Type.GROUND, false);
++            this.itemRenderer.renderItemAndGlow(itemstack, transformedModel);
+             GlStateManager.popMatrix();
+-            GlStateManager.translatef(0.0F * f, 0.0F * f1, 0.09375F * f2);
++            GlStateManager.translatef(0.0F, 0.0F, 0.09375F);
+          }
+       }
+ 
+@@ -145,4 +142,21 @@
+    protected Identifier getTexture(ItemEntity entity) {
+       return SpriteAtlasTexture.BLOCK_ATLAS_TEX;
+    }
++   
++   /*==================================== FORGE START ===========================================*/
++
++   /**
++    * @return If items should spread out when rendered in 3D
++    */
++   public boolean shouldSpreadItems() {
++      return true;
++   }
++
++   /**
++    * @return If items should have a bob effect
++    */
++   public boolean shouldBob() {
++      return true;
++   }
++   /*==================================== FORGE END =============================================*/
+ }

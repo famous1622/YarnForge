@@ -23,7 +23,7 @@ import java.util.function.Supplier;
 
 import net.minecraftforge.fml.ModContainer;
 
-import net.minecraft.client.Minecraft;
+import net.minecraft.client.MinecraftClient;
 
 /**
  * This is the second of four commonly called events during mod lifecycle startup.
@@ -40,14 +40,14 @@ import net.minecraft.client.Minecraft;
  * This is a parallel dispatch event.
  */
 public class FMLClientSetupEvent extends ModLifecycleEvent {
-	private final Supplier<Minecraft> minecraftSupplier;
+	private final Supplier<MinecraftClient> minecraftSupplier;
 
-	public FMLClientSetupEvent(Supplier<Minecraft> mc, ModContainer container) {
+	public FMLClientSetupEvent(Supplier<MinecraftClient> mc, ModContainer container) {
 		super(container);
 		this.minecraftSupplier = mc;
 	}
 
-	public Supplier<Minecraft> getMinecraftSupplier() {
+	public Supplier<MinecraftClient> getMinecraftSupplier() {
 		return minecraftSupplier;
 	}
 }

@@ -19,8 +19,6 @@
 
 package net.minecraftforge.common;
 
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.IWorldReader;
 
 public enum PlantType {
 	Plains,

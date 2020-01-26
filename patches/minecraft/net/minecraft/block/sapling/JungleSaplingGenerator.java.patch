@@ -1,0 +1,16 @@
+--- a/net/minecraft/block/sapling/JungleSaplingGenerator.java
++++ b/net/minecraft/block/sapling/JungleSaplingGenerator.java
+@@ -11,11 +11,11 @@
+ public class JungleSaplingGenerator extends LargeTreeSaplingGenerator {
+    @Nullable
+    protected AbstractTreeFeature<DefaultFeatureConfig> createTreeFeature(Random random) {
+-      return new OakTreeFeature(DefaultFeatureConfig::deserialize, true, 4 + random.nextInt(7), Blocks.JUNGLE_LOG.getDefaultState(), Blocks.JUNGLE_LEAVES.getDefaultState(), false);
++      return new OakTreeFeature(DefaultFeatureConfig::deserialize, true, 4 + random.nextInt(7), Blocks.JUNGLE_LOG.getDefaultState(), Blocks.JUNGLE_LEAVES.getDefaultState(), false).setSapling((net.minecraft.block.SaplingBlock)Blocks.JUNGLE_SAPLING);
+    }
+ 
+    @Nullable
+    protected AbstractTreeFeature<DefaultFeatureConfig> createLargeTreeFeature(Random random) {
+-      return new MegaJungleTreeFeature(DefaultFeatureConfig::deserialize, true, 10, 20, Blocks.JUNGLE_LOG.getDefaultState(), Blocks.JUNGLE_LEAVES.getDefaultState());
++      return new MegaJungleTreeFeature(DefaultFeatureConfig::deserialize, true, 10, 20, Blocks.JUNGLE_LOG.getDefaultState(), Blocks.JUNGLE_LEAVES.getDefaultState()).setSapling((net.minecraft.block.SaplingBlock)Blocks.JUNGLE_SAPLING);
+    }
+ }

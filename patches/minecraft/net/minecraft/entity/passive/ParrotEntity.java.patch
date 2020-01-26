@@ -1,11 +1,21 @@
 --- a/net/minecraft/entity/passive/ParrotEntity.java
 +++ b/net/minecraft/entity/passive/ParrotEntity.java
-@@ -225,7 +225,7 @@
+@@ -57,8 +57,8 @@
+ import net.minecraft.world.World;
+ import net.minecraftforge.api.distmarker.Dist;
+ import net.minecraftforge.api.distmarker.OnlyIn;
+-import net.minecraft.entity.Bird;
+ 
++import net.minecraft.entity.Bird;
+ 
+ public class ParrotEntity extends TameableShoulderEntity implements Bird {
+    private static final TrackedData<Integer> ATTR_VARIANT = DataTracker.registerData(ParrotEntity.class, TrackedDataHandlerRegistry.INTEGER);
+@@ -226,7 +226,7 @@
           }
  
-          if (!this.field_70170_p.field_72995_K) {
--            if (this.field_70146_Z.nextInt(10) == 0) {
-+            if (this.field_70146_Z.nextInt(10) == 0 && !net.minecraftforge.event.ForgeEventFactory.onAnimalTame(this, p_184645_1_)) {
-                this.func_193101_c(p_184645_1_);
-                this.func_70908_e(true);
-                this.field_70170_p.func_72960_a(this, (byte)7);
+          if (!this.world.isClient) {
+-            if (this.random.nextInt(10) == 0) {
++            if (this.random.nextInt(10) == 0 && !net.minecraftforge.event.ForgeEventFactory.onAnimalTame(this, player)) {
+                this.setOwner(player);
+                this.showEmoteParticle(true);
+                this.world.sendEntityStatus(this, (byte)7);

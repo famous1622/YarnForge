@@ -23,7 +23,7 @@ import java.util.function.BiFunction;
 
 import net.minecraftforge.registries.ForgeRegistryEntry;
 
-import net.minecraft.network.PacketBuffer;
+import net.minecraft.util.PacketByteBuf;
 import net.minecraft.world.World;
 import net.minecraft.world.dimension.Dimension;
 import net.minecraft.world.dimension.DimensionType;
@@ -60,7 +60,7 @@ public abstract class ModDimension extends ForgeRegistryEntry<ModDimension> {
 	 * @param buffer  The data buffer to write to.
 	 * @param network true when sent over the network, so you can only data needed by the client.
 	 */
-	public void write(PacketBuffer buffer, boolean network) {
+	public void write(PacketByteBuf buffer, boolean network) {
 	}
 
 	/**
@@ -70,6 +70,6 @@ public abstract class ModDimension extends ForgeRegistryEntry<ModDimension> {
 	 * @param buffer  The data buffer to write to.
 	 * @param network true when sent over the network, so you can only data needed by the client.
 	 */
-	public void read(PacketBuffer buffer, boolean network) {
+	public void read(PacketByteBuf buffer, boolean network) {
 	}
 }

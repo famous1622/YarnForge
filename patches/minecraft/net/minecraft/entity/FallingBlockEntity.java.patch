@@ -1,0 +1,19 @@
+--- a/net/minecraft/entity/FallingBlockEntity.java
++++ b/net/minecraft/entity/FallingBlockEntity.java
+@@ -8,7 +8,6 @@
+ import net.minecraft.block.Blocks;
+ import net.minecraft.block.ConcretePowderBlock;
+ import net.minecraft.block.FallingBlock;
+-import net.minecraft.block.BlockEntityProvider;
+ import net.minecraft.util.crash.CrashReportSection;
+ import net.minecraft.fluid.Fluids;
+ import net.minecraft.item.AutomaticItemPlacementContext;
+@@ -152,7 +151,7 @@
+                               ((FallingBlock)block).onLanding(this.world, blockpos1, this.block, blockstate);
+                            }
+ 
+-                           if (this.blockEntityData != null && block instanceof BlockEntityProvider) {
++                           if (this.blockEntityData != null && this.block.hasTileEntity()) {
+                               BlockEntity tileentity = this.world.getBlockEntity(blockpos1);
+                               if (tileentity != null) {
+                                  CompoundTag compoundnbt = tileentity.toTag(new CompoundTag());

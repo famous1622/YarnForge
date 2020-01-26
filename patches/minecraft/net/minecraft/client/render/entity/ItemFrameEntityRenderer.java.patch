@@ -1,0 +1,41 @@
+--- a/net/minecraft/client/render/entity/ItemFrameEntityRenderer.java
++++ b/net/minecraft/client/render/entity/ItemFrameEntityRenderer.java
+@@ -44,7 +44,7 @@
+       this.renderManager.textureManager.bindTexture(SpriteAtlasTexture.BLOCK_ATLAS_TEX);
+       BlockRenderManager blockrendererdispatcher = this.client.getBlockRenderManager();
+       BakedModelManager modelmanager = blockrendererdispatcher.getModels().getModelManager();
+-      ModelIdentifier modelresourcelocation = entity.getHeldItemStack().getItem() == Items.FILLED_MAP ? MAP_FRAME : NORMAL_FRAME;
++      ModelIdentifier modelresourcelocation = entity.getHeldItemStack().getItem() instanceof FilledMapItem ? MAP_FRAME : NORMAL_FRAME;
+       GlStateManager.pushMatrix();
+       GlStateManager.translatef(-0.5F, -0.5F, -0.5F);
+       if (this.renderOutlines) {
+@@ -86,17 +86,17 @@
+       ItemStack itemstack = itemFrame.getHeldItemStack();
+       if (!itemstack.isEmpty()) {
+          GlStateManager.pushMatrix();
+-         boolean flag = itemstack.getItem() == Items.FILLED_MAP;
+-         int i = flag ? itemFrame.getRotation() % 4 * 2 : itemFrame.getRotation();
++         MapState mapdata = FilledMapItem.getOrCreateMapState(itemstack, itemFrame.world);
++         int i = mapdata != null ? itemFrame.getRotation() % 4 * 2 : itemFrame.getRotation();
+          GlStateManager.rotatef((float)i * 360.0F / 8.0F, 0.0F, 0.0F, 1.0F);
+-         if (flag) {
++         if (!net.minecraftforge.common.MinecraftForge.EVENT_BUS.post(new net.minecraftforge.client.event.RenderItemInFrameEvent(itemFrame, this))) {
++         if (mapdata != null) {
+             GlStateManager.disableLighting();
+             this.renderManager.textureManager.bindTexture(MAP_BACKGROUND_TEX);
+             GlStateManager.rotatef(180.0F, 0.0F, 0.0F, 1.0F);
+             float f = 0.0078125F;
+             GlStateManager.scalef(0.0078125F, 0.0078125F, 0.0078125F);
+             GlStateManager.translatef(-64.0F, -64.0F, 0.0F);
+-            MapState mapdata = FilledMapItem.getOrCreateMapState(itemstack, itemFrame.world);
+             GlStateManager.translatef(0.0F, 0.0F, -1.0F);
+             if (mapdata != null) {
+                this.client.gameRenderer.getMapRenderer().draw(mapdata, true);
+@@ -105,6 +105,7 @@
+             GlStateManager.scalef(0.5F, 0.5F, 0.5F);
+             this.itemRenderer.renderItem(itemstack, ModelTransformation.Type.FIXED);
+          }
++         }
+ 
+          GlStateManager.popMatrix();
+       }

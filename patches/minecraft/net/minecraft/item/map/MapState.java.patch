@@ -1,0 +1,23 @@
+--- a/net/minecraft/item/map/MapState.java
++++ b/net/minecraft/item/map/MapState.java
+@@ -20,8 +20,8 @@
+ import net.minecraft.world.BlockView;
+ import net.minecraft.world.IWorld;
+ import net.minecraft.world.dimension.DimensionType;
+-import net.minecraft.world.PersistentState;
+ 
++import net.minecraft.world.PersistentState;
+ 
+ public class MapState extends PersistentState {
+    public int xCenter;
+@@ -218,8 +218,8 @@
+       if (f >= -63.0F && f1 >= -63.0F && f <= 63.0F && f1 <= 63.0F) {
+          rotationIn = rotationIn + (rotationIn < 0.0D ? -8.0D : 8.0D);
+          b2 = (byte)((int)(rotationIn * 16.0D / 360.0D));
+-         if (this.dimension == DimensionType.THE_NETHER && worldIn != null) {
+-            int l = (int)(worldIn.getLevelProperties().getTimeOfDay() / 10L);
++         if (worldIn != null && worldIn.getWorld().dimension.shouldMapSpin(decorationName, worldX, worldZ, rotationIn)) {
++            int l = (int)(worldIn.getWorld().getTimeOfDay() / 10L);
+             b2 = (byte)(l * l * 34187121 + l * 121 >> 15 & 15);
+          }
+       } else {

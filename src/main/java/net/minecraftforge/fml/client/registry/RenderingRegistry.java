@@ -22,7 +22,7 @@ package net.minecraftforge.fml.client.registry;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-import net.minecraft.client.renderer.entity.EntityRendererManager;
+import net.minecraft.client.render.entity.EntityRenderDispatcher;
 import net.minecraft.entity.Entity;
 
 public class RenderingRegistry {
@@ -40,12 +40,12 @@ public class RenderingRegistry {
 		INSTANCE.entityRenderers.put(entityClass, renderFactory);
 	}
 
-	public static void loadEntityRenderers(EntityRendererManager manager) {
+	public static void loadEntityRenderers(EntityRenderDispatcher manager) {
 		INSTANCE.entityRenderers.forEach((key, value) -> register(manager, key, value));
 	}
 
 	@SuppressWarnings("unchecked")
-	private static <T extends Entity> void register(EntityRendererManager manager, Class<T> entityClass, IRenderFactory<?> renderFactory) {
+	private static <T extends Entity> void register(EntityRenderDispatcher manager, Class<T> entityClass, IRenderFactory<?> renderFactory) {
 		manager.register(entityClass, ((IRenderFactory<T>) renderFactory).createRenderFor(manager));
 	}
 }

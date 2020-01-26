@@ -1,0 +1,54 @@
+--- a/net/minecraft/entity/mob/ZombieEntity.java
++++ b/net/minecraft/entity/mob/ZombieEntity.java
+@@ -55,7 +55,6 @@
+ import net.minecraft.util.math.MathHelper;
+ import net.minecraft.world.Difficulty;
+ import net.minecraft.world.LocalDifficulty;
+-import net.minecraft.world.GameRules;
+ import net.minecraft.world.IWorld;
+ import net.minecraft.world.World;
+ 
+@@ -106,7 +105,7 @@
+       this.getAttributeInstance(EntityAttributes.MOVEMENT_SPEED).setBaseValue((double)0.23F);
+       this.getAttributeInstance(EntityAttributes.ATTACK_DAMAGE).setBaseValue(3.0D);
+       this.getAttributeInstance(EntityAttributes.ARMOR).setBaseValue(2.0D);
+-      this.getAttributeContainer().register(SPAWN_REINFORCEMENTS).setBaseValue(this.random.nextDouble() * (double)0.1F);
++      this.getAttributeContainer().register(SPAWN_REINFORCEMENTS).setBaseValue(this.random.nextDouble() * net.minecraftforge.common.ForgeConfig.SERVER.zombieBaseSummonChance.get());
+    }
+ 
+    protected void initDataTracker() {
+@@ -280,11 +279,15 @@
+             livingentity = (LivingEntity)source.getAttacker();
+          }
+ 
+-         if (livingentity != null && this.world.getDifficulty() == Difficulty.HARD && (double)this.random.nextFloat() < this.getAttributeInstance(SPAWN_REINFORCEMENTS).getValue() && this.world.getGameRules().getBoolean(GameRules.DO_MOB_SPAWNING)) {
+             int i = MathHelper.floor(this.x);
+             int j = MathHelper.floor(this.y);
+             int k = MathHelper.floor(this.z);
+-            ZombieEntity zombieentity = new ZombieEntity(this.world);
++
++         net.minecraftforge.event.entity.living.ZombieEvent.SummonAidEvent event = net.minecraftforge.event.ForgeEventFactory.fireZombieSummonAid(this, world, i, j, k, livingentity, this.getAttributeInstance(SPAWN_REINFORCEMENTS).getValue());
++         if (event.getResult() == net.minecraftforge.eventbus.api.Event.Result.DENY) return true;
++         if (event.getResult() == net.minecraftforge.eventbus.api.Event.Result.ALLOW  ||
++            livingentity != null && this.world.getDifficulty() == Difficulty.HARD && (double)this.random.nextFloat() < this.getAttributeInstance(SPAWN_REINFORCEMENTS).getValue() && net.minecraftforge.event.ForgeEventFactory.getMobGriefingEvent(this.world, this)) {
++            ZombieEntity zombieentity = event.getCustomSummonedAid() != null && event.getResult() == net.minecraftforge.eventbus.api.Event.Result.ALLOW ? event.getCustomSummonedAid() : EntityType.ZOMBIE.create(this.world);
+ 
+             for(int l = 0; l < 50; ++l) {
+                int i1 = i + MathHelper.nextInt(this.random, 7, 40) * MathHelper.nextInt(this.random, -1, 1);
+@@ -295,6 +298,7 @@
+                   zombieentity.setPosition((double)i1, (double)j1, (double)k1);
+                   if (!this.world.isPlayerInRange((double)i1, (double)j1, (double)k1, 7.0D) && this.world.intersectsEntities(zombieentity) && this.world.doesNotCollide(zombieentity) && !this.world.intersectsFluid(zombieentity.getBoundingBox())) {
+                      this.world.spawnEntity(zombieentity);
++                     if (livingentity != null)
+                      zombieentity.setTarget(livingentity);
+                      zombieentity.initialize(this.world, this.world.getLocalDifficulty(new BlockPos(zombieentity)), SpawnType.REINFORCEMENT, (EntityData)null, (CompoundTag)null);
+                      this.getAttributeInstance(SPAWN_REINFORCEMENTS).addModifier(new EntityAttributeModifier("Zombie reinforcement caller charge", (double)-0.05F, EntityAttributeModifier.Operation.ADDITION));
+@@ -428,7 +432,7 @@
+       float f = difficultyIn.getClampedLocalDifficulty();
+       this.setCanPickUpLoot(this.random.nextFloat() < 0.55F * f);
+       if (spawnDataIn == null) {
+-         spawnDataIn = new ZombieEntity.class_1644(worldIn.getRandom().nextFloat() < 0.05F);
++         spawnDataIn = new ZombieEntity.class_1644(worldIn.getRandom().nextFloat() < net.minecraftforge.common.ForgeConfig.SERVER.zombieBabyChance.get());
+       }
+ 
+       if (spawnDataIn instanceof ZombieEntity.class_1644) {

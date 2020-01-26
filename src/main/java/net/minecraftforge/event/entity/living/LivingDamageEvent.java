@@ -19,11 +19,10 @@
 
 package net.minecraftforge.event.entity.living;
 
-import net.minecraftforge.common.ForgeHooks;
 import net.minecraftforge.eventbus.api.Cancelable;
 
 import net.minecraft.entity.LivingEntity;
-import net.minecraft.util.DamageSource;
+import net.minecraft.entity.damage.DamageSource;
 
 /**
  * LivingDamageEvent is fired just before damage is applied to entity.<br>

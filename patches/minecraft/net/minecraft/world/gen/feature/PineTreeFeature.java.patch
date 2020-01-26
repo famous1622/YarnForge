@@ -1,0 +1,39 @@
+--- a/net/minecraft/world/gen/feature/PineTreeFeature.java
++++ b/net/minecraft/world/gen/feature/PineTreeFeature.java
+@@ -16,6 +16,7 @@
+ 
+    public PineTreeFeature(Function<Dynamic<?>, ? extends DefaultFeatureConfig> p_i51469_1_) {
+       super(p_i51469_1_, false);
++      setSapling((net.minecraftforge.common.IPlantable)Blocks.SPRUCE_SAPLING);
+    }
+ 
+    public boolean generate(Set<BlockPos> changedBlocks, ModifiableTestableWorld worldIn, Random rand, BlockPos position, MutableIntBoundingBox p_208519_5_) {
+@@ -23,7 +24,7 @@
+       int j = i - rand.nextInt(2) - 3;
+       int k = i - j;
+       int l = 1 + rand.nextInt(k + 1);
+-      if (position.getY() >= 1 && position.getY() + i + 1 <= 256) {
++      if (position.getY() >= 1 && position.getY() + i + 1 <= worldIn.getMaxHeight()) {
+          boolean flag = true;
+ 
+          for(int i1 = position.getY(); i1 <= position.getY() + 1 + i && flag; ++i1) {
+@@ -38,7 +39,7 @@
+ 
+             for(int k1 = position.getX() - j1; k1 <= position.getX() + j1 && flag; ++k1) {
+                for(int l1 = position.getZ() - j1; l1 <= position.getZ() + j1 && flag; ++l1) {
+-                  if (i1 >= 0 && i1 < 256) {
++                  if (i1 >= 0 && i1 < worldIn.getMaxHeight()) {
+                      if (!canTreeReplace(worldIn, blockpos$mutableblockpos.set(k1, i1, l1))) {
+                         flag = false;
+                      }
+@@ -51,8 +52,8 @@
+ 
+          if (!flag) {
+             return false;
+-         } else if (isNaturalDirtOrGrass(worldIn, position.down()) && position.getY() < 256 - i - 1) {
+-            this.setToDirt(worldIn, position.down());
++         } else if (isSoil(worldIn, position.down(), getSapling()) && position.getY() < worldIn.getMaxHeight() - i - 1) {
++            this.setDirtAt(worldIn, position.down(), position);
+             int j2 = 0;
+ 
+             for(int k2 = position.getY() + i; k2 >= position.getY() + j; --k2) {

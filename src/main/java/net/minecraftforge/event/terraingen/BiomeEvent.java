@@ -19,11 +19,12 @@
 
 package net.minecraftforge.event.terraingen;
 
-import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.eventbus.api.Event;
 
 import net.minecraft.block.BlockState;
 import net.minecraft.world.biome.Biome;
+
+import net.minecraftforge.eventbus.api.Event.HasResult;
 
 /**
  * BiomeEvent is fired whenever an event involving biomes occurs.<br>

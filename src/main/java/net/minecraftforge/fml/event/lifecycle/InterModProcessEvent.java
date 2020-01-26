@@ -19,7 +19,6 @@
 
 package net.minecraftforge.fml.event.lifecycle;
 
-import java.util.function.Predicate;
 
 import net.minecraftforge.fml.ModContainer;
 

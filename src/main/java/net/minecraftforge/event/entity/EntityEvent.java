@@ -19,15 +19,11 @@
 
 package net.minecraftforge.event.entity;
 
-import net.minecraftforge.common.MinecraftForge;
-import net.minecraftforge.eventbus.api.Cancelable;
 import net.minecraftforge.eventbus.api.Event;
 
 import net.minecraft.entity.Entity;
-import net.minecraft.entity.EntitySize;
-import net.minecraft.entity.Pose;
-import net.minecraft.world.World;
-import net.minecraft.world.chunk.Chunk;
+import net.minecraft.entity.EntityDimensions;
+import net.minecraft.entity.EntityPose;
 
 /**
  * EntityEvent is fired when an event involving any Entity occurs.<br>
@@ -163,12 +159,12 @@ public class EntityEvent extends Event {
 	 * This event is fired on the {@link MinecraftForge#EVENT_BUS}.<br>
 	 **/
 	public static class EyeHeight extends EntityEvent {
-		private final Pose pose;
-		private final EntitySize size;
+		private final EntityPose pose;
+		private final EntityDimensions size;
 		private final float oldHeight;
 		private float newHeight;
 
-		public EyeHeight(Entity entity, Pose pose, EntitySize size, float defaultHeight) {
+		public EyeHeight(Entity entity, EntityPose pose, EntityDimensions size, float defaultHeight) {
 			super(entity);
 			this.pose = pose;
 			this.size = size;
@@ -176,11 +172,11 @@ public class EntityEvent extends Event {
 			this.newHeight = defaultHeight;
 		}
 
-		public Pose getPose() {
+		public EntityPose getPose() {
 			return pose;
 		}
 
-		public EntitySize getSize() {
+		public EntityDimensions getSize() {
 			return size;
 		}
 

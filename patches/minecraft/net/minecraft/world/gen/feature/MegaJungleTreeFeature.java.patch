@@ -1,0 +1,10 @@
+--- a/net/minecraft/world/gen/feature/MegaJungleTreeFeature.java
++++ b/net/minecraft/world/gen/feature/MegaJungleTreeFeature.java
+@@ -16,6 +16,7 @@
+ public class MegaJungleTreeFeature extends MegaTreeFeature<DefaultFeatureConfig> {
+    public MegaJungleTreeFeature(Function<Dynamic<?>, ? extends DefaultFeatureConfig> p_i51483_1_, boolean p_i51483_2_, int p_i51483_3_, int p_i51483_4_, BlockState p_i51483_5_, BlockState p_i51483_6_) {
+       super(p_i51483_1_, p_i51483_2_, p_i51483_3_, p_i51483_4_, p_i51483_5_, p_i51483_6_);
++      setSapling((net.minecraftforge.common.IPlantable)Blocks.JUNGLE_SAPLING);
+    }
+ 
+    public boolean generate(Set<BlockPos> changedBlocks, ModifiableTestableWorld worldIn, Random rand, BlockPos position, MutableIntBoundingBox p_208519_5_) {

@@ -1,0 +1,29 @@
+--- a/net/minecraft/server/ServerAdvancementLoader.java
++++ b/net/minecraft/server/ServerAdvancementLoader.java
+@@ -19,12 +19,12 @@
+ import net.minecraft.text.Style;
+ import org.apache.logging.log4j.LogManager;
+ import org.apache.logging.log4j.Logger;
++
+ import net.minecraft.advancement.Advancement;
+ import net.minecraft.advancement.AdvancementManager;
+ import net.minecraft.advancement.AdvancementPositioner;
+ import net.minecraft.advancement.AdvancementRewards;
+ 
+-
+ public class ServerAdvancementLoader extends JsonDataLoader {
+    private static final Logger LOGGER = LogManager.getLogger();
+    private static final Gson GSON = (new GsonBuilder()).registerTypeHierarchyAdapter(Advancement.Task.class, (JsonDeserializer<Advancement.Task>)(p_210124_0_, p_210124_1_, p_210124_2_) -> {
+@@ -41,7 +41,11 @@
+       Map<Identifier, Advancement.Task> map = Maps.newHashMap();
+       splashList.forEach((p_223387_1_, p_223387_2_) -> {
+          try {
+-            Advancement.Task advancement$builder = GSON.fromJson(p_223387_2_, Advancement.Task.class);
++            Advancement.Task advancement$builder = net.minecraftforge.common.crafting.ConditionalAdvancement.read(GSON, p_223387_1_, p_223387_2_);
++            if (advancement$builder == null) {
++               LOGGER.info("Skipping loading advancement {} as it's conditions were not met", p_223387_1_);
++               return;
++            }
+             map.put(p_223387_1_, advancement$builder);
+          } catch (IllegalArgumentException | JsonParseException jsonparseexception) {
+             LOGGER.error("Parsing error loading custom advancement {}: {}", p_223387_1_, jsonparseexception.getMessage());

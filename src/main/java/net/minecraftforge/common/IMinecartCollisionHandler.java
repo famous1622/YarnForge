@@ -20,8 +20,8 @@
 package net.minecraftforge.common;
 
 import net.minecraft.entity.Entity;
-import net.minecraft.entity.item.minecart.AbstractMinecartEntity;
-import net.minecraft.util.math.AxisAlignedBB;
+import net.minecraft.entity.vehicle.AbstractMinecartEntity;
+import net.minecraft.util.math.Box;
 
 /**
  * This class defines a replacement for the default minecart collision code.
@@ -50,7 +50,7 @@ public interface IMinecartCollisionHandler {
 	 * @param other The entity requesting the collision box.
 	 * @return The collision box or null.
 	 */
-	AxisAlignedBB getCollisionBox(AbstractMinecartEntity cart, Entity other);
+	Box getCollisionBox(AbstractMinecartEntity cart, Entity other);
 
 	/**
 	 * This function is used to define the box used for detecting minecart collisions.
@@ -59,7 +59,7 @@ public interface IMinecartCollisionHandler {
 	 * @param cart The cart for which the collision box was requested.
 	 * @return The collision box, cannot be null.
 	 */
-	AxisAlignedBB getMinecartCollisionBox(AbstractMinecartEntity cart);
+	Box getMinecartCollisionBox(AbstractMinecartEntity cart);
 
 	/**
 	 * This function replaces the function of the same name in EntityMinecart.
@@ -68,6 +68,6 @@ public interface IMinecartCollisionHandler {
 	 * @param cart The cart for which the bounding box was requested.
 	 * @return The bounding box or null.
 	 */
-	AxisAlignedBB getBoundingBox(AbstractMinecartEntity cart);
+	Box getBoundingBox(AbstractMinecartEntity cart);
 }
 

@@ -22,22 +22,22 @@ package net.minecraftforge.fml.client.gui;
 import net.minecraftforge.fml.StartupQuery;
 
 import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.client.gui.widget.button.Button;
-import net.minecraft.client.resources.I18n;
-import net.minecraft.util.text.TranslationTextComponent;
+import net.minecraft.client.gui.widget.ButtonWidget;
+import net.minecraft.client.resource.language.I18n;
+import net.minecraft.text.TranslatableText;
 
 public class GuiNotification extends Screen {
 	protected final StartupQuery query;
 
 	public GuiNotification(StartupQuery query) {
-		super(new TranslationTextComponent("fml.menu.notification.title"));
+		super(new TranslatableText("fml.menu.notification.title"));
 		this.query = query;
 	}
 
 	@Override
 	public void init() {
-		this.buttons.add(new Button(this.width / 2 - 100, this.height - 38, 200, 20, I18n.format("gui.done"), b -> {
-			GuiNotification.this.minecraft.displayGuiScreen(null);
+		this.buttons.add(new ButtonWidget(this.width / 2 - 100, this.height - 38, 200, 20, I18n.translate("gui.done"), b -> {
+			GuiNotification.this.minecraft.openScreen(null);
 			query.finish();
 		}));
 	}

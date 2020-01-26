@@ -1,0 +1,22 @@
+--- a/net/minecraft/world/ViewableWorld.java
++++ b/net/minecraft/world/ViewableWorld.java
+@@ -28,7 +28,7 @@
+ 
+ public interface ViewableWorld extends ExtendedBlockView {
+    default boolean isAir(BlockPos pos) {
+-      return this.getBlockState(pos).isAir();
++      return this.getBlockState(pos).isAir(this, pos);
+    }
+ 
+    default boolean method_8626(BlockPos pos) {
+@@ -232,6 +232,10 @@
+       return this.isChunkLoaded(pos.getX() >> 4, pos.getZ() >> 4);
+    }
+ 
++   default boolean isAreaLoaded(BlockPos center, int range) {
++      return this.isAreaLoaded(center.add(-range, -range, -range), center.add(range, range, range));
++   }
++
+    @Deprecated
+    default boolean isAreaLoaded(BlockPos from, BlockPos to) {
+       return this.isAreaLoaded(from.getX(), from.getY(), from.getZ(), to.getX(), to.getY(), to.getZ());

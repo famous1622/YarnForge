@@ -1,21 +1,31 @@
 --- a/net/minecraft/item/MilkBucketItem.java
 +++ b/net/minecraft/item/MilkBucketItem.java
-@@ -16,6 +16,8 @@
+@@ -9,8 +9,8 @@
+ import net.minecraft.util.ActionResult;
+ import net.minecraft.util.Hand;
+ import net.minecraft.world.World;
+-import net.minecraft.util.UseAction;
+ 
++import net.minecraft.util.UseAction;
+ 
+ public class MilkBucketItem extends Item {
+    public MilkBucketItem(Item.Settings builder) {
+@@ -18,6 +18,8 @@
     }
  
-    public ItemStack func_77654_b(ItemStack p_77654_1_, World p_77654_2_, LivingEntity p_77654_3_) {
-+      if (!p_77654_2_.field_72995_K) p_77654_3_.curePotionEffects(p_77654_1_); // FORGE - move up so stack.shrink does not turn stack into air
+    public ItemStack finishUsing(ItemStack stack, World worldIn, LivingEntity entityLiving) {
++      if (!worldIn.isClient) entityLiving.curePotionEffects(stack); // FORGE - move up so stack.shrink does not turn stack into air
 +
-       if (p_77654_3_ instanceof ServerPlayerEntity) {
-          ServerPlayerEntity serverplayerentity = (ServerPlayerEntity)p_77654_3_;
-          CriteriaTriggers.field_193138_y.func_193148_a(serverplayerentity, p_77654_1_);
-@@ -45,4 +47,9 @@
-       p_77659_2_.func_184598_c(p_77659_3_);
-       return new ActionResult<>(ActionResultType.SUCCESS, p_77659_2_.func_184586_b(p_77659_3_));
+       if (entityLiving instanceof ServerPlayerEntity) {
+          ServerPlayerEntity serverplayerentity = (ServerPlayerEntity)entityLiving;
+          Criterions.CONSUME_ITEM.handle(serverplayerentity, stack);
+@@ -47,4 +49,9 @@
+       playerIn.setCurrentHand(handIn);
+       return new TypedActionResult<>(ActionResult.SUCCESS, playerIn.getStackInHand(handIn));
     }
 +
 +   @Override
-+   public net.minecraftforge.common.capabilities.ICapabilityProvider initCapabilities(ItemStack stack, @javax.annotation.Nullable net.minecraft.nbt.CompoundNBT nbt) {
++   public net.minecraftforge.common.capabilities.ICapabilityProvider initCapabilities(ItemStack stack, @javax.annotation.Nullable net.minecraft.nbt.CompoundTag nbt) {
 +      return new net.minecraftforge.fluids.capability.wrappers.FluidBucketWrapper(stack);
 +   }
  }

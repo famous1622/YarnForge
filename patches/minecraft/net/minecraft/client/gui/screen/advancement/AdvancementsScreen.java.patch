@@ -1,0 +1,81 @@
+--- a/net/minecraft/client/gui/screen/advancement/AdvancementsScreen.java
++++ b/net/minecraft/client/gui/screen/advancement/AdvancementsScreen.java
+@@ -17,6 +17,8 @@
+ import net.minecraftforge.api.distmarker.Dist;
+ import net.minecraftforge.api.distmarker.OnlyIn;
+ 
++import net.minecraft;
++
+ @OnlyIn(Dist.CLIENT)
+ public class AdvancementsScreen extends Screen implements ClientAdvancementManager.Listener {
+    private static final Identifier WINDOW_TEXTURE = new Identifier("textures/gui/advancements/window.png");
+@@ -25,6 +27,7 @@
+    private final Map<Advancement, AdvancementTreeWidget> widgetMap = Maps.newLinkedHashMap();
+    private AdvancementTreeWidget selectedWidget;
+    private boolean field_2718;
++   private static int tabPage, maxPages;
+ 
+    public AdvancementsScreen(ClientAdvancementManager p_i47383_1_) {
+       super(NarratorManager.EMPTY);
+@@ -40,7 +43,13 @@
+       } else {
+          this.advancementHandler.selectTab(this.selectedWidget == null ? null : this.selectedWidget.method_2307(), true);
+       }
+-
++      if (this.widgetMap.size() > AdvancementTabType.MAX_TABS) {
++          int guiLeft = (this.width - 252) / 2;
++          int guiTop = (this.height - 140) / 2;
++          addButton(new net.minecraft.client.gui.widget.ButtonWidget(guiLeft,            guiTop - 50, 20, 20, "<", b -> tabPage = Math.max(tabPage - 1, 0       )));
++          addButton(new net.minecraft.client.gui.widget.ButtonWidget(guiLeft + 252 - 20, guiTop - 50, 20, 20, ">", b -> tabPage = Math.min(tabPage + 1, maxPages)));
++          maxPages = this.widgetMap.size() / AdvancementTabType.MAX_TABS;
++      }
+    }
+ 
+    public void removed() {
+@@ -58,7 +67,7 @@
+          int j = (this.height - 140) / 2;
+ 
+          for(AdvancementTreeWidget advancementtabgui : this.widgetMap.values()) {
+-            if (advancementtabgui.method_2316(i, j, p_mouseClicked_1_, p_mouseClicked_3_)) {
++            if (advancementtabgui.getPage() == tabPage && advancementtabgui.method_2316(i, j, p_mouseClicked_1_, p_mouseClicked_3_)) {
+                this.advancementHandler.selectTab(advancementtabgui.method_2307(), true);
+                break;
+             }
+@@ -83,6 +92,12 @@
+       int j = (this.height - 140) / 2;
+       this.renderBackground();
+       this.drawAdvancementTree(p_render_1_, p_render_2_, i, j);
++      if (maxPages != 0) {
++         String page = String.format("%d / %d", tabPage + 1, maxPages + 1);
++         int width = this.font.getStringWidth(page);
++         GlStateManager.disableLighting();
++         this.font.drawWithShadow(page, i + (252 / 2) - (width / 2), j - 44, -1);
++      }
+       this.drawWidgets(i, j);
+       this.drawWidgetTooltip(p_render_1_, p_render_2_, i, j);
+    }
+@@ -131,6 +146,7 @@
+          this.minecraft.getTextureManager().bindTexture(TABS_TEXTURE);
+ 
+          for(AdvancementTreeWidget advancementtabgui : this.widgetMap.values()) {
++            if (advancementtabgui.getPage() == tabPage)
+             advancementtabgui.drawBackground(p_191934_1_, p_191934_2_, advancementtabgui == this.selectedWidget);
+          }
+ 
+@@ -139,6 +155,7 @@
+          GuiLighting.enableForItems();
+ 
+          for(AdvancementTreeWidget advancementtabgui1 : this.widgetMap.values()) {
++            if (advancementtabgui1.getPage() == tabPage)
+             advancementtabgui1.drawIcon(p_191934_1_, p_191934_2_, this.itemRenderer);
+          }
+ 
+@@ -161,7 +178,7 @@
+ 
+       if (this.widgetMap.size() > 1) {
+          for(AdvancementTreeWidget advancementtabgui : this.widgetMap.values()) {
+-            if (advancementtabgui.method_2316(p_191937_3_, p_191937_4_, (double)p_191937_1_, (double)p_191937_2_)) {
++            if (advancementtabgui.getPage() == tabPage && advancementtabgui.method_2316(p_191937_3_, p_191937_4_, (double)p_191937_1_, (double)p_191937_2_)) {
+                this.renderTooltip(advancementtabgui.method_2309(), p_191937_1_, p_191937_2_);
+             }
+          }

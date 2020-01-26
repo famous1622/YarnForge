@@ -32,17 +32,19 @@ import net.minecraftforge.eventbus.api.Cancelable;
 import net.minecraftforge.eventbus.api.Event;
 
 import net.minecraft.block.BlockState;
-import net.minecraft.block.NetherPortalBlock;
+import net.minecraft.block.PortalBlock;
 import net.minecraft.enchantment.EnchantmentHelper;
 import net.minecraft.enchantment.Enchantments;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
-import net.minecraft.util.Direction;
-import net.minecraft.util.NonNullList;
+import net.minecraft.util.math.Direction;
+import net.minecraft.util.DefaultedList;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.IWorld;
 import net.minecraft.world.World;
+
+import net.minecraftforge.eventbus.api.Event.HasResult;
 
 public class BlockEvent extends Event {
 	private static final boolean DEBUG = Boolean.parseBoolean(System.getProperty("forge.debugBlockEvent", "false"));
@@ -82,12 +84,12 @@ public class BlockEvent extends Event {
 	 */
 	public static class HarvestDropsEvent extends BlockEvent {
 		private final int fortuneLevel;
-		private final NonNullList<ItemStack> drops;
+		private final DefaultedList<ItemStack> drops;
 		private final boolean isSilkTouching;
 		private final PlayerEntity harvester; // May be null for non-player harvesting such as explosions or machines
 		private float dropChance; // Change to e.g. 1.0f, if you manipulate the list and want to guarantee it always drops
 
-		public HarvestDropsEvent(World world, BlockPos pos, BlockState state, int fortuneLevel, float dropChance, NonNullList<ItemStack> drops, PlayerEntity harvester, boolean isSilkTouching) {
+		public HarvestDropsEvent(World world, BlockPos pos, BlockState state, int fortuneLevel, float dropChance, DefaultedList<ItemStack> drops, PlayerEntity harvester, boolean isSilkTouching) {
 			super(world, pos, state);
 			this.fortuneLevel = fortuneLevel;
 			this.setDropChance(dropChance);
@@ -141,8 +143,8 @@ public class BlockEvent extends Event {
 			{
 				this.exp = 0;
 			} else {
-				int bonusLevel = EnchantmentHelper.getEnchantmentLevel(Enchantments.FORTUNE, player.getHeldItemMainhand());
-				int silklevel = EnchantmentHelper.getEnchantmentLevel(Enchantments.SILK_TOUCH, player.getHeldItemMainhand());
+				int bonusLevel = EnchantmentHelper.getLevel(Enchantments.FORTUNE, player.getMainHandStack());
+				int silklevel = EnchantmentHelper.getLevel(Enchantments.SILK_TOUCH, player.getMainHandStack());
 				this.exp = state.getExpDrop(world, pos, bonusLevel, silklevel);
 			}
 		}
@@ -419,14 +421,14 @@ public class BlockEvent extends Event {
 	 */
 	@Cancelable
 	public static class PortalSpawnEvent extends BlockEvent {
-		private final NetherPortalBlock.Size size;
+		private final PortalBlock.AreaHelper size;
 
-		public PortalSpawnEvent(IWorld world, BlockPos pos, BlockState state, NetherPortalBlock.Size size) {
+		public PortalSpawnEvent(IWorld world, BlockPos pos, BlockState state, PortalBlock.AreaHelper size) {
 			super(world, pos, state);
 			this.size = size;
 		}
 
-		public NetherPortalBlock.Size getPortalSize() {
+		public PortalBlock.AreaHelper getPortalSize() {
 			return size;
 		}
 	}

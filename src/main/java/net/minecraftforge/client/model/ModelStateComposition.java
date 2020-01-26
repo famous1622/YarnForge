@@ -26,12 +26,12 @@ import net.minecraftforge.common.model.IModelPart;
 import net.minecraftforge.common.model.IModelState;
 import net.minecraftforge.common.model.TRSRTransformation;
 
-import net.minecraft.client.renderer.texture.ISprite;
+import net.minecraft.client.render.model.ModelBakeSettings;
 
 /**
  * An {@link IModelState} that combines the transforms from two child {@link IModelState}.
  */
-public class ModelStateComposition implements IModelState, ISprite {
+public class ModelStateComposition implements IModelState, ModelBakeSettings {
 	private final IModelState first;
 	private final IModelState second;
 	private final boolean uvLock;
@@ -52,7 +52,7 @@ public class ModelStateComposition implements IModelState, ISprite {
 	}
 
 	@Override
-	public boolean isUvLock() {
+	public boolean isUvLocked() {
 		return uvLock;
 	}
 

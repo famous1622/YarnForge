@@ -1,0 +1,17 @@
+--- a/net/minecraft/tag/FluidTags.java
++++ b/net/minecraft/tag/FluidTags.java
+@@ -18,6 +18,14 @@
+       ++latestVersion;
+    }
+ 
++   public static TagContainer<Fluid> getCollection() {
++      return container;
++   }
++
++   public static int getGeneration() {
++      return latestVersion;
++   }
++
+    private static Tag<Fluid> register(String p_206956_0_) {
+       return new FluidTags.CachingTag(new Identifier(p_206956_0_));
+    }

@@ -23,7 +23,7 @@ import java.util.function.Supplier;
 
 import net.minecraftforge.fml.ModContainer;
 
-import net.minecraft.server.dedicated.DedicatedServer;
+import net.minecraft.server.dedicated.MinecraftDedicatedServer;
 
 /**
  * This is the second of four commonly called events during mod lifecycle startup.
@@ -40,14 +40,14 @@ import net.minecraft.server.dedicated.DedicatedServer;
  * This is a parallel dispatch event.
  */
 public class FMLDedicatedServerSetupEvent extends ModLifecycleEvent {
-	private final Supplier<DedicatedServer> serverSupplier;
+	private final Supplier<MinecraftDedicatedServer> serverSupplier;
 
-	public FMLDedicatedServerSetupEvent(Supplier<DedicatedServer> server, ModContainer container) {
+	public FMLDedicatedServerSetupEvent(Supplier<MinecraftDedicatedServer> server, ModContainer container) {
 		super(container);
 		this.serverSupplier = server;
 	}
 
-	public Supplier<DedicatedServer> getServerSupplier() {
+	public Supplier<MinecraftDedicatedServer> getServerSupplier() {
 		return serverSupplier;
 	}
 }

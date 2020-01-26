@@ -31,29 +31,29 @@ import net.minecraftforge.common.model.TRSRTransformation;
 import org.apache.commons.lang3.tuple.Pair;
 
 import net.minecraft.block.BlockState;
-import net.minecraft.client.renderer.model.BakedQuad;
-import net.minecraft.client.renderer.model.IBakedModel;
-import net.minecraft.client.renderer.model.ItemCameraTransforms.TransformType;
-import net.minecraft.client.renderer.model.ItemOverrideList;
-import net.minecraft.client.renderer.texture.TextureAtlasSprite;
-import net.minecraft.util.Direction;
+import net.minecraft.client.render.model.BakedQuad;
+import net.minecraft.client.render.model.BakedModel;
+import net.minecraft.client.render.model.json.ModelTransformation.Type;
+import net.minecraft.client.render.model.json.ModelItemPropertyOverrideList;
+import net.minecraft.client.texture.Sprite;
+import net.minecraft.util.math.Direction;
 
-public class BakedItemModel implements IBakedModel {
+public class BakedItemModel implements BakedModel {
 	protected final ImmutableList<BakedQuad> quads;
-	protected final TextureAtlasSprite particle;
-	protected final ImmutableMap<TransformType, TRSRTransformation> transforms;
-	protected final ItemOverrideList overrides;
-	protected final IBakedModel guiModel;
+	protected final Sprite particle;
+	protected final ImmutableMap<Type, TRSRTransformation> transforms;
+	protected final ModelItemPropertyOverrideList overrides;
+	protected final BakedModel guiModel;
 
 	/**
 	 * @deprecated use {@link #BakedItemModel(ImmutableList, TextureAtlasSprite, ImmutableMap, ItemOverrideList, boolean)}
 	 */
 	@Deprecated // TODO: remove
-	public BakedItemModel(ImmutableList<BakedQuad> quads, TextureAtlasSprite particle, ImmutableMap<TransformType, TRSRTransformation> transforms, ItemOverrideList overrides) {
+	public BakedItemModel(ImmutableList<BakedQuad> quads, Sprite particle, ImmutableMap<Type, TRSRTransformation> transforms, ModelItemPropertyOverrideList overrides) {
 		this(quads, particle, transforms, overrides, true);
 	}
 
-	public BakedItemModel(ImmutableList<BakedQuad> quads, TextureAtlasSprite particle, ImmutableMap<TransformType, TRSRTransformation> transforms, ItemOverrideList overrides, boolean untransformed) {
+	public BakedItemModel(ImmutableList<BakedQuad> quads, Sprite particle, ImmutableMap<Type, TRSRTransformation> transforms, ModelItemPropertyOverrideList overrides, boolean untransformed) {
 		this.quads = quads;
 		this.particle = particle;
 		this.transforms = transforms;
@@ -61,33 +61,33 @@ public class BakedItemModel implements IBakedModel {
 		this.guiModel = untransformed && hasGuiIdentity(transforms) ? new BakedGuiItemModel<>(this) : null;
 	}
 
-	private static boolean hasGuiIdentity(ImmutableMap<TransformType, TRSRTransformation> transforms) {
-		TRSRTransformation guiTransform = transforms.get(TransformType.GUI);
+	private static boolean hasGuiIdentity(ImmutableMap<Type, TRSRTransformation> transforms) {
+		TRSRTransformation guiTransform = transforms.get(Type.GUI);
 		return guiTransform == null || guiTransform.isIdentity();
 	}
 
 	@Override
-	public boolean isAmbientOcclusion() {
+	public boolean useAmbientOcclusion() {
 		return true;
 	}
 
 	@Override
-	public boolean isGui3d() {
+	public boolean hasDepthInGui() {
 		return false;
 	}
 
 	@Override
-	public boolean isBuiltInRenderer() {
+	public boolean isBuiltin() {
 		return false;
 	}
 
 	@Override
-	public TextureAtlasSprite getParticleTexture() {
+	public Sprite getSprite() {
 		return particle;
 	}
 
 	@Override
-	public ItemOverrideList getOverrides() {
+	public ModelItemPropertyOverrideList getItemPropertyOverrides() {
 		return overrides;
 	}
 
@@ -100,8 +100,8 @@ public class BakedItemModel implements IBakedModel {
 	}
 
 	@Override
-	public Pair<? extends IBakedModel, Matrix4f> handlePerspective(TransformType type) {
-		if (type == TransformType.GUI && this.guiModel != null) {
+	public Pair<? extends BakedModel, Matrix4f> handlePerspective(Type type) {
+		if (type == Type.GUI && this.guiModel != null) {
 			return this.guiModel.handlePerspective(type);
 		}
 		return PerspectiveMapWrapper.handlePerspective(this, transforms, type);
@@ -130,8 +130,8 @@ public class BakedItemModel implements IBakedModel {
 		}
 
 		@Override
-		public Pair<? extends IBakedModel, Matrix4f> handlePerspective(TransformType type) {
-			if (type == TransformType.GUI) {
+		public Pair<? extends BakedModel, Matrix4f> handlePerspective(Type type) {
+			if (type == Type.GUI) {
 				return PerspectiveMapWrapper.handlePerspective(this, originalModel.transforms, type);
 			}
 			return this.originalModel.handlePerspective(type);

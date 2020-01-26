@@ -1,0 +1,12 @@
+--- a/net/minecraft/client/texture/BannerTexture.java
++++ b/net/minecraft/client/texture/BannerTexture.java
+@@ -39,8 +39,7 @@
+             String s = this.patternNames.get(i);
+             if (s != null) {
+                try (
+-                  Resource iresource1 = manager.getResource(new Identifier(s));
+-                  NativeImage nativeimage2 = NativeImage.read(iresource1.getInputStream());
++                  NativeImage nativeimage2 = net.minecraftforge.client.MinecraftForgeClient.getImageLayer(new Identifier(s), manager);
+                ) {
+                   int j = this.dyes.get(i).getColorSwapped();
+                   if (nativeimage2.getWidth() == nativeimage1.getWidth() && nativeimage2.getHeight() == nativeimage1.getHeight()) {

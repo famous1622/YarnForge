@@ -25,37 +25,37 @@ import com.mojang.authlib.GameProfile;
 import net.minecraftforge.fml.server.ServerLifecycleHooks;
 
 import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.entity.player.ServerPlayerEntity;
-import net.minecraft.network.play.client.CClientSettingsPacket;
+import net.minecraft.server.network.ServerPlayerEntity;
+import net.minecraft.server.network.packet.ClientSettingsC2SPacket;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.management.PlayerInteractionManager;
-import net.minecraft.stats.Stat;
-import net.minecraft.util.DamageSource;
+import net.minecraft.server.network.ServerPlayerInteractionManager;
+import net.minecraft.stat.Stat;
+import net.minecraft.entity.damage.DamageSource;
 import net.minecraft.util.math.Vec3d;
-import net.minecraft.util.text.ITextComponent;
-import net.minecraft.world.server.ServerWorld;
+import net.minecraft.text.Text;
+import net.minecraft.server.world.ServerWorld;
 
 //Preliminary, simple Fake Player class
 public class FakePlayer extends ServerPlayerEntity {
 	public FakePlayer(ServerWorld world, GameProfile name) {
-		super(world.getServer(), world, name, new PlayerInteractionManager(world));
+		super(world.getServer(), world, name, new ServerPlayerInteractionManager(world));
 	}
 
 	@Override
-	public Vec3d getPositionVector() {
+	public Vec3d getPosVector() {
 		return new Vec3d(0, 0, 0);
 	}
 
 	@Override
-	public void sendStatusMessage(ITextComponent chatComponent, boolean actionBar) {
+	public void addChatMessage(Text chatComponent, boolean actionBar) {
 	}
 
 	@Override
-	public void sendMessage(ITextComponent component) {
+	public void sendMessage(Text component) {
 	}
 
 	@Override
-	public void addStat(Stat par1StatBase, int par2) {
+	public void increaseStat(Stat par1StatBase, int par2) {
 	}
 
 	//@Override public void openGui(Object mod, int modGuiId, World world, int x, int y, int z){}
@@ -65,7 +65,7 @@ public class FakePlayer extends ServerPlayerEntity {
 	}
 
 	@Override
-	public boolean canAttackPlayer(PlayerEntity player) {
+	public boolean shouldDamagePlayer(PlayerEntity player) {
 		return false;
 	}
 
@@ -80,7 +80,7 @@ public class FakePlayer extends ServerPlayerEntity {
 	}
 
 	@Override
-	public void handleClientSettings(CClientSettingsPacket pkt) {
+	public void setClientSettings(ClientSettingsC2SPacket pkt) {
 		return;
 	}
 

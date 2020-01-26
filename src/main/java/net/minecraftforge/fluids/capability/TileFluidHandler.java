@@ -27,29 +27,29 @@ import net.minecraftforge.common.util.LazyOptional;
 import net.minecraftforge.fluids.FluidAttributes;
 import net.minecraftforge.fluids.capability.templates.FluidTank;
 
-import net.minecraft.nbt.CompoundNBT;
-import net.minecraft.tileentity.TileEntity;
-import net.minecraft.tileentity.TileEntityType;
-import net.minecraft.util.Direction;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.block.entity.BlockEntity;
+import net.minecraft.block.entity.BlockEntityType;
+import net.minecraft.util.math.Direction;
 
-public class TileFluidHandler extends TileEntity {
+public class TileFluidHandler extends BlockEntity {
 	protected FluidTank tank = new FluidTank(FluidAttributes.BUCKET_VOLUME);
 
 	private final LazyOptional<IFluidHandler> holder = LazyOptional.of(() -> tank);
 
-	public TileFluidHandler(@Nonnull TileEntityType<?> tileEntityTypeIn) {
+	public TileFluidHandler(@Nonnull BlockEntityType<?> tileEntityTypeIn) {
 		super(tileEntityTypeIn);
 	}
 
 	@Override
-	public void read(CompoundNBT tag) {
-		super.read(tag);
+	public void fromTag(CompoundTag tag) {
+		super.fromTag(tag);
 		tank.readFromNBT(tag);
 	}
 
 	@Override
-	public CompoundNBT write(CompoundNBT tag) {
-		tag = super.write(tag);
+	public CompoundTag toTag(CompoundTag tag) {
+		tag = super.toTag(tag);
 		tank.writeToNBT(tag);
 		return tag;
 	}

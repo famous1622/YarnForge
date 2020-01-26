@@ -32,18 +32,18 @@ import net.minecraftforge.common.property.Properties;
 import net.minecraftforge.common.util.LazyOptional;
 
 import net.minecraft.block.BlockState;
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.BlockRendererDispatcher;
-import net.minecraft.client.renderer.BufferBuilder;
-import net.minecraft.client.renderer.model.IBakedModel;
-import net.minecraft.tileentity.TileEntity;
+import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.render.block.BlockRenderManager;
+import net.minecraft.client.render.BufferBuilder;
+import net.minecraft.client.render.model.BakedModel;
+import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.util.math.BlockPos;
 
 /**
  * Generic {@link TileGameRenderer} that works with the Forge model system and animations.
  */
-public class TileEntityRendererAnimation<T extends TileEntity> extends TileEntityRendererFast<T> implements IEventHandler<T> {
-	protected static BlockRendererDispatcher blockRenderer;
+public class TileEntityRendererAnimation<T extends BlockEntity> extends TileEntityRendererFast<T> implements IEventHandler<T> {
+	protected static BlockRenderManager blockRenderer;
 
 	@Override
 	public void renderTileEntityFast(T te, double x, double y, double z, float partialTick, int breakStage, BufferBuilder renderer) {
@@ -51,11 +51,11 @@ public class TileEntityRendererAnimation<T extends TileEntity> extends TileEntit
 		if (!cap.isPresent()) {
 			return;
 		}
-		if (blockRenderer == null) blockRenderer = Minecraft.getInstance().getBlockRendererDispatcher();
+		if (blockRenderer == null) blockRenderer = MinecraftClient.getInstance().getBlockRenderManager();
 		BlockPos pos = te.getPos();
-		net.minecraft.world.IEnviromentBlockReader world = MinecraftForgeClient.getRegionRenderCache(te.getWorld(), pos);
+		net.minecraft.world.ExtendedBlockView world = MinecraftForgeClient.getRegionRenderCache(te.getWorld(), pos);
 		BlockState state = world.getBlockState(pos);
-		IBakedModel model = blockRenderer.getBlockModelShapes().getModel(state);
+		BakedModel model = blockRenderer.getModels().getModel(state);
 		IModelData data = model.getModelData(world, pos, state, ModelDataManager.getModelData(te.getWorld(), pos));
 		if (data.hasProperty(Properties.AnimationProperty)) {
 			float time = Animation.getWorldTime(getWorld(), partialTick);
@@ -67,9 +67,9 @@ public class TileEntityRendererAnimation<T extends TileEntity> extends TileEntit
 						// TODO: caching?
 						data.setData(Properties.AnimationProperty, pair.getLeft());
 
-						renderer.setTranslation(x - pos.getX(), y - pos.getY(), z - pos.getZ());
+						renderer.setOffset(x - pos.getX(), y - pos.getY(), z - pos.getZ());
 
-						blockRenderer.getBlockModelRenderer().renderModel(world, model, state, pos, renderer, false, new Random(), 42, data);
+						blockRenderer.getModelRenderer().renderModel(world, model, state, pos, renderer, false, new Random(), 42, data);
 					});
 		}
 	}

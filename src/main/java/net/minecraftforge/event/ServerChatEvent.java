@@ -19,12 +19,10 @@
 
 package net.minecraftforge.event;
 
-import net.minecraftforge.common.ForgeHooks;
-import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.eventbus.api.Cancelable;
 
-import net.minecraft.entity.player.ServerPlayerEntity;
-import net.minecraft.util.text.ITextComponent;
+import net.minecraft.server.network.ServerPlayerEntity;
+import net.minecraft.text.Text;
 
 /**
  * ServerChatEvent is fired whenever a C01PacketChatMessage is processed. <br>
@@ -47,9 +45,9 @@ import net.minecraft.util.text.ITextComponent;
 public class ServerChatEvent extends net.minecraftforge.eventbus.api.Event {
 	private final String message, username;
 	private final ServerPlayerEntity player;
-	private ITextComponent component;
+	private Text component;
 
-	public ServerChatEvent(ServerPlayerEntity player, String message, ITextComponent component) {
+	public ServerChatEvent(ServerPlayerEntity player, String message, Text component) {
 		super();
 		this.message = message;
 		this.player = player;
@@ -57,11 +55,11 @@ public class ServerChatEvent extends net.minecraftforge.eventbus.api.Event {
 		this.component = component;
 	}
 
-	public ITextComponent getComponent() {
+	public Text getComponent() {
 		return this.component;
 	}
 
-	public void setComponent(ITextComponent e) {
+	public void setComponent(Text e) {
 		this.component = e;
 	}
 

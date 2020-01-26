@@ -19,7 +19,6 @@
 
 package net.minecraftforge.fml;
 
-import static net.minecraftforge.fml.Logging.CORE;
 
 import java.text.FieldPosition;
 import java.text.Format;

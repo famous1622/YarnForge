@@ -1,0 +1,14 @@
+--- a/net/minecraft/sound/SoundEvents.java
++++ b/net/minecraft/sound/SoundEvents.java
+@@ -1,9 +1,10 @@
+ package net.minecraft.util;
+ 
+ import net.minecraft.util.registry.Registry;
+-import net.minecraft.util.Identifier;
+ 
++import net.minecraft.util.Identifier;
+ 
++@net.minecraftforge.registries.ObjectHolder("minecraft")
+ public class SoundEvents {
+    public static final SoundEvent AMBIENT_CAVE = register("ambient.cave");
+    public static final SoundEvent AMBIENT_UNDERWATER_ENTER = register("ambient.underwater.enter");

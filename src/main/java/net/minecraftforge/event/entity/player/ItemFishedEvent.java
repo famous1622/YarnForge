@@ -27,7 +27,7 @@ import com.google.common.base.Preconditions;
 
 import net.minecraft.entity.projectile.FishingBobberEntity;
 import net.minecraft.item.ItemStack;
-import net.minecraft.util.NonNullList;
+import net.minecraft.util.DefaultedList;
 
 /**
  * This event is called when a player fishes an item.
@@ -38,12 +38,12 @@ import net.minecraft.util.NonNullList;
  */
 @net.minecraftforge.eventbus.api.Cancelable
 public class ItemFishedEvent extends PlayerEvent {
-	private final NonNullList<ItemStack> stacks = NonNullList.create();
+	private final DefaultedList<ItemStack> stacks = DefaultedList.of();
 	private final FishingBobberEntity hook;
 	private int rodDamage;
 
 	public ItemFishedEvent(List<ItemStack> stacks, int rodDamage, FishingBobberEntity hook) {
-		super(hook.getAngler());
+		super(hook.getOwner());
 		this.stacks.addAll(stacks);
 		this.rodDamage = rodDamage;
 		this.hook = hook;
@@ -74,7 +74,7 @@ public class ItemFishedEvent extends PlayerEvent {
 	 * You cannot use this to modify the drops the player will get.
 	 * If you want to affect the loot, you should use LootTables.
 	 */
-	public NonNullList<ItemStack> getDrops() {
+	public DefaultedList<ItemStack> getDrops() {
 		return stacks;
 	}
 

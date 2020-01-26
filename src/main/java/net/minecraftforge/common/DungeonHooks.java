@@ -24,7 +24,7 @@ import java.util.Iterator;
 import java.util.Random;
 
 import net.minecraft.entity.EntityType;
-import net.minecraft.util.WeightedRandom;
+import net.minecraft.util.WeightedPicker;
 
 public class DungeonHooks {
 	private static ArrayList<DungeonMob> dungeonMobs = new ArrayList<DungeonMob>();
@@ -59,7 +59,7 @@ public class DungeonHooks {
 			DungeonMob mob = itr.next();
 			if (type == mob.type) {
 				itr.remove();
-				rarity = mob.itemWeight + rarity;
+				rarity = mob.weight + rarity;
 				break;
 			}
 		}
@@ -78,7 +78,7 @@ public class DungeonHooks {
 		for (DungeonMob mob : dungeonMobs) {
 			if (name == mob.type) {
 				dungeonMobs.remove(mob);
-				return mob.itemWeight;
+				return mob.weight;
 			}
 		}
 		return 0;
@@ -91,11 +91,11 @@ public class DungeonHooks {
 	 * @return The mob name
 	 */
 	public static EntityType<?> getRandomDungeonMob(Random rand) {
-		DungeonMob mob = WeightedRandom.getRandomItem(rand, dungeonMobs);
+		DungeonMob mob = WeightedPicker.getRandom(rand, dungeonMobs);
 		return mob.type;
 	}
 
-	public static class DungeonMob extends WeightedRandom.Item {
+	public static class DungeonMob extends WeightedPicker.Entry {
 		public final EntityType<?> type;
 
 		public DungeonMob(int weight, EntityType<?> type) {

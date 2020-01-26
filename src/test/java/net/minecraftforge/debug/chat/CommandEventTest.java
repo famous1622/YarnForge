@@ -30,8 +30,8 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import net.minecraft.command.CommandException;
-import net.minecraft.command.CommandSource;
-import net.minecraft.util.text.StringTextComponent;
+import net.minecraft.server.command.ServerCommandSource;
+import net.minecraft.text.LiteralText;
 
 @Mod("command_event_test")
 @Mod.EventBusSubscriber
@@ -40,9 +40,9 @@ public class CommandEventTest {
 
 	@SubscribeEvent
 	public static void onCommand(CommandEvent event) {
-		CommandDispatcher<CommandSource> dispatcher = event.getParseResults().getContext().getDispatcher();
-		List<ParsedCommandNode<CommandSource>> nodes = event.getParseResults().getContext().getNodes();
-		CommandSource source = event.getParseResults().getContext().getSource();
+		CommandDispatcher<ServerCommandSource> dispatcher = event.getParseResults().getContext().getDispatcher();
+		List<ParsedCommandNode<ServerCommandSource>> nodes = event.getParseResults().getContext().getNodes();
+		ServerCommandSource source = event.getParseResults().getContext().getSource();
 
 		// test: when the /time command is used with no arguments, automatically add default arguments (/time set day)
 		if (nodes.size() == 1 && nodes.get(0).getNode() == dispatcher.getRoot().getChild("time")) {
@@ -53,13 +53,13 @@ public class CommandEventTest {
 		// test: whenever a player uses the /give command, let everyone on the server know
 		if (nodes.size() > 0 && nodes.get(0).getNode() == dispatcher.getRoot().getChild("give")) {
 			String msg = source.getName() + " used the give command: " + event.getParseResults().getReader().getString();
-			source.getServer().getPlayerList().getPlayers().forEach(PlayerEntityMP -> PlayerEntityMP.sendMessage(new StringTextComponent(msg)));
+			source.getMinecraftServer().getPlayerManager().getPlayerList().forEach(PlayerEntityMP -> PlayerEntityMP.sendMessage(new LiteralText(msg)));
 			return;
 		}
 
 		// test: when the /kill command is used with no arguments, throw a custom exception
 		if (nodes.size() == 1 && nodes.get(0).getNode() == dispatcher.getRoot().getChild("kill")) {
-			event.setException(new CommandException(new StringTextComponent("You tried to use the /kill command with no arguments")));
+			event.setException(new CommandException(new LiteralText("You tried to use the /kill command with no arguments")));
 			event.setCanceled(true);
 			return;
 		}

@@ -32,7 +32,7 @@ import net.minecraftforge.event.RegistryEvent;
 import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.fml.RegistryObject;
 
-import net.minecraft.util.ResourceLocation;
+import net.minecraft.util.Identifier;
 
 /**
  * Utility class to help with managing registry entries.
@@ -77,7 +77,7 @@ public class DeferredRegister<T extends IForgeRegistryEntry<T>> {
 	public <I extends T> RegistryObject<I> register(final String name, final Supplier<? extends I> sup) {
 		Objects.requireNonNull(name);
 		Objects.requireNonNull(sup);
-		final ResourceLocation key = new ResourceLocation(modid, name);
+		final Identifier key = new Identifier(modid, name);
 		RegistryObject<I> ret = RegistryObject.of(key, this.type);
 		if (entries.putIfAbsent((RegistryObject<T>) ret, () -> sup.get().setRegistryName(key)) != null) {
 			throw new IllegalArgumentException("Duplicate registration " + name);

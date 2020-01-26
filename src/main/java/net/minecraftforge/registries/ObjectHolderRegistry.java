@@ -19,7 +19,6 @@
 
 package net.minecraftforge.registries;
 
-import static net.minecraftforge.registries.ForgeRegistry.REGISTRIES;
 
 import java.lang.annotation.ElementType;
 import java.lang.reflect.Field;
@@ -44,14 +43,14 @@ import org.apache.logging.log4j.Logger;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 
-import net.minecraft.util.ResourceLocation;
+import net.minecraft.util.Identifier;
 
 /**
  * Internal registry for tracking {@link ObjectHolder} references
  */
 public class ObjectHolderRegistry {
 	private static final Logger LOGGER = LogManager.getLogger();
-	private static final Set<Consumer<Predicate<ResourceLocation>>> objectHolders = new HashSet<>();
+	private static final Set<Consumer<Predicate<Identifier>>> objectHolders = new HashSet<>();
 
 	//==============================================================
 	// Everything below is internal, do not use.
@@ -66,7 +65,7 @@ public class ObjectHolderRegistry {
 	 * and hashCode function to de-duplicate callers here.
 	 * The default @ObjectHolder implementation uses the hashCode/equals for the field the annotation is on.
 	 */
-	public static void addHandler(Consumer<Predicate<ResourceLocation>> ref) {
+	public static void addHandler(Consumer<Predicate<Identifier>> ref) {
 		objectHolders.add(ref);
 	}
 
@@ -79,7 +78,7 @@ public class ObjectHolderRegistry {
 	 *
 	 * @return true if handler was matched and removed.
 	 */
-	public static boolean removeHandler(Consumer<Predicate<ResourceLocation>> ref) {
+	public static boolean removeHandler(Consumer<Predicate<Identifier>> ref) {
 		return objectHolders.remove(ref);
 	}
 
@@ -163,7 +162,7 @@ public class ObjectHolderRegistry {
 		LOGGER.debug(REGISTRIES, "Holder lookups applied");
 	}
 
-	public static void applyObjectHolders(Predicate<ResourceLocation> filter) {
+	public static void applyObjectHolders(Predicate<Identifier> filter) {
 		objectHolders.forEach(e -> e.accept(filter));
 	}
 

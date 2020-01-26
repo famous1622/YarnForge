@@ -26,7 +26,7 @@ import net.minecraftforge.eventbus.api.Event;
 
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
-import net.minecraft.util.math.RayTraceResult;
+import net.minecraft.util.hit.HitResult;
 import net.minecraft.world.World;
 
 /**
@@ -45,11 +45,11 @@ public class FillBucketEvent extends PlayerEvent {
 	private final ItemStack current;
 	private final World world;
 	@Nullable
-	private final RayTraceResult target;
+	private final HitResult target;
 
 	private ItemStack result;
 
-	public FillBucketEvent(PlayerEntity player, @Nonnull ItemStack current, World world, @Nullable RayTraceResult target) {
+	public FillBucketEvent(PlayerEntity player, @Nonnull ItemStack current, World world, @Nullable HitResult target) {
 		super(player);
 		this.current = current;
 		this.world = world;
@@ -66,7 +66,7 @@ public class FillBucketEvent extends PlayerEvent {
 	}
 
 	@Nullable
-	public RayTraceResult getTarget() {
+	public HitResult getTarget() {
 		return this.target;
 	}
 

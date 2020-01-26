@@ -21,17 +21,17 @@ package net.minecraftforge.client.event;
 
 import net.minecraftforge.event.entity.player.PlayerEvent;
 
-import net.minecraft.client.renderer.entity.PlayerRenderer;
+import net.minecraft.client.render.entity.PlayerEntityRenderer;
 import net.minecraft.entity.player.PlayerEntity;
 
 public abstract class RenderPlayerEvent extends PlayerEvent {
-	private final PlayerRenderer renderer;
+	private final PlayerEntityRenderer renderer;
 	private final float partialRenderTick;
 	private final double x;
 	private final double y;
 	private final double z;
 
-	public RenderPlayerEvent(PlayerEntity player, PlayerRenderer renderer, float partialRenderTick, double x, double y, double z) {
+	public RenderPlayerEvent(PlayerEntity player, PlayerEntityRenderer renderer, float partialRenderTick, double x, double y, double z) {
 		super(player);
 		this.renderer = renderer;
 		this.partialRenderTick = partialRenderTick;
@@ -40,7 +40,7 @@ public abstract class RenderPlayerEvent extends PlayerEvent {
 		this.z = z;
 	}
 
-	public PlayerRenderer getRenderer() {
+	public PlayerEntityRenderer getRenderer() {
 		return renderer;
 	}
 
@@ -62,13 +62,13 @@ public abstract class RenderPlayerEvent extends PlayerEvent {
 
 	@net.minecraftforge.eventbus.api.Cancelable
 	public static class Pre extends RenderPlayerEvent {
-		public Pre(PlayerEntity player, PlayerRenderer renderer, float tick, double x, double y, double z) {
+		public Pre(PlayerEntity player, PlayerEntityRenderer renderer, float tick, double x, double y, double z) {
 			super(player, renderer, tick, x, y, z);
 		}
 	}
 
 	public static class Post extends RenderPlayerEvent {
-		public Post(PlayerEntity player, PlayerRenderer renderer, float tick, double x, double y, double z) {
+		public Post(PlayerEntity player, PlayerEntityRenderer renderer, float tick, double x, double y, double z) {
 			super(player, renderer, tick, x, y, z);
 		}
 	}

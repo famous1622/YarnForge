@@ -28,9 +28,9 @@ import net.minecraftforge.fml.server.ServerLifecycleHooks;
 import net.minecraftforge.registries.ForgeRegistries;
 
 import net.minecraft.block.BlockState;
-import net.minecraft.nbt.CompoundNBT;
-import net.minecraft.tileentity.TileEntity;
-import net.minecraft.util.ResourceLocation;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.block.entity.BlockEntity;
+import net.minecraft.util.Identifier;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.IWorld;
 import net.minecraft.world.World;
@@ -49,8 +49,8 @@ public class BlockSnapshot {
 	private final BlockPos pos;
 	private final int dimId;
 	@Nullable
-	private final CompoundNBT nbt;
-	private final ResourceLocation registryName;
+	private final CompoundTag nbt;
+	private final Identifier registryName;
 	private final int meta = 0; // TODO BlockSnapshot needs a total refactor for the absence of metadata
 	@Nullable
 	private BlockState replacedBlock;
@@ -59,19 +59,19 @@ public class BlockSnapshot {
 	private WeakReference<IWorld> world;
 
 	public BlockSnapshot(IWorld world, BlockPos pos, BlockState state) {
-		this(world, pos, state, getTileNBT(world.getTileEntity(pos)));
+		this(world, pos, state, getTileNBT(world.getBlockEntity(pos)));
 	}
 
-	public BlockSnapshot(IWorld world, BlockPos pos, BlockState state, @Nullable CompoundNBT nbt) {
+	public BlockSnapshot(IWorld world, BlockPos pos, BlockState state, @Nullable CompoundTag nbt) {
 		this.setWorld(world);
-		this.dimId = world.getDimension().getType().getId();
+		this.dimId = world.getDimension().getType().getRawId();
 		this.pos = pos.toImmutable();
 		this.setReplacedBlock(state);
 		this.registryName = state.getBlock().getRegistryName();
 		this.setFlag(3);
 		this.nbt = nbt;
 		if (DEBUG) {
-			System.out.printf("Created BlockSnapshot - [World: %s ][Location: %d,%d,%d ][Block: %s ][Meta: %d ]", world.getWorldInfo().getWorldName(), pos.getX(), pos.getY(), pos.getZ(), getRegistryName(), getMeta());
+			System.out.printf("Created BlockSnapshot - [World: %s ][Location: %d,%d,%d ][Block: %s ][Meta: %d ]", world.getLevelProperties().getLevelName(), pos.getX(), pos.getY(), pos.getZ(), getRegistryName(), getMeta());
 		}
 	}
 
@@ -83,7 +83,7 @@ public class BlockSnapshot {
 	/**
 	 * Raw constructor designed for serialization usages.
 	 */
-	public BlockSnapshot(int dimension, BlockPos pos, ResourceLocation registryName, int meta, int flag, @Nullable CompoundNBT nbt) {
+	public BlockSnapshot(int dimension, BlockPos pos, Identifier registryName, int meta, int flag, @Nullable CompoundTag nbt) {
 		this.dimId = dimension;
 		this.pos = pos.toImmutable();
 		this.setFlag(flag);
@@ -99,21 +99,21 @@ public class BlockSnapshot {
 		return new BlockSnapshot(world, pos, world.getBlockState(pos), flag);
 	}
 
-	public static BlockSnapshot readFromNBT(CompoundNBT tag) {
+	public static BlockSnapshot readFromNBT(CompoundTag tag) {
 		return new BlockSnapshot(
 				tag.getInt("dimension"),
 				new BlockPos(tag.getInt("posX"), tag.getInt("posY"), tag.getInt("posZ")),
-				new ResourceLocation(tag.getString("blockMod"), tag.getString("blockName")),
+				new Identifier(tag.getString("blockMod"), tag.getString("blockName")),
 				tag.getInt("metadata"),
 				tag.getInt("flag"),
 				tag.getBoolean("hasTE") ? tag.getCompound("tileEntity") : null);
 	}
 
 	@Nullable
-	private static CompoundNBT getTileNBT(@Nullable TileEntity te) {
+	private static CompoundTag getTileNBT(@Nullable BlockEntity te) {
 		if (te == null) return null;
-		CompoundNBT nbt = new CompoundNBT();
-		te.write(nbt);
+		CompoundTag nbt = new CompoundTag();
+		te.toTag(nbt);
 		return nbt;
 	}
 
@@ -124,7 +124,7 @@ public class BlockSnapshot {
 	public IWorld getWorld() {
 		IWorld world = this.world != null ? this.world.get() : null;
 		if (world == null) {
-			world = ServerLifecycleHooks.getCurrentServer().getWorld(DimensionType.getById(getDimId()));
+			world = ServerLifecycleHooks.getCurrentServer().getWorld(DimensionType.byRawId(getDimId()));
 			this.world = new WeakReference<IWorld>(world);
 		}
 		return world;
@@ -136,7 +136,7 @@ public class BlockSnapshot {
 
 	public BlockState getReplacedBlock() {
 		if (this.replacedBlock == null) {
-			this.replacedBlock = ForgeRegistries.BLOCKS.getValue(getRegistryName()).getStateById(getMeta());
+			this.replacedBlock = ForgeRegistries.BLOCKS.getValue(getRegistryName()).getStateFromRawId(getMeta());
 		}
 		return this.replacedBlock;
 	}
@@ -146,8 +146,8 @@ public class BlockSnapshot {
 	}
 
 	@Nullable
-	public TileEntity getTileEntity() {
-		return getNbt() != null ? TileEntity.create(getNbt()) : null;
+	public BlockEntity getTileEntity() {
+		return getNbt() != null ? BlockEntity.createFromTag(getNbt()) : null;
 	}
 
 	public boolean restore() {
@@ -178,25 +178,25 @@ public class BlockSnapshot {
 
 		world.setBlockState(pos, replaced, flags);
 		if (world instanceof World) {
-			((World) world).notifyBlockUpdate(pos, current, replaced, flags);
+			((World) world).updateListeners(pos, current, replaced, flags);
 		}
 
-		TileEntity te = null;
+		BlockEntity te = null;
 		if (getNbt() != null) {
-			te = world.getTileEntity(pos);
+			te = world.getBlockEntity(pos);
 			if (te != null) {
-				te.read(getNbt());
+				te.fromTag(getNbt());
 				te.markDirty();
 			}
 		}
 
 		if (DEBUG) {
-			System.out.printf("Restored BlockSnapshot with data [World: %s ][Location: %d,%d,%d ][State: %s ][Block: %s ][TileEntity: %s ][force: %s ][notifyNeighbors: %s]", world.getWorldInfo().getWorldName(), pos.getX(), pos.getY(), pos.getZ(), replaced, replaced.getBlock().delegate.name(), te, force, notifyNeighbors);
+			System.out.printf("Restored BlockSnapshot with data [World: %s ][Location: %d,%d,%d ][State: %s ][Block: %s ][TileEntity: %s ][force: %s ][notifyNeighbors: %s]", world.getLevelProperties().getLevelName(), pos.getX(), pos.getY(), pos.getZ(), replaced, replaced.getBlock().delegate.name(), te, force, notifyNeighbors);
 		}
 		return true;
 	}
 
-	public void writeToNBT(CompoundNBT compound) {
+	public void writeToNBT(CompoundTag compound) {
 		compound.putString("blockMod", getRegistryName().getNamespace());
 		compound.putString("blockName", getRegistryName().getPath());
 		compound.putInt("posX", getPos().getX());
@@ -258,11 +258,11 @@ public class BlockSnapshot {
 	}
 
 	@Nullable
-	public CompoundNBT getNbt() {
+	public CompoundTag getNbt() {
 		return nbt;
 	}
 
-	public ResourceLocation getRegistryName() {
+	public Identifier getRegistryName() {
 		return registryName;
 	}
 

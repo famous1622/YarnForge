@@ -1,0 +1,18 @@
+--- a/net/minecraft/client/world/ClientChunkManager.java
++++ b/net/minecraft/client/world/ClientChunkManager.java
+@@ -60,6 +60,7 @@
+          int i = this.chunks.index(x, z);
+          WorldChunk chunk = this.chunks.getChunk(i);
+          if (method_20181(chunk, x, z)) {
++            net.minecraftforge.common.MinecraftForge.EVENT_BUS.post(new net.minecraftforge.event.world.ChunkEvent.Unload(chunk));
+             this.chunks.method_20183(i, chunk, (WorldChunk)null);
+          }
+ 
+@@ -112,6 +113,7 @@
+             worldlightmanager.updateSectionStatus(ChunkSectionPos.from(p_217250_2_, j, p_217250_3_), ChunkSection.isEmpty(chunksection));
+          }
+ 
++         net.minecraftforge.common.MinecraftForge.EVENT_BUS.post(new net.minecraftforge.event.world.ChunkEvent.Load(chunk));
+          return chunk;
+       }
+    }

@@ -1,0 +1,20 @@
+--- a/net/minecraft/world/gen/feature/LargeOakTreeFeature.java
++++ b/net/minecraft/world/gen/feature/LargeOakTreeFeature.java
+@@ -156,7 +156,7 @@
+       if (i == -1) {
+          return false;
+       } else {
+-         this.setToDirt(worldIn, position.down());
++         this.setDirtAt(worldIn, position.down(), position);
+          int j = (int)((double)i * 0.618D);
+          if (j >= i) {
+             j = i - 1;
+@@ -206,7 +206,7 @@
+    }
+ 
+    private int getTreeHeight(Set<BlockPos> p_208528_1_, ModifiableTestableWorld p_208528_2_, BlockPos p_208528_3_, int p_208528_4_, MutableIntBoundingBox p_208528_5_) {
+-      if (!isDirtOrGrass(p_208528_2_, p_208528_3_.down())) {
++      if (!isSoilOrFarm(p_208528_2_, p_208528_3_.down(), getSapling())) {
+          return -1;
+       } else {
+          int i = this.makeOrCheckBranch(p_208528_1_, p_208528_2_, p_208528_3_, p_208528_3_.up(p_208528_4_ - 1), false, p_208528_5_);

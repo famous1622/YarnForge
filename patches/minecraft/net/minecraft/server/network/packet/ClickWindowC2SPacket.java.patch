@@ -1,0 +1,11 @@
+--- a/net/minecraft/server/network/packet/ClickWindowC2SPacket.java
++++ b/net/minecraft/server/network/packet/ClickWindowC2SPacket.java
+@@ -49,7 +49,7 @@
+       buf.writeByte(this.button);
+       buf.writeShort(this.transactionId);
+       buf.writeEnumConstant(this.actionType);
+-      buf.writeItemStack(this.stack);
++      buf.writeItemStack(this.stack, false); //Forge: Include full tag for C->S
+    }
+ 
+    public int getSyncId() {

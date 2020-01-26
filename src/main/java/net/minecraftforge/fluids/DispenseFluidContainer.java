@@ -25,11 +25,11 @@ import net.minecraftforge.fluids.capability.IFluidHandler;
 import net.minecraftforge.fluids.capability.IFluidHandlerItem;
 
 import net.minecraft.block.DispenserBlock;
-import net.minecraft.dispenser.DefaultDispenseItemBehavior;
-import net.minecraft.dispenser.IBlockSource;
+import net.minecraft.block.dispenser.ItemDispenserBehavior;
+import net.minecraft.util.math.BlockPointer;
 import net.minecraft.item.ItemStack;
-import net.minecraft.tileentity.DispenserTileEntity;
-import net.minecraft.util.Direction;
+import net.minecraft.block.entity.DispenserBlockEntity;
+import net.minecraft.util.math.Direction;
 import net.minecraft.util.Hand;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
@@ -37,9 +37,9 @@ import net.minecraft.world.World;
 /**
  * Fills or drains a fluid container item using a Dispenser.
  */
-public class DispenseFluidContainer extends DefaultDispenseItemBehavior {
+public class DispenseFluidContainer extends ItemDispenserBehavior {
 	private static final DispenseFluidContainer INSTANCE = new DispenseFluidContainer();
-	private final DefaultDispenseItemBehavior dispenseBehavior = new DefaultDispenseItemBehavior();
+	private final ItemDispenserBehavior dispenseBehavior = new ItemDispenserBehavior();
 
 	private DispenseFluidContainer() {
 	}
@@ -50,7 +50,7 @@ public class DispenseFluidContainer extends DefaultDispenseItemBehavior {
 
 	@Override
 	@Nonnull
-	public ItemStack dispenseStack(@Nonnull IBlockSource source, @Nonnull ItemStack stack) {
+	public ItemStack dispenseSilently(@Nonnull BlockPointer source, @Nonnull ItemStack stack) {
 		if (FluidUtil.getFluidContained(stack).isPresent()) {
 			return dumpContainer(source, stack);
 		} else {
@@ -62,7 +62,7 @@ public class DispenseFluidContainer extends DefaultDispenseItemBehavior {
 	 * Picks up fluid in front of a Dispenser and fills a container with it.
 	 */
 	@Nonnull
-	private ItemStack fillContainer(@Nonnull IBlockSource source, @Nonnull ItemStack stack) {
+	private ItemStack fillContainer(@Nonnull BlockPointer source, @Nonnull ItemStack stack) {
 		World world = source.getWorld();
 		Direction dispenserFacing = source.getBlockState().get(DispenserBlock.FACING);
 		BlockPos blockpos = source.getBlockPos().offset(dispenserFacing);
@@ -71,17 +71,17 @@ public class DispenseFluidContainer extends DefaultDispenseItemBehavior {
 		ItemStack resultStack = actionResult.getResult();
 
 		if (!actionResult.isSuccess() || resultStack.isEmpty()) {
-			return super.dispenseStack(source, stack);
+			return super.dispenseSilently(source, stack);
 		}
 
 		if (stack.getCount() == 1) {
 			return resultStack;
-		} else if (((DispenserTileEntity) source.getBlockTileEntity()).addItemStack(resultStack) < 0) {
+		} else if (((DispenserBlockEntity) source.getBlockEntity()).addToFirstFreeSlot(resultStack) < 0) {
 			this.dispenseBehavior.dispense(source, resultStack);
 		}
 
 		ItemStack stackCopy = stack.copy();
-		stackCopy.shrink(1);
+		stackCopy.decrement(1);
 		return stackCopy;
 	}
 
@@ -89,12 +89,12 @@ public class DispenseFluidContainer extends DefaultDispenseItemBehavior {
 	 * Drains a filled container and places the fluid in front of the Dispenser.
 	 */
 	@Nonnull
-	private ItemStack dumpContainer(IBlockSource source, @Nonnull ItemStack stack) {
+	private ItemStack dumpContainer(BlockPointer source, @Nonnull ItemStack stack) {
 		ItemStack singleStack = stack.copy();
 		singleStack.setCount(1);
 		IFluidHandlerItem fluidHandler = FluidUtil.getFluidHandler(singleStack).orElse(null);
 		if (fluidHandler == null) {
-			return super.dispenseStack(source, stack);
+			return super.dispenseSilently(source, stack);
 		}
 
 		FluidStack fluidStack = fluidHandler.drain(FluidAttributes.BUCKET_VOLUME, IFluidHandler.FluidAction.EXECUTE);
@@ -107,12 +107,12 @@ public class DispenseFluidContainer extends DefaultDispenseItemBehavior {
 
 			if (drainedStack.getCount() == 1) {
 				return drainedStack;
-			} else if (!drainedStack.isEmpty() && ((DispenserTileEntity) source.getBlockTileEntity()).addItemStack(drainedStack) < 0) {
+			} else if (!drainedStack.isEmpty() && ((DispenserBlockEntity) source.getBlockEntity()).addToFirstFreeSlot(drainedStack) < 0) {
 				this.dispenseBehavior.dispense(source, drainedStack);
 			}
 
 			ItemStack stackCopy = drainedStack.copy();
-			stackCopy.shrink(1);
+			stackCopy.decrement(1);
 			return stackCopy;
 		} else {
 			return this.dispenseBehavior.dispense(source, stack);

@@ -13,7 +13,7 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 
 import net.minecraft.block.Block;
-import net.minecraft.state.IProperty;
+import net.minecraft.state.property.Property;
 
 public final class MultiPartBlockStateBuilder implements IGeneratedBlockstate {
 
@@ -53,7 +53,7 @@ public final class MultiPartBlockStateBuilder implements IGeneratedBlockstate {
 	}
 
 	public class PartBuilder {
-		public final Multimap<IProperty<?>, Comparable<?>> conditions = HashMultimap.create();
+		public final Multimap<Property<?>, Comparable<?>> conditions = HashMultimap.create();
 		public BlockStateProvider.ConfiguredModelList models;
 		public boolean useOr;
 
@@ -82,7 +82,7 @@ public final class MultiPartBlockStateBuilder implements IGeneratedBlockstate {
 		 *                                  current block's state
 		 */
 		@SafeVarargs
-		public final <T extends Comparable<T>> PartBuilder condition(IProperty<T> prop, T... values) {
+		public final <T extends Comparable<T>> PartBuilder condition(Property<T> prop, T... values) {
 			Preconditions.checkNotNull(prop, "Property must not be null");
 			Preconditions.checkNotNull(values, "Value list must not be null");
 			Preconditions.checkArgument(values.length > 0, "Value list must not be empty");
@@ -100,7 +100,7 @@ public final class MultiPartBlockStateBuilder implements IGeneratedBlockstate {
 			JsonObject out = new JsonObject();
 			if (!conditions.isEmpty()) {
 				JsonObject when = new JsonObject();
-				for (Entry<IProperty<?>, Collection<Comparable<?>>> e : conditions.asMap().entrySet()) {
+				for (Entry<Property<?>, Collection<Comparable<?>>> e : conditions.asMap().entrySet()) {
 					StringBuilder activeString = new StringBuilder();
 					for (Object val : e.getValue()) {
 						if (activeString.length() > 0) {
@@ -122,7 +122,7 @@ public final class MultiPartBlockStateBuilder implements IGeneratedBlockstate {
 		}
 
 		public boolean canApplyTo(Block b) {
-			return b.getStateContainer().getProperties().containsAll(conditions.keySet());
+			return b.getStateFactory().getProperties().containsAll(conditions.keySet());
 		}
 	}
 }

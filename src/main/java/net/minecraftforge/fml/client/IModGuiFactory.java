@@ -21,7 +21,7 @@ package net.minecraftforge.fml.client;
 
 import java.util.Set;
 
-import net.minecraft.client.Minecraft;
+import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.screen.Screen;
 
 /**
@@ -35,7 +35,7 @@ public interface IModGuiFactory {
 	 *
 	 * @param minecraftInstance the instance
 	 */
-	void initialize(Minecraft minecraftInstance);
+	void initialize(MinecraftClient minecraftInstance);
 
 	/**
 	 * If this method returns false, the config button in the mod list will be disabled

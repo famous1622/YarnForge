@@ -24,23 +24,22 @@ import java.util.List;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.util.ITooltipFlag;
+import net.minecraft.client.item.TooltipContext;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
-import net.minecraft.util.text.ITextComponent;
+import net.minecraft.text.Text;
 
 public class ItemTooltipEvent extends PlayerEvent {
-	private final ITooltipFlag flags;
+	private final TooltipContext flags;
 	@Nonnull
 	private final ItemStack itemStack;
-	private final List<ITextComponent> toolTip;
+	private final List<Text> toolTip;
 
 	/**
 	 * This event is fired in {@link ItemStack#getTooltip(EntityPlayer, ITooltipFlag)}, which in turn is called from it's respective GUIContainer.
 	 * Tooltips are also gathered with a null entityPlayer during startup by {@link Minecraft#populateSearchTreeManager()}.
 	 */
-	public ItemTooltipEvent(@Nonnull ItemStack itemStack, @Nullable PlayerEntity entityPlayer, List<ITextComponent> list, ITooltipFlag flags) {
+	public ItemTooltipEvent(@Nonnull ItemStack itemStack, @Nullable PlayerEntity entityPlayer, List<Text> list, TooltipContext flags) {
 		super(entityPlayer);
 		this.itemStack = itemStack;
 		this.toolTip = list;
@@ -50,7 +49,7 @@ public class ItemTooltipEvent extends PlayerEvent {
 	/**
 	 * Use to determine if the advanced information on item tooltips is being shown, toggled by F3+H.
 	 */
-	public ITooltipFlag getFlags() {
+	public TooltipContext getFlags() {
 		return flags;
 	}
 
@@ -65,7 +64,7 @@ public class ItemTooltipEvent extends PlayerEvent {
 	/**
 	 * The {@link ItemStack} tooltip.
 	 */
-	public List<ITextComponent> getToolTip() {
+	public List<Text> getToolTip() {
 		return toolTip;
 	}
 

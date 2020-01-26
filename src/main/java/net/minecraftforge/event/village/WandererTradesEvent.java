@@ -21,12 +21,9 @@ package net.minecraftforge.event.village;
 
 import java.util.List;
 
-import net.minecraftforge.common.BasicTrade;
-import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.eventbus.api.Event;
-import net.minecraftforge.fml.event.server.FMLServerAboutToStartEvent;
 
-import net.minecraft.entity.merchant.villager.VillagerTrades.ITrade;
+import net.minecraft.village.TradeOffers.Factory;
 
 /**
  * WandererTradesEvent is fired during the {@link FMLServerAboutToStartEvent}.  It is used to gather the trade lists for the wandering merchant.
@@ -36,19 +33,19 @@ import net.minecraft.entity.merchant.villager.VillagerTrades.ITrade;
  */
 public class WandererTradesEvent extends Event {
 
-	protected List<ITrade> generic;
-	protected List<ITrade> rare;
+	protected List<Factory> generic;
+	protected List<Factory> rare;
 
-	public WandererTradesEvent(List<ITrade> generic, List<ITrade> rare) {
+	public WandererTradesEvent(List<Factory> generic, List<Factory> rare) {
 		this.generic = generic;
 		this.rare = rare;
 	}
 
-	public List<ITrade> getGenericTrades() {
+	public List<Factory> getGenericTrades() {
 		return generic;
 	}
 
-	public List<ITrade> getRareTrades() {
+	public List<Factory> getRareTrades() {
 		return rare;
 	}
 }

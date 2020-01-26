@@ -21,20 +21,20 @@ package net.minecraftforge.client.event;
 
 import net.minecraftforge.eventbus.api.Event;
 
-import net.minecraft.client.gui.screen.inventory.ContainerScreen;
+import net.minecraft.client.gui.screen.ingame.AbstractContainerScreen;
 
 /**
  * Event class for handling GuiContainer specific events.
  */
 public class GuiContainerEvent extends Event {
 
-	private final ContainerScreen guiContainer;
+	private final AbstractContainerScreen guiContainer;
 
-	public GuiContainerEvent(ContainerScreen guiContainer) {
+	public GuiContainerEvent(AbstractContainerScreen guiContainer) {
 		this.guiContainer = guiContainer;
 	}
 
-	public ContainerScreen getGuiContainer() {
+	public AbstractContainerScreen getGuiContainer() {
 		return guiContainer;
 	}
 
@@ -55,7 +55,7 @@ public class GuiContainerEvent extends Event {
 		 * @param mouseX       The current X position of the players mouse.
 		 * @param mouseY       The current Y position of the players mouse.
 		 */
-		public DrawForeground(ContainerScreen guiContainer, int mouseX, int mouseY) {
+		public DrawForeground(AbstractContainerScreen guiContainer, int mouseX, int mouseY) {
 			super(guiContainer);
 			this.mouseX = mouseX;
 			this.mouseY = mouseY;
@@ -85,7 +85,7 @@ public class GuiContainerEvent extends Event {
 		 * @param mouseX       The current X position of the players mouse.
 		 * @param mouseY       The current Y position of the players mouse.
 		 */
-		public DrawBackground(ContainerScreen guiContainer, int mouseX, int mouseY) {
+		public DrawBackground(AbstractContainerScreen guiContainer, int mouseX, int mouseY) {
 			super(guiContainer);
 			this.mouseX = mouseX;
 			this.mouseY = mouseY;

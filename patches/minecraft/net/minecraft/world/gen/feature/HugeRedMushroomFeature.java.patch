@@ -1,0 +1,29 @@
+--- a/net/minecraft/world/gen/feature/HugeRedMushroomFeature.java
++++ b/net/minecraft/world/gen/feature/HugeRedMushroomFeature.java
+@@ -44,7 +44,7 @@
+                for(int i1 = -l; i1 <= l; ++i1) {
+                   for(int j1 = -l; j1 <= l; ++j1) {
+                      BlockState blockstate = worldIn.getBlockState(blockpos$mutableblockpos.set(pos).setOffset(i1, k, j1));
+-                     if (!blockstate.isAir() && !blockstate.matches(BlockTags.LEAVES)) {
++                     if (!blockstate.isAir(worldIn, blockpos$mutableblockpos) && !blockstate.matches(BlockTags.LEAVES)) {
+                         return false;
+                      }
+                   }
+@@ -67,7 +67,7 @@
+                      boolean flag5 = flag2 || flag3;
+                      if (l1 >= i || flag4 != flag5) {
+                         blockpos$mutableblockpos.set(pos).setOffset(l2, l1, k1);
+-                        if (!worldIn.getBlockState(blockpos$mutableblockpos).isFullOpaque(worldIn, blockpos$mutableblockpos)) {
++                        if (worldIn.getBlockState(blockpos$mutableblockpos).canBeReplacedByLeaves(worldIn, blockpos$mutableblockpos)) {
+                            this.setBlockState(worldIn, blockpos$mutableblockpos, blockstate1.with(MushroomBlock.UP, Boolean.valueOf(l1 >= i - 1)).with(MushroomBlock.WEST, Boolean.valueOf(l2 < 0)).with(MushroomBlock.EAST, Boolean.valueOf(l2 > 0)).with(MushroomBlock.NORTH, Boolean.valueOf(k1 < 0)).with(MushroomBlock.SOUTH, Boolean.valueOf(k1 > 0)));
+                         }
+                      }
+@@ -79,7 +79,7 @@
+ 
+             for(int j2 = 0; j2 < i; ++j2) {
+                blockpos$mutableblockpos.set(pos).setOffset(Direction.UP, j2);
+-               if (!worldIn.getBlockState(blockpos$mutableblockpos).isFullOpaque(worldIn, blockpos$mutableblockpos)) {
++               if (worldIn.getBlockState(blockpos$mutableblockpos).canBeReplacedByLeaves(worldIn, blockpos$mutableblockpos)) {
+                   if (config.planted) {
+                      worldIn.setBlockState(blockpos$mutableblockpos, blockstate2, 3);
+                   } else {

@@ -1,0 +1,91 @@
+--- a/net/minecraft/world/loot/LootSupplier.java
++++ b/net/minecraft/world/loot/LootSupplier.java
+@@ -27,23 +27,23 @@
+ import org.apache.commons.lang3.ArrayUtils;
+ import org.apache.logging.log4j.LogManager;
+ import org.apache.logging.log4j.Logger;
++
+ import net.minecraft.world.loot.context.LootContext;
+ import net.minecraft.world.loot.context.LootContextType;
+ import net.minecraft.world.loot.context.LootContextTypes;
+ 
+-
+ public class LootSupplier {
+    private static final Logger LOGGER = LogManager.getLogger();
+    public static final LootSupplier EMPTY = new LootSupplier(LootContextTypes.EMPTY, new LootPool[0], new LootFunction[0]);
+    public static final LootContextType GENERIC = LootContextTypes.GENERIC;
+    private final LootContextType type;
+-   private final LootPool[] pools;
++   private final List<LootPool> pools;
+    private final LootFunction[] functions;
+    private final BiFunction<ItemStack, LootContext, ItemStack> combinedFunction;
+ 
+    private LootSupplier(LootContextType p_i51265_1_, LootPool[] p_i51265_2_, LootFunction[] p_i51265_3_) {
+       this.type = p_i51265_1_;
+-      this.pools = p_i51265_2_;
++      this.pools = Lists.newArrayList(p_i51265_2_);
+       this.functions = p_i51265_3_;
+       this.combinedFunction = LootFunctions.join(p_i51265_3_);
+    }
+@@ -96,8 +96,8 @@
+    }
+ 
+    public void check(LootTableReporter p_216117_1_, Function<Identifier, LootSupplier> p_216117_2_, Set<Identifier> p_216117_3_, LootContextType p_216117_4_) {
+-      for(int i = 0; i < this.pools.length; ++i) {
+-         this.pools[i].check(p_216117_1_.makeChild(".pools[" + i + "]"), p_216117_2_, p_216117_3_, p_216117_4_);
++      for(int i = 0; i < this.pools.size(); ++i) {
++         this.pools.get(i).check(p_216117_1_.makeChild(".pools[" + i + "]"), p_216117_2_, p_216117_3_, p_216117_4_);
+       }
+ 
+       for(int j = 0; j < this.functions.length; ++j) {
+@@ -208,6 +208,41 @@
+       }
+    }
+ 
++   //======================== FORGE START =============================================
++   private boolean isFrozen = false;
++   public void freeze() {
++      this.isFrozen = true;
++      this.pools.forEach(LootPool::freeze);
++   }
++   public boolean isFrozen(){ return this.isFrozen; }
++   private void checkFrozen() {
++      if (this.isFrozen())
++         throw new RuntimeException("Attempted to modify LootTable after being finalized!");
++   }
++
++   public LootPool getPool(String name) {
++      return pools.stream().filter(e -> name.equals(e.getName())).findFirst().orElse(null);
++   }
++
++   public LootPool removePool(String name) {
++      checkFrozen();
++      for (LootPool pool : this.pools) {
++         if (name.equals(pool.getName())) {
++            this.pools.remove(pool);
++            return pool;
++         }
++      }
++      return null;
++   }
++
++   public void addPool(LootPool pool) {
++      checkFrozen();
++      if (pools.stream().anyMatch(e -> e == pool || e.getName().equals(pool.getName())))
++         throw new RuntimeException("Attempted to add a duplicate pool to loot table: " + pool.getName());
++      this.pools.add(pool);
++   }
++   //======================== FORGE END ===============================================
++
+    public static class Serializer implements JsonDeserializer<LootSupplier>, JsonSerializer<LootSupplier> {
+       public LootSupplier deserialize(JsonElement p_deserialize_1_, Type p_deserialize_2_, JsonDeserializationContext p_deserialize_3_) throws JsonParseException {
+          JsonObject jsonobject = JsonHelper.asObject(p_deserialize_1_, "loot table");
+@@ -233,7 +268,7 @@
+             }
+          }
+ 
+-         if (p_serialize_1_.pools.length > 0) {
++         if (!p_serialize_1_.pools.isEmpty()) {
+             jsonobject.add("pools", p_serialize_3_.serialize(p_serialize_1_.pools));
+          }
+ 

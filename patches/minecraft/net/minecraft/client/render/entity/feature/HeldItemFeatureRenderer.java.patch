@@ -1,0 +1,16 @@
+--- a/net/minecraft/client/render/entity/feature/HeldItemFeatureRenderer.java
++++ b/net/minecraft/client/render/entity/feature/HeldItemFeatureRenderer.java
+@@ -38,11 +38,12 @@
+    private void method_4192(LivingEntity p_188358_1_, ItemStack p_188358_2_, ModelTransformation.Type p_188358_3_, Arm handSide) {
+       if (!p_188358_2_.isEmpty()) {
+          GlStateManager.pushMatrix();
+-         this.method_4193(handSide);
+          if (p_188358_1_.isInSneakingPose()) {
+             GlStateManager.translatef(0.0F, 0.2F, 0.0F);
+          }
+ 
++         // Forge: moved this call down, fixes incorrect offset while sneaking.
++         this.method_4193(handSide);
+          GlStateManager.rotatef(-90.0F, 1.0F, 0.0F, 0.0F);
+          GlStateManager.rotatef(180.0F, 0.0F, 1.0F, 0.0F);
+          boolean flag = handSide == Arm.LEFT;

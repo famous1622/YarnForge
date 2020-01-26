@@ -23,7 +23,7 @@ import java.util.Collection;
 import java.util.Collections;
 
 import net.minecraft.entity.LivingEntity;
-import net.minecraft.potion.EffectInstance;
+import net.minecraft.entity.effect.StatusEffectInstance;
 
 /**
  * Fires after Potion Color Calculation.
@@ -33,12 +33,12 @@ import net.minecraft.potion.EffectInstance;
  * This event is fired on the {@link MinecraftForge#EVENT_BUS}.
  */
 public class PotionColorCalculationEvent extends LivingEvent {
-	private final Collection<EffectInstance> effectList;
+	private final Collection<StatusEffectInstance> effectList;
 	private int color;
 	private boolean hideParticle;
 
 	public PotionColorCalculationEvent(LivingEntity entity, int color, boolean hideParticle,
-									   Collection<EffectInstance> effectList) {
+									   Collection<StatusEffectInstance> effectList) {
 		super(entity);
 		this.color = color;
 		this.effectList = effectList;
@@ -66,7 +66,7 @@ public class PotionColorCalculationEvent extends LivingEvent {
 	 *
 	 * @return effects
 	 */
-	public Collection<EffectInstance> getEffects() {
+	public Collection<StatusEffectInstance> getEffects() {
 		return Collections.unmodifiableCollection(effectList);
 	}
 }

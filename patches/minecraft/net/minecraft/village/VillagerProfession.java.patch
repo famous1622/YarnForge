@@ -1,0 +1,11 @@
+--- a/net/minecraft/village/VillagerProfession.java
++++ b/net/minecraft/village/VillagerProfession.java
+@@ -8,7 +8,7 @@
+ import net.minecraft.util.Identifier;
+ import net.minecraft.util.registry.Registry;
+ 
+-public class VillagerProfession {
++public class VillagerProfession extends net.minecraftforge.registries.ForgeRegistryEntry<VillagerProfession> {
+    public static final VillagerProfession NONE = register("none", PointOfInterestType.UNEMPLOYED);
+    public static final VillagerProfession ARMORER = register("armorer", PointOfInterestType.ARMORER);
+    public static final VillagerProfession BUTCHER = register("butcher", PointOfInterestType.BUTCHER);

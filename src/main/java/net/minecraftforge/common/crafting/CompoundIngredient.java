@@ -38,8 +38,8 @@ import it.unimi.dsi.fastutil.ints.IntComparators;
 import it.unimi.dsi.fastutil.ints.IntList;
 
 import net.minecraft.item.ItemStack;
-import net.minecraft.item.crafting.Ingredient;
-import net.minecraft.network.PacketBuffer;
+import net.minecraft.recipe.Ingredient;
+import net.minecraft.util.PacketByteBuf;
 
 public class CompoundIngredient extends Ingredient {
 	private final boolean isSimple;
@@ -55,11 +55,11 @@ public class CompoundIngredient extends Ingredient {
 
 	@Override
 	@Nonnull
-	public ItemStack[] getMatchingStacks() {
+	public ItemStack[] getStackArray() {
 		if (stacks == null) {
 			List<ItemStack> tmp = Lists.newArrayList();
 			for (Ingredient child : children) {
-				Collections.addAll(tmp, child.getMatchingStacks());
+				Collections.addAll(tmp, child.getStackArray());
 			}
 			stacks = tmp.toArray(new ItemStack[tmp.size()]);
 
@@ -69,12 +69,12 @@ public class CompoundIngredient extends Ingredient {
 
 	@Override
 	@Nonnull
-	public IntList getValidItemStacksPacked() {
+	public IntList getIds() {
 		//TODO: Add a child.isInvalid()?
 		if (this.itemIds == null) {
 			this.itemIds = new IntArrayList();
 			for (Ingredient child : children) {
-				this.itemIds.addAll(child.getValidItemStacksPacked());
+				this.itemIds.addAll(child.getIds());
 			}
 			this.itemIds.sort(IntComparators.NATURAL_COMPARATOR);
 		}
@@ -114,12 +114,12 @@ public class CompoundIngredient extends Ingredient {
 	}
 
 	@Override
-	public JsonElement serialize() {
+	public JsonElement toJson() {
 		if (this.children.size() == 1) {
-			return this.children.get(0).serialize();
+			return this.children.get(0).toJson();
 		} else {
 			JsonArray json = new JsonArray();
-			this.children.stream().forEach(e -> json.add(e.serialize()));
+			this.children.stream().forEach(e -> json.add(e.toJson()));
 			return json;
 		}
 	}
@@ -128,8 +128,8 @@ public class CompoundIngredient extends Ingredient {
 		public static final Serializer INSTANCE = new Serializer();
 
 		@Override
-		public CompoundIngredient parse(PacketBuffer buffer) {
-			return new CompoundIngredient(Stream.generate(() -> Ingredient.read(buffer)).limit(buffer.readVarInt()).collect(Collectors.toList()));
+		public CompoundIngredient parse(PacketByteBuf buffer) {
+			return new CompoundIngredient(Stream.generate(() -> Ingredient.fromPacket(buffer)).limit(buffer.readVarInt()).collect(Collectors.toList()));
 		}
 
 		@Override
@@ -138,7 +138,7 @@ public class CompoundIngredient extends Ingredient {
 		}
 
 		@Override
-		public void write(PacketBuffer buffer, CompoundIngredient ingredient) {
+		public void write(PacketByteBuf buffer, CompoundIngredient ingredient) {
 			buffer.writeVarInt(ingredient.children.size());
 			ingredient.children.forEach(c -> c.write(buffer));
 		}

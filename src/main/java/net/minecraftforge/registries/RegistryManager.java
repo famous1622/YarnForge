@@ -37,7 +37,7 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import net.minecraft.util.ResourceLocation;
+import net.minecraft.util.Identifier;
 
 public class RegistryManager {
 	public static final RegistryManager ACTIVE = new RegistryManager("ACTIVE");
@@ -45,11 +45,11 @@ public class RegistryManager {
 	public static final RegistryManager FROZEN = new RegistryManager("FROZEN");
 	private static final Logger LOGGER = LogManager.getLogger();
 	private final String name;
-	BiMap<ResourceLocation, ForgeRegistry<? extends IForgeRegistryEntry<?>>> registries = HashBiMap.create();
-	private BiMap<Class<? extends IForgeRegistryEntry<?>>, ResourceLocation> superTypes = HashBiMap.create();
-	private Set<ResourceLocation> persisted = Sets.newHashSet();
-	private Set<ResourceLocation> synced = Sets.newHashSet();
-	private Map<ResourceLocation, ResourceLocation> legacyNames = new HashMap<>();
+	BiMap<Identifier, ForgeRegistry<? extends IForgeRegistryEntry<?>>> registries = HashBiMap.create();
+	private BiMap<Class<? extends IForgeRegistryEntry<?>>, Identifier> superTypes = HashBiMap.create();
+	private Set<Identifier> persisted = Sets.newHashSet();
+	private Set<Identifier> synced = Sets.newHashSet();
+	private Map<Identifier, Identifier> legacyNames = new HashMap<>();
 
 	public RegistryManager(String name) {
 		this.name = name;
@@ -61,7 +61,7 @@ public class RegistryManager {
 				collect(Collectors.toList()) : Collections.emptyList();
 	}
 
-	public static List<ResourceLocation> getRegistryNamesForSyncToClient() {
+	public static List<Identifier> getRegistryNamesForSyncToClient() {
 		return ACTIVE.registries.keySet().stream().
 				filter(resloc -> ACTIVE.synced.contains(resloc)).
 				collect(Collectors.toList());
@@ -72,12 +72,12 @@ public class RegistryManager {
 	}
 
 	@SuppressWarnings("unchecked")
-	public <V extends IForgeRegistryEntry<V>> Class<V> getSuperType(ResourceLocation key) {
+	public <V extends IForgeRegistryEntry<V>> Class<V> getSuperType(Identifier key) {
 		return (Class<V>) superTypes.inverse().get(key);
 	}
 
 	@SuppressWarnings("unchecked")
-	public <V extends IForgeRegistryEntry<V>> ForgeRegistry<V> getRegistry(ResourceLocation key) {
+	public <V extends IForgeRegistryEntry<V>> ForgeRegistry<V> getRegistry(Identifier key) {
 		return (ForgeRegistry<V>) this.registries.get(key);
 	}
 
@@ -85,12 +85,12 @@ public class RegistryManager {
 		return getRegistry(superTypes.get(cls));
 	}
 
-	public <V extends IForgeRegistryEntry<V>> ResourceLocation getName(IForgeRegistry<V> reg) {
+	public <V extends IForgeRegistryEntry<V>> Identifier getName(IForgeRegistry<V> reg) {
 		return this.registries.inverse().get(reg);
 	}
 
-	public <V extends IForgeRegistryEntry<V>> ResourceLocation updateLegacyName(ResourceLocation legacyName) {
-		ResourceLocation originalName = legacyName;
+	public <V extends IForgeRegistryEntry<V>> Identifier updateLegacyName(Identifier legacyName) {
+		Identifier originalName = legacyName;
 		while (getRegistry(legacyName) == null) {
 			legacyName = legacyNames.get(legacyName);
 			if (legacyName == null) {
@@ -100,7 +100,7 @@ public class RegistryManager {
 		return legacyName;
 	}
 
-	public <V extends IForgeRegistryEntry<V>> ForgeRegistry<V> getRegistry(ResourceLocation key, RegistryManager other) {
+	public <V extends IForgeRegistryEntry<V>> ForgeRegistry<V> getRegistry(Identifier key, RegistryManager other) {
 		if (!this.registries.containsKey(key)) {
 			ForgeRegistry<V> ot = other.getRegistry(key);
 			if (ot == null) {
@@ -121,7 +121,7 @@ public class RegistryManager {
 		return getRegistry(key);
 	}
 
-	<V extends IForgeRegistryEntry<V>> ForgeRegistry<V> createRegistry(ResourceLocation name, RegistryBuilder<V> builder) {
+	<V extends IForgeRegistryEntry<V>> ForgeRegistry<V> createRegistry(Identifier name, RegistryBuilder<V> builder) {
 		Set<Class<?>> parents = Sets.newHashSet();
 		findSuperTypes(builder.getType(), parents);
 		SetView<Class<?>> overlappedTypes = Sets.intersection(parents, superTypes.keySet());
@@ -140,13 +140,13 @@ public class RegistryManager {
 		if (builder.getSync()) {
 			this.synced.add(name);
 		}
-		for (ResourceLocation legacyName : builder.getLegacyNames()) {
+		for (Identifier legacyName : builder.getLegacyNames()) {
 			addLegacyName(legacyName, name);
 		}
 		return getRegistry(name);
 	}
 
-	private void addLegacyName(ResourceLocation legacyName, ResourceLocation name) {
+	private void addLegacyName(Identifier legacyName, Identifier name) {
 		if (this.legacyNames.containsKey(legacyName)) {
 			throw new IllegalArgumentException("Legacy name conflict for registry " + name + ", upgrade path must be linear: " + legacyName);
 		}
@@ -164,9 +164,9 @@ public class RegistryManager {
 		findSuperTypes(type.getSuperclass(), types);
 	}
 
-	public Map<ResourceLocation, Snapshot> takeSnapshot(boolean savingToDisc) {
-		Map<ResourceLocation, Snapshot> ret = Maps.newHashMap();
-		Set<ResourceLocation> keys = savingToDisc ? this.persisted : this.synced;
+	public Map<Identifier, Snapshot> takeSnapshot(boolean savingToDisc) {
+		Map<Identifier, Snapshot> ret = Maps.newHashMap();
+		Set<Identifier> keys = savingToDisc ? this.persisted : this.synced;
 		keys.forEach(name -> ret.put(name, getRegistry(name).makeSnapshot()));
 		return ret;
 	}

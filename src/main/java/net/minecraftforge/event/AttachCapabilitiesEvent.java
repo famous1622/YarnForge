@@ -28,7 +28,7 @@ import com.google.common.collect.Maps;
 import net.minecraftforge.common.capabilities.ICapabilityProvider;
 import net.minecraftforge.eventbus.api.GenericEvent;
 
-import net.minecraft.util.ResourceLocation;
+import net.minecraft.util.Identifier;
 
 /**
  * Fired whenever an object with Capabilities support {currently TileEntity/Item/Entity)
@@ -39,8 +39,8 @@ import net.minecraft.util.ResourceLocation;
  */
 public class AttachCapabilitiesEvent<T> extends GenericEvent<T> {
 	private final T obj;
-	private final Map<ResourceLocation, ICapabilityProvider> caps = Maps.newLinkedHashMap();
-	private final Map<ResourceLocation, ICapabilityProvider> view = Collections.unmodifiableMap(caps);
+	private final Map<Identifier, ICapabilityProvider> caps = Maps.newLinkedHashMap();
+	private final Map<Identifier, ICapabilityProvider> view = Collections.unmodifiableMap(caps);
 	private final List<Runnable> listeners = Lists.newArrayList();
 	private final List<Runnable> listenersView = Collections.unmodifiableList(listeners);
 
@@ -64,7 +64,7 @@ public class AttachCapabilitiesEvent<T> extends GenericEvent<T> {
 	 * @param key The name of owner of this capability provider.
 	 * @param cap The capability provider
 	 */
-	public void addCapability(ResourceLocation key, ICapabilityProvider cap) {
+	public void addCapability(Identifier key, ICapabilityProvider cap) {
 		if (caps.containsKey(key)) {
 			throw new IllegalStateException("Duplicate Capability Key: " + key + " " + cap);
 		}
@@ -74,7 +74,7 @@ public class AttachCapabilitiesEvent<T> extends GenericEvent<T> {
 	/**
 	 * A unmodifiable view of the capabilities that will be attached to this object.
 	 */
-	public Map<ResourceLocation, ICapabilityProvider> getCapabilities() {
+	public Map<Identifier, ICapabilityProvider> getCapabilities() {
 		return view;
 	}
 

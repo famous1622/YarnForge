@@ -1,0 +1,25 @@
+--- a/net/minecraft/client/render/model/json/ModelVariantMap.java
++++ b/net/minecraft/client/render/model/json/ModelVariantMap.java
+@@ -23,13 +23,21 @@
+ import net.minecraftforge.api.distmarker.Dist;
+ import net.minecraftforge.api.distmarker.OnlyIn;
+ 
++import net.minecraft.client.render.model.ModelLoader;
++import net.minecraft.client.render.model.UnbakedModel;
++
+ @OnlyIn(Dist.CLIENT)
+ public class ModelVariantMap {
+    private final Map<String, WeightedUnbakedModel> variantMap = Maps.newLinkedHashMap();
+    private MultipartUnbakedModel multipartModel;
+ 
++   @Deprecated
+    public static ModelVariantMap deserialize(ModelVariantMap.DeserializationContext containerHolderIn, Reader readerIn) {
+-      return JsonHelper.deserialize(containerHolderIn.gson, readerIn, ModelVariantMap.class);
++      return fromJson(containerHolderIn, readerIn, null, null, null);
++   }
++
++   public static ModelVariantMap fromJson(ModelVariantMap.DeserializationContext containerHolderIn, Reader readerIn, @Nullable net.minecraft.util.Identifier location, @Nullable ModelLoader bakery, @Nullable java.util.function.BiConsumer<net.minecraft.util.Identifier, UnbakedModel> modelConsumer) {
++      return net.minecraftforge.client.model.BlockStateLoader.load(readerIn, location, containerHolderIn.gson, bakery, modelConsumer);
+    }
+ 
+    public ModelVariantMap(Map<String, WeightedUnbakedModel> variants, MultipartUnbakedModel multipartIn) {

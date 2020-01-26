@@ -32,18 +32,18 @@ import javax.annotation.Nullable;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import net.minecraft.util.ResourceLocation;
-import net.minecraft.util.ResourceLocationException;
+import net.minecraft.util.Identifier;
+import net.minecraft.util.InvalidIdentifierException;
 
 @SuppressWarnings("rawtypes")
-public class ObjectHolderRef implements Consumer<Predicate<ResourceLocation>> {
+public class ObjectHolderRef implements Consumer<Predicate<Identifier>> {
 	private static final Logger LOGGER = LogManager.getLogger();
 	private Field field;
-	private ResourceLocation injectedObject;
+	private Identifier injectedObject;
 	private boolean isValid;
 	private ForgeRegistry<?> registry;
 
-	public ObjectHolderRef(Field field, ResourceLocation injectedObject) {
+	public ObjectHolderRef(Field field, Identifier injectedObject) {
 		this(field, injectedObject.toString(), false);
 	}
 
@@ -69,8 +69,8 @@ public class ObjectHolderRef implements Consumer<Predicate<ResourceLocation>> {
 			}
 		} else {
 			try {
-				this.injectedObject = new ResourceLocation(injectedObject);
-			} catch (ResourceLocationException e) {
+				this.injectedObject = new Identifier(injectedObject);
+			} catch (InvalidIdentifierException e) {
 				throw new IllegalArgumentException("Invalid @ObjectHolder annotation on \"" + field.toString() + "\"", e);
 			}
 		}
@@ -112,7 +112,7 @@ public class ObjectHolderRef implements Consumer<Predicate<ResourceLocation>> {
 	}
 
 	@Override
-	public void accept(Predicate<ResourceLocation> filter) {
+	public void accept(Predicate<Identifier> filter) {
 		if (registry == null || !filter.test(registry.getRegistryName())) {
 			return;
 		}

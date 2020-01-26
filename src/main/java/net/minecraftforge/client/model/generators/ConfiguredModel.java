@@ -12,9 +12,8 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ObjectArrays;
 import com.google.gson.JsonObject;
 import net.minecraftforge.client.model.generators.MultiPartBlockStateBuilder.PartBuilder;
-import net.minecraftforge.client.model.generators.VariantBlockStateBuilder.PartialBlockstate;
 
-import net.minecraft.client.renderer.model.ModelRotation;
+import net.minecraft.client.render.model.ModelRotation;
 
 /**
  * Represents a model with blockstate configurations, e.g. rotation, uvlock, and
@@ -114,7 +113,7 @@ public final class ConfiguredModel {
 	}
 
 	static void checkRotation(int rotationX, int rotationY) {
-		Preconditions.checkArgument(ModelRotation.getModelRotation(rotationX, rotationY) != null, "Invalid model rotation x=%d, y=%d", rotationX, rotationY);
+		Preconditions.checkArgument(ModelRotation.get(rotationX, rotationY) != null, "Invalid model rotation x=%d, y=%d", rotationX, rotationY);
 	}
 
 	static void checkWeight(int weight) {

@@ -41,22 +41,22 @@ import net.minecraftforge.common.model.TRSRTransformation;
 import org.apache.commons.lang3.tuple.Pair;
 
 import net.minecraft.block.BlockState;
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.model.BakedQuad;
-import net.minecraft.client.renderer.model.IBakedModel;
-import net.minecraft.client.renderer.model.IUnbakedModel;
-import net.minecraft.client.renderer.model.ItemCameraTransforms;
-import net.minecraft.client.renderer.model.ItemOverrideList;
-import net.minecraft.client.renderer.model.ModelBakery;
-import net.minecraft.client.renderer.texture.ISprite;
-import net.minecraft.client.renderer.texture.TextureAtlasSprite;
-import net.minecraft.client.renderer.vertex.VertexFormat;
-import net.minecraft.util.Direction;
-import net.minecraft.util.ResourceLocation;
+import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.render.model.BakedQuad;
+import net.minecraft.client.render.model.BakedModel;
+import net.minecraft.client.render.model.UnbakedModel;
+import net.minecraft.client.render.model.json.ModelTransformation;
+import net.minecraft.client.render.model.json.ModelItemPropertyOverrideList;
+import net.minecraft.client.render.model.ModelLoader;
+import net.minecraft.client.render.model.ModelBakeSettings;
+import net.minecraft.client.texture.Sprite;
+import net.minecraft.client.render.VertexFormat;
+import net.minecraft.util.math.Direction;
+import net.minecraft.util.Identifier;
 
-final class FancyMissingModel implements IUnbakedModel {
-	private static final ResourceLocation font = new ResourceLocation("minecraft", "textures/font/ascii.png");
-	private static final ResourceLocation font2 = new ResourceLocation("minecraft", "font/ascii");
+final class FancyMissingModel implements UnbakedModel {
+	private static final Identifier font = new Identifier("minecraft", "textures/font/ascii.png");
+	private static final Identifier font2 = new Identifier("minecraft", "font/ascii");
 	private static final TRSRTransformation smallTransformation = TRSRTransformation.blockCenterToCorner(new TRSRTransformation(null, null, new Vector3f(.25f, .25f, .25f), null));
 	private static final LoadingCache<VertexFormat, SimpleModelFontRenderer> fontCache = CacheBuilder.newBuilder().maximumSize(3).build(new CacheLoader<VertexFormat, SimpleModelFontRenderer>() {
 		@Override
@@ -67,9 +67,9 @@ final class FancyMissingModel implements IUnbakedModel {
 			m.m33 = 1;
 			m.setTranslation(new Vector3f(1, 1 + 1f / 0x100, 0));
 			return new SimpleModelFontRenderer(
-					Minecraft.getInstance().gameSettings,
+					MinecraftClient.getInstance().options,
 					font,
-					Minecraft.getInstance().getTextureManager(),
+					MinecraftClient.getInstance().getTextureManager(),
 					false,
 					m,
 					format
@@ -84,43 +84,43 @@ final class FancyMissingModel implements IUnbakedModel {
 		}
 	});
 
-	private final IUnbakedModel missingModel;
+	private final UnbakedModel missingModel;
 	private final String message;
 
-	public FancyMissingModel(IUnbakedModel missingModel, String message) {
+	public FancyMissingModel(UnbakedModel missingModel, String message) {
 		this.missingModel = missingModel;
 		this.message = message;
 	}
 
 	@Override
-	public Collection<ResourceLocation> getTextures(Function<ResourceLocation, IUnbakedModel> modelGetter, Set<String> missingTextureErrors) {
+	public Collection<Identifier> getTextureDependencies(Function<Identifier, UnbakedModel> modelGetter, Set<String> missingTextureErrors) {
 		return ImmutableList.of(font2);
 	}
 
 	@Override
-	public Collection<ResourceLocation> getDependencies() {
+	public Collection<Identifier> getModelDependencies() {
 		return Collections.emptyList();
 	}
 
 	@Nullable
 	@Override
-	public IBakedModel bake(ModelBakery bakery, Function<ResourceLocation, TextureAtlasSprite> spriteGetter, ISprite sprite, VertexFormat format) {
-		IBakedModel bigMissing = missingModel.bake(bakery, spriteGetter, sprite, format);
+	public BakedModel bake(ModelLoader bakery, Function<Identifier, Sprite> spriteGetter, ModelBakeSettings sprite, VertexFormat format) {
+		BakedModel bigMissing = missingModel.bake(bakery, spriteGetter, sprite, format);
 		ModelStateComposition smallState = new ModelStateComposition(sprite.getState(), smallTransformation);
-		IBakedModel smallMissing = missingModel.bake(bakery, spriteGetter, smallState, format);
+		BakedModel smallMissing = missingModel.bake(bakery, spriteGetter, smallState, format);
 		return new BakedModel(bigMissing, smallMissing, fontCache.getUnchecked(format), message, spriteGetter.apply(font2));
 	}
 
-	static final class BakedModel implements IBakedModel {
+	static final class BakedModel implements BakedModel {
 		private final SimpleModelFontRenderer fontRenderer;
 		private final String message;
-		private final TextureAtlasSprite fontTexture;
-		private final IBakedModel missingModel;
-		private final IBakedModel otherModel;
+		private final Sprite fontTexture;
+		private final BakedModel missingModel;
+		private final BakedModel otherModel;
 		private final boolean big;
 		private ImmutableList<BakedQuad> quads;
 
-		public BakedModel(IBakedModel bigMissing, IBakedModel smallMissing, SimpleModelFontRenderer fontRenderer, String message, TextureAtlasSprite fontTexture) {
+		public BakedModel(BakedModel bigMissing, BakedModel smallMissing, SimpleModelFontRenderer fontRenderer, String message, Sprite fontTexture) {
 			this.missingModel = bigMissing;
 			otherModel = new BakedModel(smallMissing, fontRenderer, message, fontTexture, this);
 			this.big = true;
@@ -129,7 +129,7 @@ final class FancyMissingModel implements IUnbakedModel {
 			this.fontTexture = fontTexture;
 		}
 
-		public BakedModel(IBakedModel smallMissing, SimpleModelFontRenderer fontRenderer, String message, TextureAtlasSprite fontTexture, BakedModel big) {
+		public BakedModel(BakedModel smallMissing, SimpleModelFontRenderer fontRenderer, String message, Sprite fontTexture, BakedModel big) {
 			this.missingModel = smallMissing;
 			otherModel = big;
 			this.big = false;
@@ -147,10 +147,10 @@ final class FancyMissingModel implements IUnbakedModel {
 					String[] lines = message.split("\\r?\\n");
 					List<String> splitLines = Lists.newArrayList();
 					for (int y = 0; y < lines.length; y++) {
-						splitLines.addAll(fontRenderer.listFormattedStringToWidth(lines[y], 0x80));
+						splitLines.addAll(fontRenderer.wrapStringToWidthAsList(lines[y], 0x80));
 					}
 					for (int y = 0; y < splitLines.size(); y++) {
-						fontRenderer.drawString(splitLines.get(y), 0, ((y - splitLines.size() / 2f) * fontRenderer.FONT_HEIGHT) + 0x40, 0xFF00FFFF);
+						fontRenderer.draw(splitLines.get(y), 0, ((y - splitLines.size() / 2f) * fontRenderer.fontHeight) + 0x40, 0xFF00FFFF);
 					}
 					ImmutableList.Builder<BakedQuad> builder = ImmutableList.builder();
 					builder.addAll(missingModel.getQuads(state, side, rand));
@@ -163,32 +163,32 @@ final class FancyMissingModel implements IUnbakedModel {
 		}
 
 		@Override
-		public boolean isAmbientOcclusion() {
+		public boolean useAmbientOcclusion() {
 			return true;
 		}
 
 		@Override
-		public boolean isGui3d() {
+		public boolean hasDepthInGui() {
 			return false;
 		}
 
 		@Override
-		public boolean isBuiltInRenderer() {
+		public boolean isBuiltin() {
 			return false;
 		}
 
 		@Override
-		public TextureAtlasSprite getParticleTexture() {
+		public Sprite getSprite() {
 			return fontTexture;
 		}
 
 		@Override
-		public ItemOverrideList getOverrides() {
-			return ItemOverrideList.EMPTY;
+		public ModelItemPropertyOverrideList getItemPropertyOverrides() {
+			return ModelItemPropertyOverrideList.EMPTY;
 		}
 
 		@Override
-		public Pair<? extends IBakedModel, Matrix4f> handlePerspective(ItemCameraTransforms.TransformType cameraTransformType) {
+		public Pair<? extends BakedModel, Matrix4f> handlePerspective(ModelTransformation.Type cameraTransformType) {
 			TRSRTransformation transform = TRSRTransformation.identity();
 			boolean big = true;
 			switch (cameraTransformType) {

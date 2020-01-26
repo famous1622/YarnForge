@@ -19,13 +19,10 @@
 
 package net.minecraftforge.event.entity.living;
 
-import net.minecraftforge.common.ForgeHooks;
-import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.eventbus.api.Cancelable;
 
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.LivingEntity;
-import net.minecraft.util.DamageSource;
 
 /**
  * LivingKnockBackEvent is fired when a living entity is about to be knocked back. <br>

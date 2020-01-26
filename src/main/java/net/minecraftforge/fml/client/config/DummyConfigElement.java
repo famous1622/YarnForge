@@ -26,7 +26,7 @@ import java.util.regex.Pattern;
 
 import javax.annotation.Nullable;
 
-import net.minecraft.client.resources.I18n;
+import net.minecraft.client.resource.language.I18n;
 
 
 /**
@@ -150,7 +150,7 @@ public class DummyConfigElement implements IConfigElement {
 
 	@Override
 	public String getComment() {
-		return I18n.format(langKey + ".tooltip");
+		return I18n.translate(langKey + ".tooltip");
 	}
 
 	@Override

@@ -1,11 +1,21 @@
 --- a/net/minecraft/entity/projectile/ShulkerBulletEntity.java
 +++ b/net/minecraft/entity/projectile/ShulkerBulletEntity.java
-@@ -251,7 +251,7 @@
+@@ -31,8 +31,8 @@
+ import net.minecraft.server.world.ServerWorld;
+ import net.minecraftforge.api.distmarker.Dist;
+ import net.minecraftforge.api.distmarker.OnlyIn;
+-import net.minecraft.entity.ProjectileUtil;
+ 
++import net.minecraft.entity.ProjectileUtil;
+ 
+ public class ShulkerBulletEntity extends Entity {
+    private LivingEntity owner;
+@@ -253,7 +253,7 @@
              }
  
-             RayTraceResult raytraceresult = ProjectileHelper.func_221266_a(this, true, false, this.field_184570_a, RayTraceContext.BlockMode.COLLIDER);
--            if (raytraceresult.func_216346_c() != RayTraceResult.Type.MISS) {
-+            if (raytraceresult.func_216346_c() != RayTraceResult.Type.MISS && !net.minecraftforge.event.ForgeEventFactory.onProjectileImpact(this, raytraceresult)) {
-                this.func_184567_a(raytraceresult);
+             HitResult raytraceresult = ProjectileUtil.getCollision(this, true, false, this.owner, RayTraceContext.ShapeType.COLLIDER);
+-            if (raytraceresult.getType() != HitResult.Type.MISS) {
++            if (raytraceresult.getType() != HitResult.Type.MISS && !net.minecraftforge.event.ForgeEventFactory.onProjectileImpact(this, raytraceresult)) {
+                this.onHit(raytraceresult);
              }
           }

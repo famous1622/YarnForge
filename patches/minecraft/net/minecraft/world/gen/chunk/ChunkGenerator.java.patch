@@ -1,0 +1,24 @@
+--- a/net/minecraft/world/gen/chunk/ChunkGenerator.java
++++ b/net/minecraft/world/gen/chunk/ChunkGenerator.java
+@@ -27,11 +27,11 @@
+ import net.minecraft.structure.StructureStart;
+ import net.minecraft.structure.StructureManager;
+ import net.minecraft.server.world.ServerWorld;
++
+ import net.minecraft.world.ChunkRegion;
+ import net.minecraft.world.Heightmap;
+ import net.minecraft.world.gen.GenerationStep;
+ 
+-
+ public abstract class ChunkGenerator<C extends ChunkGeneratorConfig> {
+    protected final IWorld world;
+    protected final long seed;
+@@ -199,7 +199,7 @@
+    public abstract void populateNoise(IWorld worldIn, Chunk chunkIn);
+ 
+    public int getSeaLevel() {
+-      return 63;
++      return world.getDimension().getSeaLevel();
+    }
+ 
+    public abstract int getHeightOnGround(int p_222529_1_, int p_222529_2_, Heightmap.Type p_222529_3_);

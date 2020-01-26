@@ -45,27 +45,27 @@ import net.minecraft.block.BlockState;
 import net.minecraft.block.DoorBlock;
 import net.minecraft.block.FenceBlock;
 import net.minecraft.block.FenceGateBlock;
-import net.minecraft.block.FourWayBlock;
+import net.minecraft.block.HorizontalConnectedBlock;
 import net.minecraft.block.LogBlock;
 import net.minecraft.block.PaneBlock;
-import net.minecraft.block.RotatedPillarBlock;
-import net.minecraft.block.SixWayBlock;
+import net.minecraft.block.PillarBlock;
+import net.minecraft.block.ConnectedPlantBlock;
 import net.minecraft.block.SlabBlock;
 import net.minecraft.block.StairsBlock;
-import net.minecraft.block.TrapDoorBlock;
+import net.minecraft.block.TrapdoorBlock;
 import net.minecraft.block.WallBlock;
 import net.minecraft.data.DataGenerator;
-import net.minecraft.data.IDataProvider;
-import net.minecraft.state.properties.AttachFace;
-import net.minecraft.state.properties.BlockStateProperties;
-import net.minecraft.state.properties.DoorHingeSide;
-import net.minecraft.state.properties.DoubleBlockHalf;
-import net.minecraft.state.properties.Half;
-import net.minecraft.state.properties.SlabType;
-import net.minecraft.state.properties.StairsShape;
-import net.minecraft.util.Direction;
-import net.minecraft.util.Direction.Axis;
-import net.minecraft.util.ResourceLocation;
+import net.minecraft.data.DataProvider;
+import net.minecraft.block.enums.WallMountLocation;
+import net.minecraft.state.property.Properties;
+import net.minecraft.block.enums.DoorHinge;
+import net.minecraft.block.enums.DoubleBlockHalf;
+import net.minecraft.block.enums.BlockHalf;
+import net.minecraft.block.enums.SlabType;
+import net.minecraft.block.enums.StairShape;
+import net.minecraft.util.math.Direction;
+import net.minecraft.util.math.Direction.Axis;
+import net.minecraft.util.Identifier;
 
 /**
  * Data provider for blockstate files. Extends {@link BlockModelProvider} so that
@@ -122,13 +122,13 @@ public abstract class BlockStateProvider extends BlockModelProvider {
 		return block.getRegistryName().getPath();
 	}
 
-	protected ResourceLocation blockTexture(Block block) {
-		ResourceLocation name = block.getRegistryName();
-		return new ResourceLocation(name.getNamespace(), BLOCK_FOLDER + "/" + name.getPath());
+	protected Identifier blockTexture(Block block) {
+		Identifier name = block.getRegistryName();
+		return new Identifier(name.getNamespace(), BLOCK_FOLDER + "/" + name.getPath());
 	}
 
-	private ResourceLocation extend(ResourceLocation rl, String suffix) {
-		return new ResourceLocation(rl.getNamespace(), rl.getPath() + suffix);
+	private Identifier extend(Identifier rl, String suffix) {
+		return new Identifier(rl.getNamespace(), rl.getPath() + suffix);
 	}
 
 	protected ModelFile cubeAll(Block block) {
@@ -152,7 +152,7 @@ public abstract class BlockStateProvider extends BlockModelProvider {
 				.partialState().setModels(models);
 	}
 
-	protected void axisBlock(RotatedPillarBlock block) {
+	protected void axisBlock(PillarBlock block) {
 		axisBlock(block, blockTexture(block));
 	}
 
@@ -160,25 +160,25 @@ public abstract class BlockStateProvider extends BlockModelProvider {
 		axisBlock(block, blockTexture(block), extend(blockTexture(block), "_top"));
 	}
 
-	protected void axisBlock(RotatedPillarBlock block, ResourceLocation baseName) {
+	protected void axisBlock(PillarBlock block, Identifier baseName) {
 		axisBlock(block, extend(baseName, "_side"), extend(baseName, "_end"));
 	}
 
-	protected void axisBlock(RotatedPillarBlock block, ResourceLocation side, ResourceLocation end) {
+	protected void axisBlock(PillarBlock block, Identifier side, Identifier end) {
 		axisBlock(block, cubeColumn(name(block), side, end));
 	}
 
-	protected void axisBlock(RotatedPillarBlock block, ModelFile model) {
+	protected void axisBlock(PillarBlock block, ModelFile model) {
 		getVariantBuilder(block)
-				.partialState().with(RotatedPillarBlock.AXIS, Axis.Y)
+				.partialState().with(PillarBlock.AXIS, Axis.Y)
 				.modelForState().modelFile(model).addModel()
-				.partialState().with(RotatedPillarBlock.AXIS, Axis.Z)
+				.partialState().with(PillarBlock.AXIS, Axis.Z)
 				.modelForState().modelFile(model).rotationX(90).addModel()
-				.partialState().with(RotatedPillarBlock.AXIS, Axis.X)
+				.partialState().with(PillarBlock.AXIS, Axis.X)
 				.modelForState().modelFile(model).rotationX(90).rotationY(90).addModel();
 	}
 
-	protected void horizontalBlock(Block block, ResourceLocation side, ResourceLocation front, ResourceLocation top) {
+	protected void horizontalBlock(Block block, Identifier side, Identifier front, Identifier top) {
 		horizontalBlock(block, orientable(name(block), side, front, top));
 	}
 
@@ -198,7 +198,7 @@ public abstract class BlockStateProvider extends BlockModelProvider {
 		getVariantBuilder(block)
 				.forAllStates(state -> ConfiguredModel.builder()
 						.modelFile(modelFunc.apply(state))
-						.rotationY(((int) state.get(BlockStateProperties.HORIZONTAL_FACING).getHorizontalAngle() + angleOffset) % 360)
+						.rotationY(((int) state.get(Properties.HORIZONTAL_FACING).asRotation() + angleOffset) % 360)
 						.build()
 				);
 	}
@@ -219,8 +219,8 @@ public abstract class BlockStateProvider extends BlockModelProvider {
 		getVariantBuilder(block)
 				.forAllStates(state -> ConfiguredModel.builder()
 						.modelFile(modelFunc.apply(state))
-						.rotationX(state.get(BlockStateProperties.FACE).ordinal() * 90)
-						.rotationY((((int) state.get(BlockStateProperties.HORIZONTAL_FACING).getHorizontalAngle() + angleOffset) + (state.get(BlockStateProperties.FACE) == AttachFace.CEILING ? 180 : 0)) % 360)
+						.rotationX(state.get(Properties.WALL_MOUNT_LOCATION).ordinal() * 90)
+						.rotationY((((int) state.get(Properties.HORIZONTAL_FACING).asRotation() + angleOffset) + (state.get(Properties.WALL_MOUNT_LOCATION) == WallMountLocation.CEILING ? 180 : 0)) % 360)
 						.build()
 				);
 	}
@@ -240,32 +240,32 @@ public abstract class BlockStateProvider extends BlockModelProvider {
 	protected void directionalBlock(Block block, Function<BlockState, ModelFile> modelFunc, int angleOffset) {
 		getVariantBuilder(block)
 				.forAllStates(state -> {
-					Direction dir = state.get(BlockStateProperties.FACING);
+					Direction dir = state.get(Properties.FACING);
 					return ConfiguredModel.builder()
 							.modelFile(modelFunc.apply(state))
 							.rotationX(dir == Direction.DOWN ? 180 : dir.getAxis().isHorizontal() ? 90 : 0)
-							.rotationY(dir.getAxis().isVertical() ? 0 : (((int) dir.getHorizontalAngle()) + angleOffset) % 360)
+							.rotationY(dir.getAxis().isVertical() ? 0 : (((int) dir.asRotation()) + angleOffset) % 360)
 							.build();
 				});
 	}
 
-	protected void stairsBlock(StairsBlock block, ResourceLocation texture) {
+	protected void stairsBlock(StairsBlock block, Identifier texture) {
 		stairsBlock(block, texture, texture, texture);
 	}
 
-	protected void stairsBlock(StairsBlock block, String name, ResourceLocation texture) {
+	protected void stairsBlock(StairsBlock block, String name, Identifier texture) {
 		stairsBlock(block, name, texture, texture, texture);
 	}
 
-	protected void stairsBlock(StairsBlock block, ResourceLocation side, ResourceLocation bottom, ResourceLocation top) {
+	protected void stairsBlock(StairsBlock block, Identifier side, Identifier bottom, Identifier top) {
 		stairsBlockInternal(block, block.getRegistryName().toString(), side, bottom, top);
 	}
 
-	protected void stairsBlock(StairsBlock block, String name, ResourceLocation side, ResourceLocation bottom, ResourceLocation top) {
+	protected void stairsBlock(StairsBlock block, String name, Identifier side, Identifier bottom, Identifier top) {
 		stairsBlockInternal(block, name + "_stairs", side, bottom, top);
 	}
 
-	private void stairsBlockInternal(StairsBlock block, String baseName, ResourceLocation side, ResourceLocation bottom, ResourceLocation top) {
+	private void stairsBlockInternal(StairsBlock block, String baseName, Identifier side, Identifier bottom, Identifier top) {
 		ModelFile stairs = stairs(baseName, side, bottom, top);
 		ModelFile stairsInner = stairsInner(baseName + "_inner", side, bottom, top);
 		ModelFile stairsOuter = stairsOuter(baseName + "_outer", side, bottom, top);
@@ -276,31 +276,31 @@ public abstract class BlockStateProvider extends BlockModelProvider {
 		getVariantBuilder(block)
 				.forAllStatesExcept(state -> {
 					Direction facing = state.get(StairsBlock.FACING);
-					Half half = state.get(StairsBlock.HALF);
-					StairsShape shape = state.get(StairsBlock.SHAPE);
-					int yRot = (int) facing.rotateY().getHorizontalAngle(); // Stairs model is rotated 90 degrees clockwise for some reason
-					if (shape == StairsShape.INNER_LEFT || shape == StairsShape.OUTER_LEFT) {
+					BlockHalf half = state.get(StairsBlock.HALF);
+					StairShape shape = state.get(StairsBlock.SHAPE);
+					int yRot = (int) facing.rotateYClockwise().asRotation(); // Stairs model is rotated 90 degrees clockwise for some reason
+					if (shape == StairShape.INNER_LEFT || shape == StairShape.OUTER_LEFT) {
 						yRot += 270; // Left facing stairs are rotated 90 degrees clockwise
 					}
-					if (shape != StairsShape.STRAIGHT && half == Half.TOP) {
+					if (shape != StairShape.STRAIGHT && half == BlockHalf.TOP) {
 						yRot += 90; // Top stairs are rotated 90 degrees clockwise
 					}
 					yRot %= 360;
-					boolean uvlock = yRot != 0 || half == Half.TOP; // Don't set uvlock for states that have no rotation
+					boolean uvlock = yRot != 0 || half == BlockHalf.TOP; // Don't set uvlock for states that have no rotation
 					return ConfiguredModel.builder()
-							.modelFile(shape == StairsShape.STRAIGHT ? stairs : shape == StairsShape.INNER_LEFT || shape == StairsShape.INNER_RIGHT ? stairsInner : stairsOuter)
-							.rotationX(half == Half.BOTTOM ? 0 : 180)
+							.modelFile(shape == StairShape.STRAIGHT ? stairs : shape == StairShape.INNER_LEFT || shape == StairShape.INNER_RIGHT ? stairsInner : stairsOuter)
+							.rotationX(half == BlockHalf.BOTTOM ? 0 : 180)
 							.rotationY(yRot)
 							.uvLock(uvlock)
 							.build();
 				}, StairsBlock.WATERLOGGED);
 	}
 
-	protected void slabBlock(SlabBlock block, ResourceLocation doubleslab, ResourceLocation texture) {
+	protected void slabBlock(SlabBlock block, Identifier doubleslab, Identifier texture) {
 		slabBlock(block, doubleslab, texture, texture, texture);
 	}
 
-	protected void slabBlock(SlabBlock block, ResourceLocation doubleslab, ResourceLocation side, ResourceLocation bottom, ResourceLocation top) {
+	protected void slabBlock(SlabBlock block, Identifier doubleslab, Identifier side, Identifier bottom, Identifier top) {
 		slabBlock(block, slab(name(block), side, bottom, top), slabTop(name(block) + "_top", side, bottom, top), getExistingFile(doubleslab));
 	}
 
@@ -311,40 +311,40 @@ public abstract class BlockStateProvider extends BlockModelProvider {
 				.partialState().with(SlabBlock.TYPE, SlabType.DOUBLE).addModels(new ConfiguredModel(doubleslab));
 	}
 
-	protected void fourWayBlock(FourWayBlock block, ModelFile post, ModelFile side) {
+	protected void fourWayBlock(HorizontalConnectedBlock block, ModelFile post, ModelFile side) {
 		MultiPartBlockStateBuilder builder = getMultipartBuilder(block)
 				.part().modelFile(post).addModel().end();
 		fourWayMultipart(builder, side);
 	}
 
 	protected void fourWayMultipart(MultiPartBlockStateBuilder builder, ModelFile side) {
-		SixWayBlock.FACING_TO_PROPERTY_MAP.entrySet().forEach(e -> {
+		ConnectedPlantBlock.FACING_PROPERTIES.entrySet().forEach(e -> {
 			Direction dir = e.getKey();
 			if (dir.getAxis().isHorizontal()) {
-				builder.part().modelFile(side).rotationY((((int) dir.getHorizontalAngle()) + 180) % 360).uvLock(true).addModel()
+				builder.part().modelFile(side).rotationY((((int) dir.asRotation()) + 180) % 360).uvLock(true).addModel()
 						.condition(e.getValue(), true);
 			}
 		});
 	}
 
-	protected void fenceBlock(FenceBlock block, ResourceLocation texture) {
+	protected void fenceBlock(FenceBlock block, Identifier texture) {
 		String baseName = block.getRegistryName().toString();
 		fourWayBlock(block, fencePost(baseName + "_post", texture), fenceSide(baseName + "_side", texture));
 	}
 
-	protected void fenceBlock(FenceBlock block, String name, ResourceLocation texture) {
+	protected void fenceBlock(FenceBlock block, String name, Identifier texture) {
 		fourWayBlock(block, fencePost(name + "_fence_post", texture), fenceSide(name + "_fence_side", texture));
 	}
 
-	protected void fenceGateBlock(FenceGateBlock block, ResourceLocation texture) {
+	protected void fenceGateBlock(FenceGateBlock block, Identifier texture) {
 		fenceGateBlockInternal(block, block.getRegistryName().toString(), texture);
 	}
 
-	protected void fenceGateBlock(FenceGateBlock block, String name, ResourceLocation texture) {
+	protected void fenceGateBlock(FenceGateBlock block, String name, Identifier texture) {
 		fenceGateBlockInternal(block, name + "_fence_gate", texture);
 	}
 
-	private void fenceGateBlockInternal(FenceGateBlock block, String baseName, ResourceLocation texture) {
+	private void fenceGateBlockInternal(FenceGateBlock block, String baseName, Identifier texture) {
 		ModelFile gate = fenceGate(baseName, texture);
 		ModelFile gateOpen = fenceGateOpen(baseName + "_open", texture);
 		ModelFile gateWall = fenceGateWall(baseName + "_wall", texture);
@@ -363,21 +363,21 @@ public abstract class BlockStateProvider extends BlockModelProvider {
 			}
 			return ConfiguredModel.builder()
 					.modelFile(model)
-					.rotationY((int) state.get(FenceGateBlock.HORIZONTAL_FACING).getHorizontalAngle())
+					.rotationY((int) state.get(FenceGateBlock.FACING).asRotation())
 					.uvLock(true)
 					.build();
 		}, FenceGateBlock.POWERED);
 	}
 
-	protected void wallBlock(WallBlock block, ResourceLocation texture) {
+	protected void wallBlock(WallBlock block, Identifier texture) {
 		wallBlockInternal(block, block.getRegistryName().toString(), texture);
 	}
 
-	protected void wallBlock(WallBlock block, String name, ResourceLocation texture) {
+	protected void wallBlock(WallBlock block, String name, Identifier texture) {
 		wallBlockInternal(block, name + "_wall", texture);
 	}
 
-	private void wallBlockInternal(WallBlock block, String baseName, ResourceLocation texture) {
+	private void wallBlockInternal(WallBlock block, String baseName, Identifier texture) {
 		wallBlock(block, wallPost(baseName + "_post", texture), wallSide(baseName + "_side", texture));
 	}
 
@@ -388,15 +388,15 @@ public abstract class BlockStateProvider extends BlockModelProvider {
 		fourWayMultipart(builder, side);
 	}
 
-	protected void paneBlock(PaneBlock block, ResourceLocation pane, ResourceLocation edge) {
+	protected void paneBlock(PaneBlock block, Identifier pane, Identifier edge) {
 		paneBlockInternal(block, block.getRegistryName().toString(), pane, edge);
 	}
 
-	protected void paneBlock(PaneBlock block, String name, ResourceLocation pane, ResourceLocation edge) {
+	protected void paneBlock(PaneBlock block, String name, Identifier pane, Identifier edge) {
 		paneBlockInternal(block, name + "_pane", pane, edge);
 	}
 
-	private void paneBlockInternal(PaneBlock block, String baseName, ResourceLocation pane, ResourceLocation edge) {
+	private void paneBlockInternal(PaneBlock block, String baseName, Identifier pane, Identifier edge) {
 		ModelFile post = panePost(baseName + "_post", pane, edge);
 		ModelFile side = paneSide(baseName + "_side", pane, edge);
 		ModelFile sideAlt = paneSideAlt(baseName + "_side_alt", pane, edge);
@@ -408,7 +408,7 @@ public abstract class BlockStateProvider extends BlockModelProvider {
 	protected void paneBlock(PaneBlock block, ModelFile post, ModelFile side, ModelFile sideAlt, ModelFile noSide, ModelFile noSideAlt) {
 		MultiPartBlockStateBuilder builder = getMultipartBuilder(block)
 				.part().modelFile(post).addModel().end();
-		SixWayBlock.FACING_TO_PROPERTY_MAP.entrySet().forEach(e -> {
+		ConnectedPlantBlock.FACING_PROPERTIES.entrySet().forEach(e -> {
 			Direction dir = e.getKey();
 			if (dir.getAxis().isHorizontal()) {
 				boolean alt = dir == Direction.SOUTH;
@@ -420,15 +420,15 @@ public abstract class BlockStateProvider extends BlockModelProvider {
 		});
 	}
 
-	protected void doorBlock(DoorBlock block, ResourceLocation bottom, ResourceLocation top) {
+	protected void doorBlock(DoorBlock block, Identifier bottom, Identifier top) {
 		doorBlockInternal(block, block.getRegistryName().toString(), bottom, top);
 	}
 
-	protected void doorBlock(DoorBlock block, String name, ResourceLocation bottom, ResourceLocation top) {
+	protected void doorBlock(DoorBlock block, String name, Identifier bottom, Identifier top) {
 		doorBlockInternal(block, name + "_door", bottom, top);
 	}
 
-	private void doorBlockInternal(DoorBlock block, String baseName, ResourceLocation bottom, ResourceLocation top) {
+	private void doorBlockInternal(DoorBlock block, String baseName, Identifier bottom, Identifier top) {
 		ModelFile bottomLeft = doorBottomLeft(baseName + "_bottom", bottom, top);
 		ModelFile bottomRight = doorBottomRight(baseName + "_bottom_hinge", bottom, top);
 		ModelFile topLeft = doorTopLeft(baseName + "_top", bottom, top);
@@ -438,8 +438,8 @@ public abstract class BlockStateProvider extends BlockModelProvider {
 
 	protected void doorBlock(DoorBlock block, ModelFile bottomLeft, ModelFile bottomRight, ModelFile topLeft, ModelFile topRight) {
 		getVariantBuilder(block).forAllStatesExcept(state -> {
-			int yRot = ((int) state.get(DoorBlock.FACING).getHorizontalAngle()) + 90;
-			boolean rh = state.get(DoorBlock.HINGE) == DoorHingeSide.RIGHT;
+			int yRot = ((int) state.get(DoorBlock.FACING).asRotation()) + 90;
+			boolean rh = state.get(DoorBlock.HINGE) == DoorHinge.RIGHT;
 			boolean open = state.get(DoorBlock.OPEN);
 			boolean right = rh ^ open;
 			if (open) {
@@ -455,27 +455,27 @@ public abstract class BlockStateProvider extends BlockModelProvider {
 		}, DoorBlock.POWERED);
 	}
 
-	protected void trapdoorBlock(TrapDoorBlock block, ResourceLocation texture, boolean orientable) {
+	protected void trapdoorBlock(TrapdoorBlock block, Identifier texture, boolean orientable) {
 		trapdoorBlockInternal(block, block.getRegistryName().toString(), texture, orientable);
 	}
 
-	protected void trapdoorBlock(TrapDoorBlock block, String name, ResourceLocation texture, boolean orientable) {
+	protected void trapdoorBlock(TrapdoorBlock block, String name, Identifier texture, boolean orientable) {
 		trapdoorBlockInternal(block, name + "_trapdoor", texture, orientable);
 	}
 
-	private void trapdoorBlockInternal(TrapDoorBlock block, String baseName, ResourceLocation texture, boolean orientable) {
+	private void trapdoorBlockInternal(TrapdoorBlock block, String baseName, Identifier texture, boolean orientable) {
 		ModelFile bottom = orientable ? trapdoorOrientableBottom(baseName + "_bottom", texture) : trapdoorBottom(baseName + "_bottom", texture);
 		ModelFile top = orientable ? trapdoorOrientableTop(baseName + "_top", texture) : trapdoorTop(baseName + "_top", texture);
 		ModelFile open = orientable ? trapdoorOrientableOpen(baseName + "_open", texture) : trapdoorOpen(baseName + "_open", texture);
 		trapdoorBlock(block, bottom, top, open, orientable);
 	}
 
-	protected void trapdoorBlock(TrapDoorBlock block, ModelFile bottom, ModelFile top, ModelFile open, boolean orientable) {
+	protected void trapdoorBlock(TrapdoorBlock block, ModelFile bottom, ModelFile top, ModelFile open, boolean orientable) {
 		getVariantBuilder(block).forAllStatesExcept(state -> {
 			int xRot = 0;
-			int yRot = ((int) state.get(TrapDoorBlock.HORIZONTAL_FACING).getHorizontalAngle()) + 180;
-			boolean isOpen = state.get(TrapDoorBlock.OPEN);
-			if (orientable && isOpen && state.get(TrapDoorBlock.HALF) == Half.TOP) {
+			int yRot = ((int) state.get(TrapdoorBlock.FACING).asRotation()) + 180;
+			boolean isOpen = state.get(TrapdoorBlock.OPEN);
+			if (orientable && isOpen && state.get(TrapdoorBlock.HALF) == BlockHalf.TOP) {
 				xRot += 180;
 				yRot += 180;
 			}
@@ -483,20 +483,20 @@ public abstract class BlockStateProvider extends BlockModelProvider {
 				yRot = 0;
 			}
 			yRot %= 360;
-			return ConfiguredModel.builder().modelFile(isOpen ? open : state.get(TrapDoorBlock.HALF) == Half.TOP ? top : bottom)
+			return ConfiguredModel.builder().modelFile(isOpen ? open : state.get(TrapdoorBlock.HALF) == BlockHalf.TOP ? top : bottom)
 					.rotationX(xRot)
 					.rotationY(yRot)
 					.build();
-		}, TrapDoorBlock.POWERED, TrapDoorBlock.WATERLOGGED);
+		}, TrapdoorBlock.POWERED, TrapdoorBlock.WATERLOGGED);
 	}
 
 	private void saveBlockState(JsonObject stateJson, Block owner) {
-		ResourceLocation blockName = Preconditions.checkNotNull(owner.getRegistryName());
-		Path mainOutput = generator.getOutputFolder();
+		Identifier blockName = Preconditions.checkNotNull(owner.getRegistryName());
+		Path mainOutput = generator.getOutput();
 		String pathSuffix = "assets/" + blockName.getNamespace() + "/blockstates/" + blockName.getPath() + ".json";
 		Path outputPath = mainOutput.resolve(pathSuffix);
 		try {
-			IDataProvider.save(GSON, cache, stateJson, outputPath);
+			DataProvider.writeToPath(GSON, cache, stateJson, outputPath);
 		} catch (IOException e) {
 			LOGGER.error("Couldn't save blockstate to {}", outputPath, e);
 		}

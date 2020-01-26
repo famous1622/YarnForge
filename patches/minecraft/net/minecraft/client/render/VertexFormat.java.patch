@@ -1,0 +1,38 @@
+--- a/net/minecraft/client/render/VertexFormat.java
++++ b/net/minecraft/client/render/VertexFormat.java
+@@ -16,6 +16,7 @@
+    private int offsetColor = -1;
+    private final List<Integer> offsetsUv = Lists.newArrayList();
+    private int offsetNormal = -1;
++   private int hashCode;
+ 
+    public VertexFormat(VertexFormat vertexFormatIn) {
+       this();
+@@ -37,6 +38,7 @@
+       this.offsetsUv.clear();
+       this.offsetNormal = -1;
+       this.size = 0;
++      this.hashCode = 0;
+    }
+ 
+    public VertexFormat add(VertexFormatElement element) {
+@@ -58,6 +60,7 @@
+          }
+ 
+          this.size += element.getSize();
++         this.hashCode = 0;
+          return this;
+       }
+    }
+@@ -152,9 +155,11 @@
+    }
+ 
+    public int hashCode() {
++      if (this.hashCode != 0) return this.hashCode;
+       int i = this.elements.hashCode();
+       i = 31 * i + this.offsets.hashCode();
+       i = 31 * i + this.size;
++      this.hashCode = i;
+       return i;
+    }
+ }

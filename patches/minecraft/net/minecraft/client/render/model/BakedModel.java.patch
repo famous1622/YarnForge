@@ -1,0 +1,33 @@
+--- a/net/minecraft/client/render/model/BakedModel.java
++++ b/net/minecraft/client/render/model/BakedModel.java
+@@ -8,12 +8,14 @@
+ import net.minecraft.util.math.Direction;
+ import net.minecraftforge.api.distmarker.Dist;
+ import net.minecraftforge.api.distmarker.OnlyIn;
++
+ import net.minecraft.client.render.model.json.ModelItemPropertyOverrideList;
+ import net.minecraft.client.render.model.json.ModelTransformation;
+ 
+-
+ @OnlyIn(Dist.CLIENT)
+-public interface BakedModel {
++public interface BakedModel extends net.minecraftforge.client.extensions.IForgeBakedModel {
++   /**@deprecated Forge: Use {@link net.minecraftforge.client.extensions.IForgeBakedModel#getQuads(IBlockState, EnumFacing, Random, net.minecraftforge.client.model.data.IModelData)}*/
++   @Deprecated
+    List<BakedQuad> getQuads(@Nullable BlockState state, @Nullable Direction side, Random rand);
+ 
+    boolean useAmbientOcclusion();
+@@ -22,9 +24,12 @@
+ 
+    boolean isBuiltin();
+ 
++   /**@deprecated Forge: Use {@link net.minecraftforge.client.extensions.IForgeBakedModel#getParticleTexture(net.minecraftforge.client.model.data.IModelData)}*/
++   @Deprecated
+    Sprite getSprite();
+ 
+-   ModelTransformation getTransformation();
++   @Deprecated
++   default ModelTransformation getTransformation() { return ModelTransformation.NONE; }
+ 
+    ModelItemPropertyOverrideList getItemPropertyOverrides();
+ }

@@ -38,12 +38,12 @@ import net.minecraftforge.common.model.animation.IAnimationStateMachine;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.model.IUnbakedModel;
-import net.minecraft.client.renderer.model.ModelResourceLocation;
-import net.minecraft.resources.IReloadableResourceManager;
-import net.minecraft.resources.IResourceManager;
-import net.minecraft.util.ResourceLocation;
+import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.render.model.UnbakedModel;
+import net.minecraft.client.util.ModelIdentifier;
+import net.minecraft.resource.ReloadableResourceManager;
+import net.minecraft.resource.ResourceManager;
+import net.minecraft.util.Identifier;
 
 /**
  * Central hub for custom model loaders.
@@ -52,10 +52,10 @@ public class ModelLoaderRegistry {
 	private static final Logger LOGGER = LogManager.getLogger();
 
 	private static final Set<ICustomModelLoader> loaders = Sets.newHashSet();
-	private static final Map<ResourceLocation, IUnbakedModel> cache = Maps.newHashMap();
-	private static final Deque<ResourceLocation> loadingModels = Queues.newArrayDeque();
+	private static final Map<Identifier, UnbakedModel> cache = Maps.newHashMap();
+	private static final Deque<Identifier> loadingModels = Queues.newArrayDeque();
 
-	private static IResourceManager manager;
+	private static ResourceManager manager;
 
 	// Forge built-in loaders
 	public static void init() {
@@ -72,21 +72,21 @@ public class ModelLoaderRegistry {
 	 */
 	public static void registerLoader(ICustomModelLoader loader) {
 		loaders.add(loader);
-		((IReloadableResourceManager) Minecraft.getInstance().getResourceManager()).addReloadListener(loader);
+		((ReloadableResourceManager) MinecraftClient.getInstance().getResourceManager()).registerListener(loader);
 		// FIXME: Existing model loaders expect to receive a call as soon as they are registered, which was the old behaviour pre-1.13
 		// without this, their manager field is never initialized.
-		loader.onResourceManagerReload(Minecraft.getInstance().getResourceManager());
+		loader.apply(MinecraftClient.getInstance().getResourceManager());
 	}
 
-	public static boolean loaded(ResourceLocation location) {
+	public static boolean loaded(Identifier location) {
 		return cache.containsKey(location);
 	}
 
 
-	public static ResourceLocation getActualLocation(ResourceLocation location) {
-		if (location instanceof ModelResourceLocation) return location;
+	public static Identifier getActualLocation(Identifier location) {
+		if (location instanceof ModelIdentifier) return location;
 		if (location.getPath().startsWith("builtin/")) return location;
-		return new ResourceLocation(location.getNamespace(), "models/" + location.getPath());
+		return new Identifier(location.getNamespace(), "models/" + location.getPath());
 	}
 
 	/**
@@ -99,20 +99,20 @@ public class ModelLoaderRegistry {
 	 *                 appends ".json" before looking the model up.
 	 *                 - {@link ModelResourceLocation}. The blockstate system will load the model, using {@link VariantLoader}.
 	 */
-	public static IUnbakedModel getModel(ResourceLocation location) throws Exception {
-		IUnbakedModel model;
+	public static UnbakedModel getModel(Identifier location) throws Exception {
+		UnbakedModel model;
 
-		IUnbakedModel cached = cache.get(location);
+		UnbakedModel cached = cache.get(location);
 		if (cached != null) return cached;
 
-		for (ResourceLocation loading : loadingModels) {
+		for (Identifier loading : loadingModels) {
 			if (location.getClass() == loading.getClass() && location.equals(loading)) {
 				throw new LoaderException("circular model dependencies, stack: [" + Joiner.on(", ").join(loadingModels) + "]");
 			}
 		}
 		loadingModels.addLast(location);
 		try {
-			ResourceLocation actual = getActualLocation(location);
+			Identifier actual = getActualLocation(location);
 			ICustomModelLoader accepted = null;
 			for (ICustomModelLoader loader : loaders) {
 				try {
@@ -151,13 +151,13 @@ public class ModelLoaderRegistry {
 				throw new LoaderException(String.format("Loader %s returned null while loading model %s", accepted, location));
 			}
 		} finally {
-			ResourceLocation popLoc = loadingModels.removeLast();
+			Identifier popLoc = loadingModels.removeLast();
 			if (popLoc != location) {
 				throw new IllegalStateException("Corrupted loading model stack: " + popLoc + " != " + location);
 			}
 		}
 		cache.put(location, model);
-		for (ResourceLocation dep : model.getDependencies()) {
+		for (Identifier dep : model.getModelDependencies()) {
 			getModelOrMissing(dep);
 		}
 		return model;
@@ -166,7 +166,7 @@ public class ModelLoaderRegistry {
 	/**
 	 * Use this if you don't care about the exception and want some model anyway.
 	 */
-	public static IUnbakedModel getModelOrMissing(ResourceLocation location) {
+	public static UnbakedModel getModelOrMissing(Identifier location) {
 		try {
 			return getModel(location);
 		} catch (Exception e) {
@@ -177,7 +177,7 @@ public class ModelLoaderRegistry {
 	/**
 	 * Use this if you want the model, but need to log the error.
 	 */
-	public static IUnbakedModel getModelOrLogError(ResourceLocation location, String error) {
+	public static UnbakedModel getModelOrLogError(Identifier location, String error) {
 		try {
 			return getModel(location);
 		} catch (Exception e) {
@@ -186,7 +186,7 @@ public class ModelLoaderRegistry {
 		}
 	}
 
-	public static IUnbakedModel getMissingModel() {
+	public static UnbakedModel getMissingModel() {
 		final ModelLoader loader = VanillaLoader.INSTANCE.getLoader();
 		if (loader == null) {
 			throw new IllegalStateException("Using ModelLoaderRegistry too early.");
@@ -194,22 +194,22 @@ public class ModelLoaderRegistry {
 		return loader.getMissingModel();
 	}
 
-	static IUnbakedModel getMissingModel(ResourceLocation location, Throwable cause) {
+	static UnbakedModel getMissingModel(Identifier location, Throwable cause) {
 		//IModel model =  new FancyMissingModel(ExceptionUtils.getStackTrace(cause).replaceAll("\\t", "    "));
-		IUnbakedModel model = new FancyMissingModel(getMissingModel(), location.toString());
+		UnbakedModel model = new FancyMissingModel(getMissingModel(), location.toString());
 		return model;
 	}
 
-	public static void clearModelCache(IResourceManager manager) {
+	public static void clearModelCache(ResourceManager manager) {
 		ModelLoaderRegistry.manager = manager;
 		cache.clear();
 		// putting the builtin models in
-		cache.put(new ResourceLocation("minecraft:builtin/generated"), ItemLayerModel.INSTANCE);
-		cache.put(new ResourceLocation("minecraft:block/builtin/generated"), ItemLayerModel.INSTANCE);
-		cache.put(new ResourceLocation("minecraft:item/builtin/generated"), ItemLayerModel.INSTANCE);
+		cache.put(new Identifier("minecraft:builtin/generated"), ItemLayerModel.INSTANCE);
+		cache.put(new Identifier("minecraft:block/builtin/generated"), ItemLayerModel.INSTANCE);
+		cache.put(new Identifier("minecraft:item/builtin/generated"), ItemLayerModel.INSTANCE);
 	}
 
-	public static IAnimationStateMachine loadASM(ResourceLocation location, ImmutableMap<String, ITimeValue> customParameters) {
+	public static IAnimationStateMachine loadASM(Identifier location, ImmutableMap<String, ITimeValue> customParameters) {
 		return AnimationStateMachine.load(manager, location, customParameters);
 	}
 

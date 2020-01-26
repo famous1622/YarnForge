@@ -1,0 +1,15 @@
+--- a/net/minecraft/entity/passive/LlamaEntity.java
++++ b/net/minecraft/entity/passive/LlamaEntity.java
+@@ -361,9 +361,10 @@
+             }
+          }
+ 
+-         BlockState blockstate = this.world.getBlockState(new BlockPos(this.x, this.y - 0.2D - (double)this.prevYaw, this.z));
++         BlockPos pos = new BlockPos(this.x, this.y - 0.2D - (double)this.prevYaw, this.z);
++         BlockState blockstate = this.world.getBlockState(pos);
+          if (!blockstate.isAir() && !this.isSilent()) {
+-            BlockSoundGroup soundtype = blockstate.getSoundGroup();
++            BlockSoundGroup soundtype = blockstate.getSoundType(world, pos, this);
+             this.world.playSound((PlayerEntity)null, this.x, this.y, this.z, soundtype.getStepSound(), this.getSoundCategory(), soundtype.getVolume() * 0.5F, soundtype.getPitch() * 0.75F);
+          }
+ 

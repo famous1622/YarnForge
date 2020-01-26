@@ -1,0 +1,92 @@
+--- a/net/minecraft/container/Slot.java
++++ b/net/minecraft/container/Slot.java
+@@ -7,12 +7,17 @@
+ import net.minecraftforge.api.distmarker.Dist;
+ import net.minecraftforge.api.distmarker.OnlyIn;
+ 
++import net.minecraft;
++
+ public class Slot {
+    private final int invSlot;
+    public final Inventory inventory;
+    public int id;
+    public int xPosition;
+    public int yPosition;
++   protected String backgroundName = null;
++   protected net.minecraft.util.Identifier backgroundLocation = null;
++   protected Object backgroundMap;
+ 
+    public Slot(Inventory inventoryIn, int index, int xPosition, int yPosition) {
+       this.inventory = inventoryIn;
+@@ -75,7 +80,7 @@
+    @Nullable
+    @OnlyIn(Dist.CLIENT)
+    public String getBackgroundSprite() {
+-      return null;
++      return backgroundName;
+    }
+ 
+    public ItemStack takeStack(int amount) {
+@@ -90,4 +95,62 @@
+    public boolean doDrawHoveringEffect() {
+       return true;
+    }
++
++   /**
++    * Gets the path of the texture file to use for the background image of this slot when drawing the GUI.
++    * @return The resource location for the background image
++    */
++   @OnlyIn(Dist.CLIENT)
++   public net.minecraft.util.Identifier getBackgroundLocation() {
++       return (backgroundLocation == null ? net.minecraft.client.texture.SpriteAtlasTexture.BLOCK_ATLAS_TEX : backgroundLocation);
++   }
++
++   /**
++    * Sets the texture file to use for the background image of the slot when it's empty.
++    * @param texture the resourcelocation for the texture
++    */
++   @OnlyIn(Dist.CLIENT)
++   public void setBackgroundLocation(net.minecraft.util.Identifier texture) {
++       this.backgroundLocation = texture;
++   }
++
++   /**
++    * Sets which icon index to use as the background image of the slot when it's empty.
++    * @param name The icon to use, null for none
++    */
++   public void setBackgroundName(@Nullable String name) {
++       this.backgroundName = name;
++   }
++
++   @Nullable
++   @OnlyIn(Dist.CLIENT)
++   public net.minecraft.client.texture.Sprite getBackgroundSprite() {
++       String name = getBackgroundSprite();
++       return name == null ? null : getBackgroundMap().getSprite(name);
++   }
++
++   @OnlyIn(Dist.CLIENT)
++   protected net.minecraft.client.texture.SpriteAtlasTexture getBackgroundMap() {
++      if (backgroundMap == null) backgroundMap = net.minecraft.client.MinecraftClient.getInstance().getSpriteAtlas();
++      return (net.minecraft.client.texture.SpriteAtlasTexture)backgroundMap;
++   }
++
++   /**
++    * Retrieves the index in the inventory for this slot, this value should typically not
++    * be used, but can be useful for some occasions.
++    *
++    * @return Index in associated inventory for this slot.
++    */
++   public int getSlotIndex() {
++      return invSlot;
++   }
++
++   /**
++    * Checks if the other slot is in the same inventory, by comparing the inventory reference.
++    * @param other
++    * @return true if the other slot is in the same inventory
++    */
++   public boolean isSameInventory(Slot other) {
++      return this.inventory == other.inventory;
++   }
+ }

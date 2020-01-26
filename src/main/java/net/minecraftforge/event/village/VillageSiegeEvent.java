@@ -19,13 +19,12 @@
 
 package net.minecraftforge.event.village;
 
-import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.eventbus.api.Cancelable;
 import net.minecraftforge.eventbus.api.Event;
 
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.util.math.Vec3d;
-import net.minecraft.village.VillageSiege;
+import net.minecraft.village.ZombieSiegeManager;
 import net.minecraft.world.World;
 
 /**
@@ -40,19 +39,19 @@ import net.minecraft.world.World;
  */
 @Cancelable
 public class VillageSiegeEvent extends Event {
-	private final VillageSiege siege;
+	private final ZombieSiegeManager siege;
 	private final World world;
 	private final PlayerEntity player;
 	private final Vec3d attemptedSpawnPos;
 
-	public VillageSiegeEvent(VillageSiege siege, World world, PlayerEntity player, Vec3d attemptedSpawnPos) {
+	public VillageSiegeEvent(ZombieSiegeManager siege, World world, PlayerEntity player, Vec3d attemptedSpawnPos) {
 		this.siege = siege;
 		this.world = world;
 		this.player = player;
 		this.attemptedSpawnPos = attemptedSpawnPos;
 	}
 
-	public VillageSiege getSiege() {
+	public ZombieSiegeManager getSiege() {
 		return siege;
 	}
 

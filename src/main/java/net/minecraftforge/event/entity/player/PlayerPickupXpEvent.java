@@ -21,7 +21,7 @@ package net.minecraftforge.event.entity.player;
 
 import net.minecraftforge.eventbus.api.Cancelable;
 
-import net.minecraft.entity.item.ExperienceOrbEntity;
+import net.minecraft.entity.ExperienceOrbEntity;
 import net.minecraft.entity.player.PlayerEntity;
 
 /**

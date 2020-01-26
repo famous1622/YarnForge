@@ -1,0 +1,48 @@
+--- a/net/minecraft/client/gui/hud/InGameHud.java
++++ b/net/minecraft/client/gui/hud/InGameHud.java
+@@ -406,6 +406,9 @@
+ 
+          for(StatusEffectInstance effectinstance : Ordering.natural().reverse().sortedCopy(collection)) {
+             StatusEffect effect = effectinstance.getEffectType();
++            if (!effect.shouldRenderHUD(effectinstance)) continue;
++            // Rebind in case previous renderHUDEffect changed texture
++            this.client.getTextureManager().bindTexture(AbstractContainerScreen.BACKGROUND_TEXTURE);
+             if (effectinstance.shouldShowIcon()) {
+                int k = this.scaledWidth;
+                int l = 1;
+@@ -437,11 +440,13 @@
+                float f_f = f;
+                int k_f = k;
+                int l_f = l;
++
+                Sprite textureatlassprite = potionspriteuploader.getSprite(effect);
+                list.add(() -> {
+                   GlStateManager.color4f(1.0F, 1.0F, 1.0F, f_f);
+                   blit(k_f + 3, l_f + 3, this.blitOffset, 18, 18, textureatlassprite);
+                });
++               effect.renderHUDEffect(effectinstance, this, k, l, this.blitOffset, f);
+             }
+          }
+ 
+@@ -570,6 +575,7 @@
+          }
+ 
+          String s = itextcomponent.asFormattedString();
++         s = this.currentStack.getItem().getHighlightTip(this.currentStack, s);
+          int i = (this.scaledWidth - this.getFontRenderer().getStringWidth(s)) / 2;
+          int j = this.scaledHeight - 59;
+          if (!this.client.interactionManager.hasStatusBars()) {
+@@ -586,7 +592,13 @@
+             GlStateManager.enableBlend();
+             GlStateManager.blendFuncSeparate(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA, GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ZERO);
+             fill(i - 2, j - 2, i + this.getFontRenderer().getStringWidth(s) + 2, j + 9 + 2, this.client.options.getTextBackgroundColor(0));
++            TextRenderer font = currentStack.getItem().getFontRenderer(currentStack);
++            if (font == null) {
+             this.getFontRenderer().drawWithShadow(s, (float)i, (float)j, 16777215 + (k << 24));
++            } else {
++                i = (this.scaledWidth - font.getStringWidth(s)) / 2;
++                font.drawWithShadow(s, (float)i, (float)j, 16777215 + (k << 24));
++            }
+             GlStateManager.disableBlend();
+             GlStateManager.popMatrix();
+          }

@@ -40,9 +40,8 @@ import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.Marker;
 import org.apache.logging.log4j.MarkerManager;
 
-import net.minecraft.network.NetworkManager;
-import net.minecraft.network.PacketBuffer;
-import net.minecraft.util.ResourceLocation;
+import net.minecraft.util.PacketByteBuf;
+import net.minecraft.util.Identifier;
 
 /**
  * The network registry. Tracks channels on behalf of mods.
@@ -58,7 +57,7 @@ public class NetworkRegistry {
 	public static String ABSENT = new String("ABSENT \uD83E\uDD14");
 	@SuppressWarnings("RedundantStringConstructorCall")
 	public static String ACCEPTVANILLA = new String("ALLOWVANILLA \uD83D\uDC93\uD83D\uDC93\uD83D\uDC93");
-	private static Map<ResourceLocation, NetworkInstance> instances = Collections.synchronizedMap(new HashMap<>());
+	private static Map<Identifier, NetworkInstance> instances = Collections.synchronizedMap(new HashMap<>());
 	private static boolean lock = false;
 
 	public static List<String> getServerNonVanillaNetworkMods() {
@@ -87,7 +86,7 @@ public class NetworkRegistry {
 	 * @return A new {@link SimpleChannel}
 	 * @see ChannelBuilder#newSimpleChannel(ResourceLocation, Supplier, Predicate, Predicate)
 	 */
-	public static SimpleChannel newSimpleChannel(final ResourceLocation name, Supplier<String> networkProtocolVersion, Predicate<String> clientAcceptedVersions, Predicate<String> serverAcceptedVersions) {
+	public static SimpleChannel newSimpleChannel(final Identifier name, Supplier<String> networkProtocolVersion, Predicate<String> clientAcceptedVersions, Predicate<String> serverAcceptedVersions) {
 		return new SimpleChannel(createInstance(name, networkProtocolVersion, clientAcceptedVersions, serverAcceptedVersions));
 	}
 
@@ -101,7 +100,7 @@ public class NetworkRegistry {
 	 * @return A new {@link EventNetworkChannel}
 	 * @see ChannelBuilder#newEventChannel(ResourceLocation, Supplier, Predicate, Predicate)
 	 */
-	public static EventNetworkChannel newEventChannel(final ResourceLocation name, Supplier<String> networkProtocolVersion, Predicate<String> clientAcceptedVersions, Predicate<String> serverAcceptedVersions) {
+	public static EventNetworkChannel newEventChannel(final Identifier name, Supplier<String> networkProtocolVersion, Predicate<String> clientAcceptedVersions, Predicate<String> serverAcceptedVersions) {
 		return new EventNetworkChannel(createInstance(name, networkProtocolVersion, clientAcceptedVersions, serverAcceptedVersions));
 	}
 
@@ -115,7 +114,7 @@ public class NetworkRegistry {
 	 * @return The {@link NetworkInstance}
 	 * @throws IllegalArgumentException if the name already exists
 	 */
-	private static NetworkInstance createInstance(ResourceLocation name, Supplier<String> networkProtocolVersion, Predicate<String> clientAcceptedVersions, Predicate<String> serverAcceptedVersions) {
+	private static NetworkInstance createInstance(Identifier name, Supplier<String> networkProtocolVersion, Predicate<String> clientAcceptedVersions, Predicate<String> serverAcceptedVersions) {
 		if (lock) {
 			LOGGER.error(NETREGISTRY, "Attempted to register channel {} even though registry phase is over", name);
 			throw new IllegalArgumentException("Registration of network channels is locked");
@@ -135,7 +134,7 @@ public class NetworkRegistry {
 	 * @param resourceLocation The network instance to lookup
 	 * @return The {@link Optional} {@link NetworkInstance}
 	 */
-	static Optional<NetworkInstance> findTarget(ResourceLocation resourceLocation) {
+	static Optional<NetworkInstance> findTarget(Identifier resourceLocation) {
 		return Optional.ofNullable(instances.get(resourceLocation));
 	}
 
@@ -145,7 +144,7 @@ public class NetworkRegistry {
 	 * @see FMLHandshakeMessages.S2CModList
 	 * @see FMLHandshakeMessages.C2SModListReply
 	 */
-	static Map<ResourceLocation, String> buildChannelVersions() {
+	static Map<Identifier, String> buildChannelVersions() {
 		return instances.entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().getNetworkProtocolVersion()));
 	}
 
@@ -155,7 +154,7 @@ public class NetworkRegistry {
 	 * @see FMLHandshakeMessages.S2CModList
 	 * @see FMLHandshakeMessages.C2SModListReply
 	 */
-	static Map<ResourceLocation, Pair<String, Boolean>> buildChannelVersionsForListPing() {
+	static Map<Identifier, Pair<String, Boolean>> buildChannelVersionsForListPing() {
 		return instances.entrySet().stream().
 				map(p -> Pair.of(p.getKey(), Pair.of(p.getValue().getNetworkProtocolVersion(), p.getValue().tryClientVersionOnServer(ABSENT)))).
 				filter(p -> !p.getLeft().getNamespace().equals("fml")).
@@ -163,7 +162,7 @@ public class NetworkRegistry {
 	}
 
 	static List<String> listRejectedVanillaMods(BiFunction<NetworkInstance, String, Boolean> testFunction) {
-		final List<Pair<ResourceLocation, Boolean>> results = instances.values().stream().
+		final List<Pair<Identifier, Boolean>> results = instances.values().stream().
 				map(ni -> {
 					final String incomingVersion = ACCEPTVANILLA;
 					final boolean test = testFunction.apply(ni, incomingVersion);
@@ -187,7 +186,7 @@ public class NetworkRegistry {
 	 * @param channels An @{@link Map} of name->version pairs for testing
 	 * @return true if all channels accept themselves
 	 */
-	static boolean validateClientChannels(final Map<ResourceLocation, String> channels) {
+	static boolean validateClientChannels(final Map<Identifier, String> channels) {
 		return validateChannels(channels, "server", NetworkInstance::tryServerVersionOnClient);
 	}
 
@@ -198,7 +197,7 @@ public class NetworkRegistry {
 	 * @param channels An @{@link Map} of name->version pairs for testing
 	 * @return true if all channels accept themselves
 	 */
-	static boolean validateServerChannels(final Map<ResourceLocation, String> channels) {
+	static boolean validateServerChannels(final Map<Identifier, String> channels) {
 		return validateChannels(channels, "client", NetworkInstance::tryClientVersionOnServer);
 	}
 
@@ -210,8 +209,8 @@ public class NetworkRegistry {
 	 * @param testFunction The test function to use for testing
 	 * @return true if all channels accept themselves
 	 */
-	private static boolean validateChannels(final Map<ResourceLocation, String> incoming, final String originName, BiFunction<NetworkInstance, String, Boolean> testFunction) {
-		final List<Pair<ResourceLocation, Boolean>> results = instances.values().stream().
+	private static boolean validateChannels(final Map<Identifier, String> incoming, final String originName, BiFunction<NetworkInstance, String, Boolean> testFunction) {
+		final List<Pair<Identifier, Boolean>> results = instances.values().stream().
 				map(ni -> {
 					final String incomingVersion = incoming.getOrDefault(ni.getChannelName(), ABSENT);
 					final boolean test = testFunction.apply(ni, incomingVersion);
@@ -243,9 +242,9 @@ public class NetworkRegistry {
 		return gatheredPayloads;
 	}
 
-	public static boolean checkListPingCompatibilityForClient(Map<ResourceLocation, Pair<String, Boolean>> incoming) {
-		Set<ResourceLocation> handled = new HashSet<>();
-		final List<Pair<ResourceLocation, Boolean>> results = instances.values().stream().
+	public static boolean checkListPingCompatibilityForClient(Map<Identifier, Pair<String, Boolean>> incoming) {
+		Set<Identifier> handled = new HashSet<>();
+		final List<Pair<Identifier, Boolean>> results = instances.values().stream().
 				filter(p -> !p.getChannelName().getNamespace().equals("fml")).
 				map(ni -> {
 					final Pair<String, Boolean> incomingVersion = incoming.getOrDefault(ni.getChannelName(), Pair.of(ABSENT, true));
@@ -254,7 +253,7 @@ public class NetworkRegistry {
 					LOGGER.debug(NETREGISTRY, "Channel '{}' : Version test of '{}' during listping : {}", ni.getChannelName(), incomingVersion, test ? "ACCEPTED" : "REJECTED");
 					return Pair.of(ni.getChannelName(), test);
 				}).filter(p -> !p.getRight()).collect(Collectors.toList());
-		final List<ResourceLocation> missingButRequired = incoming.entrySet().stream().
+		final List<Identifier> missingButRequired = incoming.entrySet().stream().
 				filter(p -> !p.getKey().getNamespace().equals("fml")).
 				filter(p -> !p.getValue().getRight()).
 				filter(p -> !handled.contains(p.getKey())).
@@ -291,28 +290,28 @@ public class NetworkRegistry {
 		/**
 		 * The data for sending
 		 */
-		private final PacketBuffer data;
+		private final PacketByteBuf data;
 		/**
 		 * A channel which will receive a {@link NetworkEvent.LoginPayloadEvent} from the {@link FMLLoginWrapper}
 		 */
-		private final ResourceLocation channelName;
+		private final Identifier channelName;
 
 		/**
 		 * Some context for logging purposes
 		 */
 		private final String messageContext;
 
-		public LoginPayload(final PacketBuffer buffer, final ResourceLocation channelName, final String messageContext) {
+		public LoginPayload(final PacketByteBuf buffer, final Identifier channelName, final String messageContext) {
 			this.data = buffer;
 			this.channelName = channelName;
 			this.messageContext = messageContext;
 		}
 
-		public PacketBuffer getData() {
+		public PacketByteBuf getData() {
 			return data;
 		}
 
-		public ResourceLocation getChannelName() {
+		public Identifier getChannelName() {
 			return channelName;
 		}
 
@@ -325,7 +324,7 @@ public class NetworkRegistry {
 	 * Builder for constructing network channels using a builder style API.
 	 */
 	public static class ChannelBuilder {
-		private ResourceLocation channelName;
+		private Identifier channelName;
 		private Supplier<String> networkProtocolVersion;
 		private Predicate<String> clientAcceptedVersions;
 		private Predicate<String> serverAcceptedVersions;
@@ -336,7 +335,7 @@ public class NetworkRegistry {
 		 * @param channelName The name of the channel
 		 * @return the channel builder
 		 */
-		public static ChannelBuilder named(ResourceLocation channelName) {
+		public static ChannelBuilder named(Identifier channelName) {
 			ChannelBuilder builder = new ChannelBuilder();
 			builder.channelName = channelName;
 			return builder;

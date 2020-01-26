@@ -19,7 +19,7 @@
 
 package net.minecraftforge.client.extensions;
 
-import net.minecraft.client.renderer.chunk.ChunkRenderCache;
+import net.minecraft.client.render.chunk.ChunkRendererRegion;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 
@@ -37,7 +37,7 @@ public interface IForgeRenderChunk {
 	 * @return new RegionRenderCache instance
 	 * @see RegionRenderCache
 	 */
-	default ChunkRenderCache createRegionRenderCache(World world, BlockPos from, BlockPos to, int subtract) {
-		return ChunkRenderCache.generateCache(world, from, to, subtract);
+	default ChunkRendererRegion createRegionRenderCache(World world, BlockPos from, BlockPos to, int subtract) {
+		return ChunkRendererRegion.create(world, from, to, subtract);
 	}
 }

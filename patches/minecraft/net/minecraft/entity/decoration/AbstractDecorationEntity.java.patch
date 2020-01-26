@@ -1,0 +1,21 @@
+--- a/net/minecraft/entity/decoration/AbstractDecorationEntity.java
++++ b/net/minecraft/entity/decoration/AbstractDecorationEntity.java
+@@ -21,8 +21,8 @@
+ import net.minecraft.util.math.Vec3d;
+ import net.minecraft.world.World;
+ import org.apache.commons.lang3.Validate;
+-import net.minecraft.entity.ItemEntity;
+ 
++import net.minecraft.entity.ItemEntity;
+ 
+ public abstract class AbstractDecorationEntity extends Entity {
+    protected static final Predicate<Entity> PREDICATE = (p_210144_0_) -> {
+@@ -120,6 +120,8 @@
+                int j1 = (j - 1) / -2;
+                blockpos$mutableblockpos.set(blockpos).setOffset(direction, k + i1).setOffset(Direction.UP, l + j1);
+                BlockState blockstate = this.world.getBlockState(blockpos$mutableblockpos);
++               if (net.minecraft.block.Block.isSolidSmallSquare(this.world, blockpos$mutableblockpos, this.facing))
++                  continue;
+                if (!blockstate.getMaterial().isSolid() && !AbstractRedstoneGateBlock.isRedstoneGate(blockstate)) {
+                   return false;
+                }

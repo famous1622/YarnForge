@@ -1,0 +1,107 @@
+--- a/net/minecraft/structure/Structure.java
++++ b/net/minecraft/structure/Structure.java
+@@ -36,8 +36,8 @@
+ import net.minecraft.util.shape.VoxelSet;
+ import net.minecraft.world.IWorld;
+ import net.minecraft.world.World;
+-import net.minecraft.structure.processor.StructureProcessor;
+ 
++import net.minecraft.structure.processor.StructureProcessor;
+ 
+ public class Structure {
+    private final List<List<Structure.StructureBlockInfo>> blocks = Lists.newArrayList();
+@@ -154,6 +154,11 @@
+       return method_15168(pos, placementIn.getMirror(), placementIn.getRotation(), placementIn.getPosition());
+    }
+ 
++   // FORGE: Add overload accepting Vec3d
++   public static Vec3d transformedVec3d(StructurePlacementData placementIn, Vec3d pos) {
++      return method_15176(pos, placementIn.getMirror(), placementIn.getRotation(), placementIn.getPosition());
++   }
++
+    public void place(IWorld worldIn, BlockPos pos, StructurePlacementData placementIn) {
+       placementIn.method_15132();
+       this.method_15178(worldIn, pos, placementIn);
+@@ -179,7 +184,7 @@
+             int i1 = Integer.MIN_VALUE;
+             int j1 = Integer.MIN_VALUE;
+ 
+-            for(Structure.StructureBlockInfo template$blockinfo : process(worldIn, pos, placementIn, list)) {
++            for(Structure.StructureBlockInfo template$blockinfo : processBlockInfos(this, worldIn, pos, placementIn, list)) {
+                BlockPos blockpos = template$blockinfo.pos;
+                if (mutableboundingbox == null || mutableboundingbox.contains(blockpos)) {
+                   FluidState ifluidstate = placementIn.shouldPlaceFluids() ? worldIn.getFluidState(blockpos) : null;
+@@ -290,7 +295,7 @@
+             }
+ 
+             if (!placementIn.shouldIgnoreEntities()) {
+-               this.method_15179(worldIn, pos, placementIn.getMirror(), placementIn.getRotation(), placementIn.getPosition(), mutableboundingbox);
++               this.addEntitiesToWorld(worldIn, pos, placementIn, placementIn.getMirror(), placementIn.getRotation(), placementIn.getPosition(), placementIn.method_15124());
+             }
+ 
+             return true;
+@@ -319,14 +324,19 @@
+       });
+    }
+ 
++   @Deprecated // FORGE: Add template parameter
+    public static List<Structure.StructureBlockInfo> process(IWorld p_215387_0_, BlockPos p_215387_1_, StructurePlacementData p_215387_2_, List<Structure.StructureBlockInfo> p_215387_3_) {
++      return processBlockInfos(null, p_215387_0_, p_215387_1_, p_215387_2_, p_215387_3_);
++   }
++
++   public static List<Structure.StructureBlockInfo> processBlockInfos(@Nullable Structure template, IWorld p_215387_0_, BlockPos p_215387_1_, StructurePlacementData p_215387_2_, List<Structure.StructureBlockInfo> p_215387_3_) {
+       List<Structure.StructureBlockInfo> list = Lists.newArrayList();
+ 
+       for(Structure.StructureBlockInfo template$blockinfo : p_215387_3_) {
+          BlockPos blockpos = method_15171(p_215387_2_, template$blockinfo.pos).add(p_215387_1_);
+          Structure.StructureBlockInfo template$blockinfo1 = new Structure.StructureBlockInfo(blockpos, template$blockinfo.state, template$blockinfo.tag);
+ 
+-         for(Iterator<StructureProcessor> iterator = p_215387_2_.getProcessors().iterator(); template$blockinfo1 != null && iterator.hasNext(); template$blockinfo1 = iterator.next().process(p_215387_0_, p_215387_1_, template$blockinfo, template$blockinfo1, p_215387_2_)) {
++         for(Iterator<StructureProcessor> iterator = p_215387_2_.getProcessors().iterator(); template$blockinfo1 != null && iterator.hasNext(); template$blockinfo1 = iterator.next().process(p_215387_0_, p_215387_1_, template$blockinfo, template$blockinfo1, p_215387_2_, template)) {
+             ;
+          }
+ 
+@@ -338,13 +348,41 @@
+       return list;
+    }
+ 
++   // FORGE: Add processing for entities
++   public static List<Structure.StructureEntityInfo> processEntityInfos(@Nullable Structure template, IWorld p_215387_0_, BlockPos p_215387_1_, StructurePlacementData p_215387_2_, List<Structure.StructureEntityInfo> p_215387_3_) {
++      List<Structure.StructureEntityInfo> list = Lists.newArrayList();
++
++      for(Structure.StructureEntityInfo entityInfo : p_215387_3_) {
++         Vec3d pos = transformedVec3d(p_215387_2_, entityInfo.pos).add(new Vec3d(p_215387_1_));
++         BlockPos blockpos = method_15171(p_215387_2_, entityInfo.blockPos).add(p_215387_1_);
++         Structure.StructureEntityInfo entityInfo1 = new Structure.StructureEntityInfo(pos, blockpos, entityInfo.tag);
++
++         for(Iterator<StructureProcessor> iterator = p_215387_2_.getProcessors().iterator(); entityInfo1 != null && iterator.hasNext(); entityInfo1 = iterator.next().processEntity(p_215387_0_, p_215387_1_, entityInfo, entityInfo1, p_215387_2_, template)) {
++            ;
++         }
++
++         if (entityInfo1 != null) {
++            list.add(entityInfo1);
++         }
++      }
++
++      return list;
++   }
++
++   @Deprecated // FORGE: Add PlacementSettings parameter (below) to pass to entity processors
+    private void method_15179(IWorld p_207668_1_, BlockPos p_207668_2_, BlockMirror p_207668_3_, BlockRotation p_207668_4_, BlockPos p_207668_5_, @Nullable MutableIntBoundingBox p_207668_6_) {
+-      for(Structure.StructureEntityInfo template$entityinfo : this.entities) {
++      addEntitiesToWorld(p_207668_1_, p_207668_2_, new StructurePlacementData().setMirrored(p_207668_3_).setRotation(p_207668_4_).setPosition(p_207668_5_).setBoundingBox(p_207668_6_), p_207668_3_, p_207668_4_, p_207668_2_, p_207668_6_);
++   }
++
++   private void addEntitiesToWorld(IWorld p_207668_1_, BlockPos p_207668_2_, StructurePlacementData placementIn, BlockMirror p_207668_3_, BlockRotation p_207668_4_, BlockPos p_207668_5_, @Nullable MutableIntBoundingBox p_207668_6_) {
++      for(Structure.StructureEntityInfo template$entityinfo : processEntityInfos(this, p_207668_1_, p_207668_2_, placementIn, this.entities)) {
+          BlockPos blockpos = method_15168(template$entityinfo.blockPos, p_207668_3_, p_207668_4_, p_207668_5_).add(p_207668_2_);
++         blockpos = template$entityinfo.blockPos; // FORGE: Position will have already been transformed by processEntityInfos
+          if (p_207668_6_ == null || p_207668_6_.contains(blockpos)) {
+             CompoundTag compoundnbt = template$entityinfo.tag;
+             Vec3d vec3d = method_15176(template$entityinfo.pos, p_207668_3_, p_207668_4_, p_207668_5_);
+-            Vec3d vec3d1 = vec3d.add((double)p_207668_2_.getX(), (double)p_207668_2_.getY(), (double)p_207668_2_.getZ());
++            vec3d = vec3d.add((double)p_207668_2_.getX(), (double)p_207668_2_.getY(), (double)p_207668_2_.getZ());
++            Vec3d vec3d1 = template$entityinfo.pos; // FORGE: Position will have already been transformed by processEntityInfos
+             ListTag listnbt = new ListTag();
+             listnbt.add(new DoubleTag(vec3d1.x));
+             listnbt.add(new DoubleTag(vec3d1.y));

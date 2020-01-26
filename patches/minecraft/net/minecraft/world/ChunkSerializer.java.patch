@@ -1,0 +1,41 @@
+--- a/net/minecraft/world/ChunkSerializer.java
++++ b/net/minecraft/world/ChunkSerializer.java
+@@ -142,6 +142,7 @@
+          ichunk = new WorldChunk(worldIn.getWorld(), pos, abiome, upgradedata, iticklist, iticklist1, i2, achunksection, (p_222648_1_) -> {
+             writeEntities(compoundnbt, p_222648_1_);
+          });
++         if (compoundnbt.containsKey("ForgeCaps")) ((WorldChunk)ichunk).readCapsFromNBT(compoundnbt.getCompound("ForgeCaps"));
+       } else {
+          ProtoChunk chunkprimer = new ProtoChunk(pos, upgradedata, achunksection, chunkprimerticklist1, chunkprimerticklist);
+          ichunk = chunkprimer;
+@@ -309,12 +310,22 @@
+          for(int k = 0; k < chunk.getEntitySectionArray().length; ++k) {
+             for(Entity entity : chunk.getEntitySectionArray()[k]) {
+                CompoundTag compoundnbt3 = new CompoundTag();
++               try {
+                if (entity.saveToTag(compoundnbt3)) {
+                   chunk.setUnsaved(true);
+                   listnbt2.add(compoundnbt3);
+                }
++               } catch (Exception e) {
++                  LogManager.getLogger().error("An Entity type {} has thrown an exception trying to write state. It will not persist. Report this to the mod author", entity.getType(), e);
++               }
+             }
+          }
++         try {
++             final CompoundTag capTag = chunk.writeCapsToNBT();
++             if (capTag != null) compoundnbt1.put("ForgeCaps", capTag);
++         } catch (Exception exception) {
++             LogManager.getLogger().error("A capability provider has thrown an exception trying to write state. It will not persist. Report this to the mod author", exception);
++         }
+       } else {
+          ProtoChunk chunkprimer = (ProtoChunk)chunkIn;
+          listnbt2.addAll(chunkprimer.getEntities());
+@@ -358,6 +369,7 @@
+ 
+       compoundnbt1.put("Heightmaps", compoundnbt6);
+       compoundnbt1.put("Structures", writeStructures(chunkpos, chunkIn.getStructureStarts(), chunkIn.getStructureReferences()));
++
+       return compoundnbt;
+    }
+ 

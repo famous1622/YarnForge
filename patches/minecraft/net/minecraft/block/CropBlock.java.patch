@@ -1,0 +1,47 @@
+--- a/net/minecraft/block/CropBlock.java
++++ b/net/minecraft/block/CropBlock.java
+@@ -13,7 +13,6 @@
+ import net.minecraft.util.math.MathHelper;
+ import net.minecraft.entity.EntityContext;
+ import net.minecraft.util.shape.VoxelShape;
+-import net.minecraft.world.GameRules;
+ import net.minecraft.world.BlockView;
+ import net.minecraft.world.ViewableWorld;
+ import net.minecraft.world.World;
+@@ -57,12 +56,14 @@
+ 
+    public void onScheduledTick(BlockState state, World worldIn, BlockPos pos, Random random) {
+       super.onScheduledTick(state, worldIn, pos, random);
++      if (!worldIn.isAreaLoaded(pos, 1)) return; // Forge: prevent loading unloaded chunks when checking neighbor's light
+       if (worldIn.getLightLevel(pos, 0) >= 9) {
+          int i = this.getAge(state);
+          if (i < this.getMaxAge()) {
+             float f = getAvailableMoisture(this, worldIn, pos);
+-            if (random.nextInt((int)(25.0F / f) + 1) == 0) {
++            if (net.minecraftforge.common.ForgeHooks.onCropsGrowPre(worldIn, pos, state, random.nextInt((int)(25.0F / f) + 1) == 0)) {
+                worldIn.setBlockState(pos, this.withAge(i + 1), 2);
++               net.minecraftforge.common.ForgeHooks.onCropsGrowPost(worldIn, pos, state);
+             }
+          }
+       }
+@@ -91,9 +92,9 @@
+          for(int j = -1; j <= 1; ++j) {
+             float f1 = 0.0F;
+             BlockState blockstate = worldIn.getBlockState(blockpos.add(i, 0, j));
+-            if (blockstate.getBlock() == Blocks.FARMLAND) {
++            if (blockstate.canSustainPlant(worldIn, blockpos.add(i, 0, j), minecraft.util.math.Direction.UP, (net.minecraftforge.common.IPlantable)blockIn)) {
+                f1 = 1.0F;
+-               if (blockstate.get(FarmlandBlock.MOISTURE) > 0) {
++               if (blockstate.isFertile(worldIn, blockpos.add(i, 0, j))) {
+                   f1 = 3.0F;
+                }
+             }
+@@ -129,7 +130,7 @@
+    }
+ 
+    public void onEntityCollision(BlockState state, World worldIn, BlockPos pos, Entity entityIn) {
+-      if (entityIn instanceof RavagerEntity && worldIn.getGameRules().getBoolean(GameRules.MOB_GRIEFING)) {
++      if (entityIn instanceof RavagerEntity && net.minecraftforge.event.ForgeEventFactory.getMobGriefingEvent(worldIn, entityIn)) {
+          worldIn.breakBlock(pos, true);
+       }
+ 

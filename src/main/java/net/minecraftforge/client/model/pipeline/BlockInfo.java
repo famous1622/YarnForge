@@ -22,12 +22,12 @@ package net.minecraftforge.client.model.pipeline;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
-import net.minecraft.client.renderer.color.BlockColors;
-import net.minecraft.util.Direction;
+import net.minecraft.client.color.block.BlockColors;
+import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
-import net.minecraft.util.math.shapes.VoxelShapes;
-import net.minecraft.world.IEnviromentBlockReader;
+import net.minecraft.util.shape.VoxelShapes;
+import net.minecraft.world.ExtendedBlockView;
 
 public class BlockInfo {
 	private static final Direction[] SIDES = Direction.values();
@@ -40,7 +40,7 @@ public class BlockInfo {
 	private final float[][][][] blockLight = new float[3][2][2][2];
 	private final float[][][] ao = new float[3][3][3];
 	private final int[] packed = new int[7];
-	private IEnviromentBlockReader world;
+	private ExtendedBlockView world;
 	private BlockState state;
 	private BlockPos blockPos;
 	private boolean full;
@@ -57,12 +57,12 @@ public class BlockInfo {
 	public int getColorMultiplier(int tint) {
 		if (cachedTint == tint) return cachedMultiplier;
 		cachedTint = tint;
-		cachedMultiplier = colors.getColor(state, world, blockPos, tint);
+		cachedMultiplier = colors.getColorMultiplier(state, world, blockPos, tint);
 		return cachedMultiplier;
 	}
 
 	public void updateShift() {
-		Vec3d offset = state.getOffset(world, blockPos);
+		Vec3d offset = state.getOffsetPos(world, blockPos);
 		shx = (float) offset.x;
 		shy = (float) offset.y;
 		shz = (float) offset.z;
@@ -91,11 +91,11 @@ public class BlockInfo {
 				for (int z = 0; z <= 2; z++) {
 					BlockPos pos = blockPos.add(x - 1, y - 1, z - 1);
 					BlockState state = world.getBlockState(pos);
-					t[x][y][z] = state.getOpacity(world, pos) < 15;
-					int brightness = state.getPackedLightmapCoords(world, pos);
+					t[x][y][z] = state.getLightSubtracted(world, pos) < 15;
+					int brightness = state.getBlockBrightness(world, pos);
 					s[x][y][z] = (brightness >> 0x14) & 0xF;
 					b[x][y][z] = (brightness >> 0x04) & 0xF;
-					ao[x][y][z] = state.func_215703_d(world, pos);
+					ao[x][y][z] = state.getAmbientOcclusionLightLevel(world, pos);
 				}
 			}
 		}
@@ -103,13 +103,13 @@ public class BlockInfo {
 			BlockPos pos = blockPos.offset(side);
 			BlockState state = world.getBlockState(pos);
 
-			BlockState thisStateShape = this.state.isSolid() && this.state.func_215691_g() ? this.state : Blocks.AIR.getDefaultState();
-			BlockState otherStateShape = state.isSolid() && state.func_215691_g() ? state : Blocks.AIR.getDefaultState();
+			BlockState thisStateShape = this.state.isOpaque() && this.state.hasSidedTransparency() ? this.state : Blocks.AIR.getDefaultState();
+			BlockState otherStateShape = state.isOpaque() && state.hasSidedTransparency() ? state : Blocks.AIR.getDefaultState();
 
-			if (state.getOpacity(world, blockPos) == 15 || VoxelShapes.func_223416_b(thisStateShape.func_215702_a(world, blockPos, side), otherStateShape.func_215702_a(world, pos, side.getOpposite()))) {
-				int x = side.getXOffset() + 1;
-				int y = side.getYOffset() + 1;
-				int z = side.getZOffset() + 1;
+			if (state.getLightSubtracted(world, blockPos) == 15 || VoxelShapes.method_20713(thisStateShape.getCullShape(world, blockPos, side), otherStateShape.getCullShape(world, pos, side.getOpposite()))) {
+				int x = side.getOffsetX() + 1;
+				int y = side.getOffsetY() + 1;
+				int z = side.getOffsetZ() + 1;
 				s[x][y][z] = Math.max(s[1][1][1] - 1, s[x][y][z]);
 				b[x][y][z] = Math.max(b[1][1][1] - 1, b[x][y][z]);
 			}
@@ -153,20 +153,20 @@ public class BlockInfo {
 	}
 
 	public void updateFlatLighting() {
-		full = Block.isOpaque(state.getCollisionShape(world, blockPos));
-		packed[0] = state.getPackedLightmapCoords(world, blockPos);
+		full = Block.isShapeFullCube(state.getCollisionShape(world, blockPos));
+		packed[0] = state.getBlockBrightness(world, blockPos);
 
 		for (Direction side : SIDES) {
 			int i = side.ordinal() + 1;
-			packed[i] = state.getPackedLightmapCoords(world, blockPos.offset(side));
+			packed[i] = state.getBlockBrightness(world, blockPos.offset(side));
 		}
 	}
 
-	public IEnviromentBlockReader getWorld() {
+	public ExtendedBlockView getWorld() {
 		return world;
 	}
 
-	public void setWorld(IEnviromentBlockReader world) {
+	public void setWorld(ExtendedBlockView world) {
 		this.world = world;
 		cachedTint = -1;
 		cachedMultiplier = -1;

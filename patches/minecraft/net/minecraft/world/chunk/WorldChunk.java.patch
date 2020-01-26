@@ -1,0 +1,240 @@
+--- a/net/minecraft/world/chunk/WorldChunk.java
++++ b/net/minecraft/world/chunk/WorldChunk.java
+@@ -20,7 +20,6 @@
+ import net.minecraft.block.Block;
+ import net.minecraft.block.BlockState;
+ import net.minecraft.block.Blocks;
+-import net.minecraft.block.BlockEntityProvider;
+ import net.minecraft.util.crash.CrashReport;
+ import net.minecraft.util.crash.CrashReportSection;
+ import net.minecraft.util.crash.CrashException;
+@@ -59,7 +58,7 @@
+ 
+ import net.minecraft.world.ChunkTickScheduler;
+ 
+-public class WorldChunk implements Chunk {
++public class WorldChunk extends net.minecraftforge.common.capabilities.CapabilityProvider<WorldChunk> implements Chunk, net.minecraftforge.common.extensions.IForgeChunk {
+    private static final Logger LOGGER = LogManager.getLogger();
+    public static final ChunkSection EMPTY_SECTION = null;
+    private final ChunkSection[] sections = new ChunkSection[16];
+@@ -92,6 +91,7 @@
+    }
+ 
+    public WorldChunk(World p_i49946_1_, ChunkPos p_i49946_2_, Biome[] p_i49946_3_, UpgradeData p_i49946_4_, TickScheduler<Block> p_i49946_5_, TickScheduler<Fluid> p_i49946_6_, long p_i49946_7_, @Nullable ChunkSection[] p_i49946_9_, @Nullable Consumer<WorldChunk> p_i49946_10_) {
++      super(WorldChunk.class);
+       this.entitySections = new TypeFilterableList[16];
+       this.world = p_i49946_1_;
+       this.pos = p_i49946_2_;
+@@ -119,6 +119,7 @@
+             LOGGER.warn("Could not set level chunk sections, array length is {} instead of {}", p_i49946_9_.length, this.sections.length);
+          }
+       }
++      this.gatherCapabilities();
+ 
+    }
+ 
+@@ -264,14 +265,14 @@
+ 
+          if (!this.world.isClient) {
+             blockstate.onBlockRemoved(this.world, pos, state, isMoving);
+-         } else if (block1 != block && block1 instanceof BlockEntityProvider) {
++         } else if (block1 != block && blockstate.hasTileEntity()) {
+             this.world.removeBlockEntity(pos);
+          }
+ 
+          if (chunksection.getBlockState(i, j & 15, k).getBlock() != block) {
+             return null;
+          } else {
+-            if (block1 instanceof BlockEntityProvider) {
++            if (blockstate.hasTileEntity()) {
+                BlockEntity tileentity = this.getBlockEntity(pos, WorldChunk.CreationType.CHECK);
+                if (tileentity != null) {
+                   tileentity.resetBlock();
+@@ -282,10 +283,10 @@
+                state.onBlockAdded(this.world, pos, blockstate, isMoving);
+             }
+ 
+-            if (block instanceof BlockEntityProvider) {
++            if (state.hasTileEntity()) {
+                BlockEntity tileentity1 = this.getBlockEntity(pos, WorldChunk.CreationType.CHECK);
+                if (tileentity1 == null) {
+-                  tileentity1 = ((BlockEntityProvider)block).createBlockEntity(this.world);
++                  tileentity1 = state.createTileEntity(this.world);
+                   this.world.setBlockEntity(pos, tileentity1);
+                } else {
+                   tileentity1.resetBlock();
+@@ -325,11 +326,13 @@
+          k = this.entitySections.length - 1;
+       }
+ 
++      net.minecraftforge.common.MinecraftForge.EVENT_BUS.post(new net.minecraftforge.event.entity.EntityEvent.EnteringChunk(entityIn, this.pos.x, this.pos.z, entityIn.chunkX, entityIn.chunkZ));
+       entityIn.updateNeeded = true;
+       entityIn.chunkX = this.pos.x;
+       entityIn.chunkY = k;
+       entityIn.chunkZ = this.pos.z;
+       this.entitySections[k].add(entityIn);
++      this.markDirty(); // Forge - ensure chunks are marked to save after an entity add
+    }
+ 
+    public void setHeightmap(Heightmap.Type type, long[] data) {
+@@ -350,6 +353,7 @@
+       }
+ 
+       this.entitySections[index].remove(entityIn);
++      this.markDirty(); // Forge - ensure chunks are marked to save after entity removals
+    }
+ 
+    public int sampleHeightmap(Heightmap.Type heightmapType, int x, int z) {
+@@ -360,7 +364,7 @@
+    private BlockEntity createBlockEntity(BlockPos pos) {
+       BlockState blockstate = this.getBlockState(pos);
+       Block block = blockstate.getBlock();
+-      return !block.hasBlockEntity() ? null : ((BlockEntityProvider)block).createBlockEntity(this.world);
++      return !blockstate.hasTileEntity() ? null : blockstate.createTileEntity(this.world);
+    }
+ 
+    @Nullable
+@@ -371,6 +375,10 @@
+    @Nullable
+    public BlockEntity getBlockEntity(BlockPos pos, WorldChunk.CreationType creationMode) {
+       BlockEntity tileentity = this.blockEntities.get(pos);
++      if (tileentity != null && tileentity.isInvalid()) {
++         blockEntities.remove(pos);
++         tileentity = null;
++      }
+       if (tileentity == null) {
+          CompoundTag compoundnbt = this.pendingBlockEntityTags.remove(pos);
+          if (compoundnbt != null) {
+@@ -386,9 +394,6 @@
+             tileentity = this.createBlockEntity(pos);
+             this.world.setBlockEntity(pos, tileentity);
+          }
+-      } else if (tileentity.isInvalid()) {
+-         this.blockEntities.remove(pos);
+-         return null;
+       }
+ 
+       return tileentity;
+@@ -403,7 +408,8 @@
+    }
+ 
+    public void setBlockEntity(BlockPos pos, BlockEntity tileEntityIn) {
+-      if (this.getBlockState(pos).getBlock() instanceof BlockEntityProvider) {
++      if (this.getBlockState(pos).hasTileEntity()) {
++         if (tileEntityIn.getWorld() != this.world) //Forge don't call unless it's changed, could screw up bad mods.
+          tileEntityIn.setWorld(this.world);
+          tileEntityIn.setPos(pos);
+          tileEntityIn.validate();
+@@ -423,9 +429,14 @@
+    public CompoundTag method_20598(BlockPos p_223134_1_) {
+       BlockEntity tileentity = this.getBlockEntity(p_223134_1_);
+       if (tileentity != null && !tileentity.isInvalid()) {
++         try {
+          CompoundTag compoundnbt1 = tileentity.toTag(new CompoundTag());
+          compoundnbt1.putBoolean("keepPacked", false);
+          return compoundnbt1;
++         } catch (Exception e) {
++            LogManager.getLogger().error("A TileEntity type {} has thrown an exception trying to write state. It will not persist, Report this to the mod author", tileentity.getClass().getName(), e);
++            return null;
++         }
+       } else {
+          CompoundTag compoundnbt = this.pendingBlockEntityTags.get(p_223134_1_);
+          if (compoundnbt != null) {
+@@ -460,8 +471,8 @@
+    }
+ 
+    public void appendEntities(@Nullable Entity entityIn, Box aabb, List<Entity> listToFill, @Nullable Predicate<? super Entity> filter) {
+-      int i = MathHelper.floor((aabb.minY - 2.0D) / 16.0D);
+-      int j = MathHelper.floor((aabb.maxY + 2.0D) / 16.0D);
++      int i = MathHelper.floor((aabb.minY - this.world.getMaxEntityRadius()) / 16.0D);
++      int j = MathHelper.floor((aabb.maxY + this.world.getMaxEntityRadius()) / 16.0D);
+       i = MathHelper.clamp(i, 0, this.entitySections.length - 1);
+       j = MathHelper.clamp(j, 0, this.entitySections.length - 1);
+ 
+@@ -488,8 +499,8 @@
+    }
+ 
+    public void appendEntities(@Nullable EntityType<?> p_217313_1_, Box p_217313_2_, List<Entity> p_217313_3_, Predicate<? super Entity> p_217313_4_) {
+-      int i = MathHelper.floor((p_217313_2_.minY - 2.0D) / 16.0D);
+-      int j = MathHelper.floor((p_217313_2_.maxY + 2.0D) / 16.0D);
++      int i = MathHelper.floor((p_217313_2_.minY - this.world.getMaxEntityRadius()) / 16.0D);
++      int j = MathHelper.floor((p_217313_2_.maxY + this.world.getMaxEntityRadius()) / 16.0D);
+       i = MathHelper.clamp(i, 0, this.entitySections.length - 1);
+       j = MathHelper.clamp(j, 0, this.entitySections.length - 1);
+ 
+@@ -504,8 +515,8 @@
+    }
+ 
+    public <T extends Entity> void appendEntities(Class<? extends T> entityClass, Box aabb, List<T> listToFill, @Nullable Predicate<? super T> filter) {
+-      int i = MathHelper.floor((aabb.minY - 2.0D) / 16.0D);
+-      int j = MathHelper.floor((aabb.maxY + 2.0D) / 16.0D);
++      int i = MathHelper.floor((aabb.minY - this.world.getMaxEntityRadius()) / 16.0D);
++      int j = MathHelper.floor((aabb.maxY + this.world.getMaxEntityRadius()) / 16.0D);
+       i = MathHelper.clamp(i, 0, this.entitySections.length - 1);
+       j = MathHelper.clamp(j, 0, this.entitySections.length - 1);
+ 
+@@ -536,6 +547,11 @@
+       };
+       Sets.newHashSet(this.blockEntities.keySet()).stream().filter(predicate).forEach(this.world::removeBlockEntity);
+ 
++      for (BlockEntity tileEntity : blockEntities.values()) {
++         tileEntity.resetBlock();
++         tileEntity.getCachedState();
++      }
++
+       for(int i = 0; i < this.sections.length; ++i) {
+          ChunkSection chunksection = this.sections[i];
+          if ((availableSections & 1 << i) == 0) {
+@@ -601,7 +617,7 @@
+ 
+    public Stream<BlockPos> getLightSourcesStream() {
+       return StreamSupport.stream(BlockPos.iterate(this.pos.getStartX(), 0, this.pos.getStartZ(), this.pos.getEndX(), 255, this.pos.getEndZ()).spliterator(), false).filter((p_217312_1_) -> {
+-         return this.getBlockState(p_217312_1_).getLuminance() != 0;
++         return this.getBlockState(p_217312_1_).getLightValue(getWorld(), p_217312_1_) != 0;
+       });
+    }
+ 
+@@ -706,9 +722,9 @@
+    private BlockEntity loadBlockEntity(BlockPos pos, CompoundTag compound) {
+       BlockEntity tileentity;
+       if ("DUMMY".equals(compound.getString("id"))) {
+-         Block block = this.getBlockState(pos).getBlock();
+-         if (block instanceof BlockEntityProvider) {
+-            tileentity = ((BlockEntityProvider)block).createBlockEntity(this.world);
++         BlockState state = this.getBlockState(pos);
++         if (state.hasTileEntity()) {
++            tileentity = state.createTileEntity(this.world);
+          } else {
+             tileentity = null;
+             LOGGER.warn("Tried to load a DUMMY block entity @ {} but found not block entity block {} at location", pos, this.getBlockState(pos));
+@@ -800,4 +816,30 @@
+       QUEUED,
+       CHECK;
+    }
++
++   /**
++    * <strong>FOR INTERNAL USE ONLY</strong>
++    * <p>
++    * Only public for use in {@link AnvilChunkLoader}.
++    */
++   @java.lang.Deprecated
++   @javax.annotation.Nullable
++   public final CompoundTag writeCapsToNBT() {
++      return this.serializeCaps();
++   }
++
++   /**
++    * <strong>FOR INTERNAL USE ONLY</strong>
++    * <p>
++    * Only public for use in {@link AnvilChunkLoader}.
++    */
++   @java.lang.Deprecated
++   public final void readCapsFromNBT(CompoundTag tag) {
++      this.deserializeCaps(tag);
++   }
++
++   @Override
++   public World getWorldForge() {
++      return getWorld();
++   }
+ }

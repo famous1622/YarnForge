@@ -1,0 +1,24 @@
+--- a/net/minecraft/client/resource/GrassColormapResourceSupplier.java
++++ b/net/minecraft/client/resource/GrassColormapResourceSupplier.java
+@@ -7,10 +7,10 @@
+ import net.minecraft.client.color.world.GrassColors;
+ import net.minecraftforge.api.distmarker.Dist;
+ import net.minecraftforge.api.distmarker.OnlyIn;
++
+ import net.minecraft.client.util.RawTextureDataLoader;
+ import net.minecraft.resource.SinglePreparationResourceReloadListener;
+ 
+-
+ @OnlyIn(Dist.CLIENT)
+ public class GrassColormapResourceSupplier extends SinglePreparationResourceReloadListener<int[]> {
+    private static final Identifier GRASS_COLORMAP_LOC = new Identifier("textures/colormap/grass.png");
+@@ -26,4 +26,9 @@
+    protected void apply(int[] splashList, ResourceManager resourceManagerIn, Profiler profilerIn) {
+       GrassColors.setColorMap(splashList);
+    }
++
++   //@Override //Forge: TODO: Filtered resource reloading
++   public net.minecraftforge.resource.IResourceType getResourceType() {
++      return net.minecraftforge.resource.VanillaResourceType.TEXTURES;
++   }
+ }

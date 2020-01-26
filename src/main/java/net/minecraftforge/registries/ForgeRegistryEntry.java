@@ -23,7 +23,7 @@ import javax.annotation.Nullable;
 
 import com.google.common.reflect.TypeToken;
 
-import net.minecraft.util.ResourceLocation;
+import net.minecraft.util.Identifier;
 
 /**
  * Default implementation of IForgeRegistryEntry, this is necessary to reduce redundant code.
@@ -36,7 +36,7 @@ public abstract class ForgeRegistryEntry<V extends IForgeRegistryEntry<V>> imple
 	private final TypeToken<V> token = new TypeToken<V>(getClass()) {
 	};
 	public final IRegistryDelegate<V> delegate = new RegistryDelegate<>((V) this, (Class<V>) token.getRawType());
-	private ResourceLocation registryName = null;
+	private Identifier registryName = null;
 
 	public final V setRegistryName(String name) {
 		if (getRegistryName() != null) {
@@ -48,7 +48,7 @@ public abstract class ForgeRegistryEntry<V extends IForgeRegistryEntry<V>> imple
 	}
 
 	//Helper functions
-	public final V setRegistryName(ResourceLocation name) {
+	public final V setRegistryName(Identifier name) {
 		return setRegistryName(name.toString());
 	}
 
@@ -57,7 +57,7 @@ public abstract class ForgeRegistryEntry<V extends IForgeRegistryEntry<V>> imple
 	}
 
 	@Nullable
-	public final ResourceLocation getRegistryName() {
+	public final Identifier getRegistryName() {
 		if (delegate.name() != null) return delegate.name();
 		return registryName;
 	}

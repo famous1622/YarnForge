@@ -1,27 +1,27 @@
 --- a/net/minecraft/block/VineBlock.java
 +++ b/net/minecraft/block/VineBlock.java
-@@ -20,7 +20,7 @@
- import net.minecraft.world.IWorldReader;
+@@ -19,7 +19,7 @@
+ import net.minecraft.world.ViewableWorld;
  import net.minecraft.world.World;
  
 -public class VineBlock extends Block {
 +public class VineBlock extends Block implements net.minecraftforge.common.IShearable {
-    public static final BooleanProperty field_176277_a = SixWayBlock.field_196496_z;
-    public static final BooleanProperty field_176273_b = SixWayBlock.field_196488_a;
-    public static final BooleanProperty field_176278_M = SixWayBlock.field_196490_b;
-@@ -154,7 +154,7 @@
-                p_196267_2_.func_217377_a(p_196267_3_, false);
+    public static final BooleanProperty UP = ConnectedPlantBlock.UP;
+    public static final BooleanProperty NORTH = ConnectedPlantBlock.NORTH;
+    public static final BooleanProperty EAST = ConnectedPlantBlock.EAST;
+@@ -153,7 +153,7 @@
+                worldIn.clearBlockState(pos, false);
              }
  
--         } else if (p_196267_2_.field_73012_v.nextInt(4) == 0) {
-+         } else if (p_196267_2_.field_73012_v.nextInt(4) == 0 && p_196267_2_.isAreaLoaded(p_196267_3_, 4)) { // Forge: check area to prevent loading unloaded chunks
-             Direction direction = Direction.func_176741_a(p_196267_4_);
-             BlockPos blockpos = p_196267_3_.func_177984_a();
-             if (direction.func_176740_k().func_176722_c() && !p_196267_1_.func_177229_b(func_176267_a(direction))) {
-@@ -329,4 +329,6 @@
-    public static BooleanProperty func_176267_a(Direction p_176267_0_) {
-       return field_196546_A.get(p_176267_0_);
+-         } else if (worldIn.random.nextInt(4) == 0) {
++         } else if (worldIn.random.nextInt(4) == 0 && worldIn.isAreaLoaded(pos, 4)) { // Forge: check area to prevent loading unloaded chunks
+             Direction direction = Direction.random(random);
+             BlockPos blockpos = pos.up();
+             if (direction.getAxis().isHorizontal() && !state.get(getFacingProperty(direction))) {
+@@ -328,4 +328,6 @@
+    public static BooleanProperty getFacingProperty(Direction side) {
+       return FACING_PROPERTIES.get(side);
     }
 +
-+   @Override public boolean isLadder(BlockState state, IWorldReader world, BlockPos pos, net.minecraft.entity.LivingEntity entity) { return true; }
++   @Override public boolean isLadder(BlockState state, ViewableWorld world, BlockPos pos, net.minecraft.entity.LivingEntity entity) { return true; }
  }

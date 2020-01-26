@@ -25,7 +25,7 @@ import com.google.common.base.Preconditions;
 
 import net.minecraft.block.BlockState;
 import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.util.Direction;
+import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.ChunkPos;
 
@@ -42,7 +42,7 @@ public class BlockPosContext extends PlayerContext {
 	}
 
 	public BlockPosContext(PlayerEntity ep, ChunkPos pos) {
-		this(ep, new BlockPos(pos.getXStart() + 8, 0, pos.getZStart() + 8), null, null);
+		this(ep, new BlockPos(pos.getStartX() + 8, 0, pos.getStartZ() + 8), null, null);
 	}
 
 	@Override

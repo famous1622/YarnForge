@@ -1,0 +1,20 @@
+--- a/net/minecraft/client/gui/MapRenderer.java
++++ b/net/minecraft/client/gui/MapRenderer.java
+@@ -17,8 +17,8 @@
+ import net.minecraft.item.map.MapIcon;
+ import net.minecraftforge.api.distmarker.Dist;
+ import net.minecraftforge.api.distmarker.OnlyIn;
+-import net.minecraft.client.font.TextRenderer;
+ 
++import net.minecraft.client.font.TextRenderer;
+ 
+ @OnlyIn(Dist.CLIENT)
+ public class MapRenderer implements AutoCloseable {
+@@ -120,6 +120,7 @@
+ 
+          for(MapIcon mapdecoration : this.mapState.icons.values()) {
+             if (!noOverlayRendering || mapdecoration.isAlwaysRendered()) {
++               if (mapdecoration.render(k)) { k++; continue; }
+                MapRenderer.this.textureManager.bindTexture(MapRenderer.MAP_ICONS_TEXTURE);
+                GlStateManager.pushMatrix();
+                GlStateManager.translatef(0.0F + (float)mapdecoration.getX() / 2.0F + 64.0F, 0.0F + (float)mapdecoration.getZ() / 2.0F + 64.0F, -0.02F);

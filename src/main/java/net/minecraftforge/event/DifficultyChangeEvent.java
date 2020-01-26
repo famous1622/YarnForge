@@ -19,8 +19,6 @@
 
 package net.minecraftforge.event;
 
-import net.minecraftforge.common.ForgeHooks;
-import net.minecraftforge.common.MinecraftForge;
 
 import net.minecraft.world.Difficulty;
 

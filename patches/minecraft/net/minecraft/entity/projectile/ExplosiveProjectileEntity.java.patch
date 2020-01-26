@@ -1,0 +1,21 @@
+--- a/net/minecraft/entity/projectile/ExplosiveProjectileEntity.java
++++ b/net/minecraft/entity/projectile/ExplosiveProjectileEntity.java
+@@ -18,8 +18,8 @@
+ import net.minecraft.world.World;
+ import net.minecraftforge.api.distmarker.Dist;
+ import net.minecraftforge.api.distmarker.OnlyIn;
+-import net.minecraft.entity.ProjectileUtil;
+ 
++import net.minecraft.entity.ProjectileUtil;
+ 
+ public abstract class ExplosiveProjectileEntity extends Entity {
+    public LivingEntity owner;
+@@ -81,7 +81,7 @@
+ 
+          ++this.ticks;
+          HitResult raytraceresult = ProjectileUtil.getCollision(this, true, this.ticks >= 25, this.owner, RayTraceContext.ShapeType.COLLIDER);
+-         if (raytraceresult.getType() != HitResult.Type.MISS) {
++         if (raytraceresult.getType() != HitResult.Type.MISS && !net.minecraftforge.event.ForgeEventFactory.onProjectileImpact(this, raytraceresult)) {
+             this.onCollision(raytraceresult);
+          }
+ 

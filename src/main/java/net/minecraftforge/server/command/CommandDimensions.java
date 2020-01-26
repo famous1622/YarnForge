@@ -27,26 +27,26 @@ import java.util.stream.Collectors;
 
 import com.mojang.brigadier.builder.ArgumentBuilder;
 
-import net.minecraft.command.CommandSource;
-import net.minecraft.command.Commands;
-import net.minecraft.util.text.StringTextComponent;
-import net.minecraft.util.text.TranslationTextComponent;
+import net.minecraft.server.command.ServerCommandSource;
+import net.minecraft.server.command.CommandManager;
+import net.minecraft.text.LiteralText;
+import net.minecraft.text.TranslatableText;
 import net.minecraft.world.dimension.DimensionType;
 
 public class CommandDimensions {
-	static ArgumentBuilder<CommandSource, ?> register() {
-		return Commands.literal("dimensions")
+	static ArgumentBuilder<ServerCommandSource, ?> register() {
+		return CommandManager.literal("dimensions")
 				.requires(cs -> cs.hasPermissionLevel(0)) //permission
 				.executes(ctx -> {
-					ctx.getSource().sendFeedback(new TranslationTextComponent("commands.forge.dimensions.list"), true);
+					ctx.getSource().sendFeedback(new TranslatableText("commands.forge.dimensions.list"), true);
 					Map<String, List<String>> types = new HashMap<>();
 					for (DimensionType dim : DimensionType.getAll()) {
 						String key = dim.getModType() == null ? "Vanilla" : dim.getModType().getRegistryName().toString();
-						types.computeIfAbsent(key, k -> new ArrayList<>()).add(DimensionType.getKey(dim).toString());
+						types.computeIfAbsent(key, k -> new ArrayList<>()).add(DimensionType.getId(dim).toString());
 					}
 
 					types.keySet().stream().sorted().forEach(key -> {
-						ctx.getSource().sendFeedback(new StringTextComponent(key + ": " + types.get(key).stream().sorted().collect(Collectors.joining(", "))), true);
+						ctx.getSource().sendFeedback(new LiteralText(key + ": " + types.get(key).stream().sorted().collect(Collectors.joining(", "))), true);
 					});
 					return 0;
 				});

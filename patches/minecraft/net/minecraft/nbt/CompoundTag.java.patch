@@ -1,0 +1,26 @@
+--- a/net/minecraft/nbt/CompoundTag.java
++++ b/net/minecraft/nbt/CompoundTag.java
+@@ -72,6 +72,7 @@
+ 
+    @Nullable
+    public Tag put(String key, Tag p_218657_2_) {
++      if (p_218657_2_ == null) throw new IllegalArgumentException("Invalid null NBT value with key " + key);
+       return this.tags.put(key, p_218657_2_);
+    }
+ 
+@@ -390,6 +391,7 @@
+    }
+ 
+    private static byte readByte(DataInput input, PositionTracker sizeTracker) throws IOException {
++      sizeTracker.add(8);
+       return input.readByte();
+    }
+ 
+@@ -398,6 +400,7 @@
+    }
+ 
+    static Tag createTag(byte id, String key, DataInput input, int depth, PositionTracker sizeTracker) throws IOException {
++      sizeTracker.add(32); //Forge: 4 extra bytes for the object allocation.
+       Tag inbt = Tag.createTag(id);
+ 
+       try {

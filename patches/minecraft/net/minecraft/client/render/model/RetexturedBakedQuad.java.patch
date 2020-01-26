@@ -1,0 +1,30 @@
+--- a/net/minecraft/client/render/model/RetexturedBakedQuad.java
++++ b/net/minecraft/client/render/model/RetexturedBakedQuad.java
+@@ -10,17 +10,22 @@
+    private final Sprite spriteRetextured;
+ 
+    public RetexturedBakedQuad(BakedQuad quad, Sprite textureIn) {
+-      super(Arrays.copyOf(quad.getVertexData(), quad.getVertexData().length), quad.colorIndex, BakedQuadFactory.method_3467(quad.getVertexData()), quad.getSprite());
++      super(Arrays.copyOf(quad.getVertexData(), quad.getVertexData().length), quad.colorIndex, BakedQuadFactory.method_3467(quad.getVertexData()), quad.getSprite(), quad.shouldApplyDiffuseLighting(), quad.getFormat());
+       this.spriteRetextured = textureIn;
+       this.recalculateUvs();
+    }
+ 
+    private void recalculateUvs() {
+       for(int i = 0; i < 4; ++i) {
+-         int j = 7 * i;
+-         this.vertexData[j + 4] = Float.floatToRawIntBits(this.spriteRetextured.getU((double)this.sprite.getXFromU(Float.intBitsToFloat(this.vertexData[j + 4]))));
+-         this.vertexData[j + 4 + 1] = Float.floatToRawIntBits(this.spriteRetextured.getV((double)this.sprite.getYFromV(Float.intBitsToFloat(this.vertexData[j + 4 + 1]))));
++          int j = format.getVertexSizeInteger() * i;
++          int uvIndex = format.getUvOffset(0) / 4;
++          this.vertexData[j + uvIndex] = Float.floatToRawIntBits(this.spriteRetextured.getU((double)this.sprite.getXFromU(Float.intBitsToFloat(this.vertexData[j + uvIndex]))));
++          this.vertexData[j + uvIndex + 1] = Float.floatToRawIntBits(this.spriteRetextured.getV((double)this.sprite.getYFromV(Float.intBitsToFloat(this.vertexData[j + uvIndex + 1]))));
+       }
+-
+    }
++   
++   @Override
++   public Sprite getSprite() {
++      return spriteRetextured;
++    }
+ }

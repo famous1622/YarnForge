@@ -22,13 +22,13 @@ package net.minecraftforge.common.property;
 import net.minecraftforge.client.model.data.ModelProperty;
 import net.minecraftforge.common.model.IModelState;
 
-import net.minecraft.state.BooleanProperty;
+import net.minecraft.state.property.BooleanProperty;
 
 public class Properties {
 	/**
 	 * Property indicating if the model should be rendered in the static renderer or in the TESR. AnimationTESR sets it to false.
 	 */
-	public static final BooleanProperty StaticProperty = BooleanProperty.create("static");
+	public static final BooleanProperty StaticProperty = BooleanProperty.of("static");
 
 	/**
 	 * Property holding the IModelState used for animating the model in the TESR.

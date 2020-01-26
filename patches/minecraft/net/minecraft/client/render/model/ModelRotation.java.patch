@@ -1,0 +1,21 @@
+--- a/net/minecraft/client/render/model/ModelRotation.java
++++ b/net/minecraft/client/render/model/ModelRotation.java
+@@ -12,7 +12,7 @@
+ import net.minecraftforge.api.distmarker.OnlyIn;
+ 
+ @OnlyIn(Dist.CLIENT)
+-public enum ModelRotation implements ModelBakeSettings {
++public enum ModelRotation implements ModelBakeSettings, net.minecraftforge.common.model.IModelState, net.minecraftforge.common.model.ITransformation {
+    X0_Y0(0, 0),
+    X0_Y90(0, 90),
+    X0_Y180(0, 180),
+@@ -101,4 +101,9 @@
+    public static ModelRotation get(int x, int y) {
+       return BY_INDEX.get(getIndex(MathHelper.floorMod(x, 360), MathHelper.floorMod(y, 360)));
+    }
++
++   public java.util.Optional<net.minecraftforge.common.model.TRSRTransformation> apply(java.util.Optional<? extends net.minecraftforge.common.model.IModelPart> part) { return net.minecraftforge.client.ForgeHooksClient.applyTransform(this, part); }
++   public javax.vecmath.Matrix4f getMatrixVec() { return net.minecraftforge.common.model.TRSRTransformation.from(this).getMatrixVec(); }
++   public Direction rotateTransform(Direction facing) { return apply(facing); }
++   public int rotate(Direction facing, int vertexIndex) { return method_4706(facing, vertexIndex); }
+ }

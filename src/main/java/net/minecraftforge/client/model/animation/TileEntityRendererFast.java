@@ -22,15 +22,14 @@ package net.minecraftforge.client.model.animation;
 import com.mojang.blaze3d.platform.GlStateManager;
 import org.lwjgl.opengl.GL11;
 
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.BufferBuilder;
-import net.minecraft.client.renderer.RenderHelper;
-import net.minecraft.client.renderer.Tessellator;
-import net.minecraft.client.renderer.texture.AtlasTexture;
-import net.minecraft.client.renderer.tileentity.TileEntityRenderer;
-import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
-import net.minecraft.client.renderer.vertex.VertexFormat;
-import net.minecraft.tileentity.TileEntity;
+import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.render.BufferBuilder;
+import net.minecraft.client.render.GuiLighting;
+import net.minecraft.client.render.Tessellator;
+import net.minecraft.client.texture.SpriteAtlasTexture;
+import net.minecraft.client.render.block.entity.BlockEntityRenderer;
+import net.minecraft.client.render.VertexFormats;
+import net.minecraft.block.entity.BlockEntity;
 
 /**
  * A special case {@link TileGameRenderer} which can be batched with other
@@ -52,31 +51,31 @@ import net.minecraft.tileentity.TileEntity;
  *
  * @param <T> The type of {@link TileEntity} being rendered.
  */
-public abstract class TileEntityRendererFast<T extends TileEntity> extends TileEntityRenderer<T> {
+public abstract class TileEntityRendererFast<T extends BlockEntity> extends BlockEntityRenderer<T> {
 	@Override
 	public final void render(T te, double x, double y, double z, float partialTicks, int destroyStage) {
 		Tessellator tessellator = Tessellator.getInstance();
-		BufferBuilder buffer = tessellator.getBuffer();
-		this.bindTexture(AtlasTexture.LOCATION_BLOCKS_TEXTURE);
-		RenderHelper.disableStandardItemLighting();
+		BufferBuilder buffer = tessellator.getBufferBuilder();
+		this.bindTexture(SpriteAtlasTexture.BLOCK_ATLAS_TEX);
+		GuiLighting.disable();
 		GlStateManager.blendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
 		GlStateManager.enableBlend();
 		GlStateManager.disableCull();
 
-		if (Minecraft.isAmbientOcclusionEnabled()) {
+		if (MinecraftClient.isAmbientOcclusionEnabled()) {
 			GlStateManager.shadeModel(GL11.GL_SMOOTH);
 		} else {
 			GlStateManager.shadeModel(GL11.GL_FLAT);
 		}
 
-		buffer.begin(GL11.GL_QUADS, DefaultVertexFormats.BLOCK);
+		buffer.begin(GL11.GL_QUADS, VertexFormats.POSITION_COLOR_UV_LMAP);
 
 		renderTileEntityFast(te, x, y, z, partialTicks, destroyStage, buffer);
-		buffer.setTranslation(0, 0, 0);
+		buffer.setOffset(0, 0, 0);
 
 		tessellator.draw();
 
-		RenderHelper.enableStandardItemLighting();
+		GuiLighting.enable();
 	}
 
 	/**

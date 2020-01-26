@@ -26,14 +26,14 @@ import org.jline.reader.LineReaderBuilder;
 import org.jline.reader.UserInterruptException;
 import org.jline.terminal.Terminal;
 
-import net.minecraft.server.dedicated.DedicatedServer;
+import net.minecraft.server.dedicated.MinecraftDedicatedServer;
 
 public final class TerminalHandler {
 
 	private TerminalHandler() {
 	}
 
-	public static boolean handleCommands(DedicatedServer server) {
+	public static boolean handleCommands(MinecraftDedicatedServer server) {
 		final Terminal terminal = TerminalConsoleAppender.getTerminal();
 		if (terminal == null) {
 			return false;
@@ -51,7 +51,7 @@ public final class TerminalHandler {
 
 		try {
 			String line;
-			while (!server.isServerStopped() && server.isServerRunning()) {
+			while (!server.isStopped() && server.isRunning()) {
 				try {
 					line = reader.readLine("> ");
 				} catch (EndOfFileException ignored) {
@@ -65,11 +65,11 @@ public final class TerminalHandler {
 
 				line = line.trim();
 				if (!line.isEmpty()) {
-					server.handleConsoleInput(line, server.getCommandSource());
+					server.enqueueCommand(line, server.getCommandSource());
 				}
 			}
 		} catch (UserInterruptException e) {
-			server.initiateShutdown(true);
+			server.stop(true);
 		} finally {
 			TerminalConsoleAppender.setReader(null);
 		}

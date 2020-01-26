@@ -19,8 +19,6 @@
 
 package net.minecraftforge.fml.javafmlmod;
 
-import static net.minecraftforge.fml.Logging.LOADING;
-import static net.minecraftforge.fml.Logging.SCAN;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;

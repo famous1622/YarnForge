@@ -2,13 +2,13 @@
 +++ b/net/minecraft/block/NetherWartBlock.java
 @@ -31,9 +31,10 @@
  
-    public void func_196267_b(BlockState p_196267_1_, World p_196267_2_, BlockPos p_196267_3_, Random p_196267_4_) {
-       int i = p_196267_1_.func_177229_b(field_176486_a);
--      if (i < 3 && p_196267_4_.nextInt(10) == 0) {
-+      if (i < 3 && net.minecraftforge.common.ForgeHooks.onCropsGrowPre(p_196267_2_, p_196267_3_, p_196267_1_, p_196267_4_.nextInt(10) == 0)) {
-          p_196267_1_ = p_196267_1_.func_206870_a(field_176486_a, Integer.valueOf(i + 1));
-          p_196267_2_.func_180501_a(p_196267_3_, p_196267_1_, 2);
-+         net.minecraftforge.common.ForgeHooks.onCropsGrowPost(p_196267_2_, p_196267_3_, p_196267_1_);
+    public void onScheduledTick(BlockState state, World worldIn, BlockPos pos, Random random) {
+       int i = state.get(AGE);
+-      if (i < 3 && random.nextInt(10) == 0) {
++      if (i < 3 && net.minecraftforge.common.ForgeHooks.onCropsGrowPre(worldIn, pos, state, random.nextInt(10) == 0)) {
+          state = state.with(AGE, Integer.valueOf(i + 1));
+          worldIn.setBlockState(pos, state, 2);
++         net.minecraftforge.common.ForgeHooks.onCropsGrowPost(worldIn, pos, state);
        }
  
-       super.func_196267_b(p_196267_1_, p_196267_2_, p_196267_3_, p_196267_4_);
+       super.onScheduledTick(state, worldIn, pos, random);

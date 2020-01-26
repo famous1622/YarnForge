@@ -1,0 +1,52 @@
+--- a/net/minecraft/client/gui/widget/ListWidget.java
++++ b/net/minecraft/client/gui/widget/ListWidget.java
+@@ -10,12 +10,12 @@
+ import net.minecraft.util.math.MathHelper;
+ import net.minecraftforge.api.distmarker.Dist;
+ import net.minecraftforge.api.distmarker.OnlyIn;
++
+ import net.minecraft.client.gui.AbstractParentElement;
+ import net.minecraft.client.gui.Drawable;
+ import net.minecraft.client.gui.DrawableHelper;
+ import net.minecraft.client.gui.Element;
+ 
+-
+ @OnlyIn(Dist.CLIENT)
+ public abstract class ListWidget extends AbstractParentElement implements Drawable {
+    protected static final int NO_DRAG = -1;
+@@ -159,15 +159,8 @@
+          GlStateManager.disableFog();
+          Tessellator tessellator = Tessellator.getInstance();
+          BufferBuilder bufferbuilder = tessellator.getBufferBuilder();
+-         this.minecraft.getTextureManager().bindTexture(DrawableHelper.BACKGROUND_LOCATION);
+-         GlStateManager.color4f(1.0F, 1.0F, 1.0F, 1.0F);
+-         float f = 32.0F;
+-         bufferbuilder.begin(7, VertexFormats.POSITION_UV_COLOR);
+-         bufferbuilder.vertex((double)this.field_2180, (double)this.field_2165, 0.0D).texture((double)((float)this.field_2180 / 32.0F), (double)((float)(this.field_2165 + (int)this.field_2175) / 32.0F)).color(32, 32, 32, 255).next();
+-         bufferbuilder.vertex((double)this.field_2181, (double)this.field_2165, 0.0D).texture((double)((float)this.field_2181 / 32.0F), (double)((float)(this.field_2165 + (int)this.field_2175) / 32.0F)).color(32, 32, 32, 255).next();
+-         bufferbuilder.vertex((double)this.field_2181, (double)this.field_2166, 0.0D).texture((double)((float)this.field_2181 / 32.0F), (double)((float)(this.field_2166 + (int)this.field_2175) / 32.0F)).color(32, 32, 32, 255).next();
+-         bufferbuilder.vertex((double)this.field_2180, (double)this.field_2166, 0.0D).texture((double)((float)this.field_2180 / 32.0F), (double)((float)(this.field_2166 + (int)this.field_2175) / 32.0F)).color(32, 32, 32, 255).next();
+-         tessellator.draw();
++         // Forge: background rendering moved into separate method.
++         this.drawContainerBackground(tessellator);
+          int k = this.field_2180 + this.width / 2 - this.getRowWidth() / 2 + 2;
+          int l = this.field_2166 + 4 - (int)this.field_2175;
+          if (this.renderHeader) {
+@@ -407,4 +400,17 @@
+    public int getItemHeight() {
+       return this.itemHeight;
+    }
++
++   protected void drawContainerBackground(Tessellator tessellator) {
++      BufferBuilder buffer = tessellator.getBufferBuilder();
++      this.minecraft.getTextureManager().bindTexture(DrawableHelper.BACKGROUND_LOCATION);
++      GlStateManager.color4f(1.0F, 1.0F, 1.0F, 1.0F);
++      float scale = 32.0F;
++      buffer.begin(7, VertexFormats.POSITION_UV_COLOR);
++      buffer.vertex((double)this.field_2180, (double)this.field_2165, 0.0D).texture(this.field_2180 / scale, (this.field_2165 + (int)this.field_2175) / scale).color(32, 32, 32, 255).next();
++      buffer.vertex((double)this.field_2181, (double)this.field_2165, 0.0D).texture(this.field_2181 / scale, (this.field_2165 + (int)this.field_2175) / scale).color(32, 32, 32, 255).next();
++      buffer.vertex((double)this.field_2181, (double)this.field_2166, 0.0D).texture(this.field_2181 / scale, (this.field_2166 + (int)this.field_2175) / scale).color(32, 32, 32, 255).next();
++      buffer.vertex((double)this.field_2180, (double)this.field_2166, 0.0D).texture(this.field_2180 / scale, (this.field_2166 + (int)this.field_2175) / scale).color(32, 32, 32, 255).next();
++      tessellator.draw();
++   }
+ }

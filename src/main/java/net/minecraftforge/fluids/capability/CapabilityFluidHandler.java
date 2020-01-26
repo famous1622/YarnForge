@@ -29,9 +29,9 @@ import net.minecraftforge.fluids.capability.templates.FluidTank;
 
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
-import net.minecraft.nbt.CompoundNBT;
-import net.minecraft.nbt.INBT;
-import net.minecraft.util.Direction;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.Tag;
+import net.minecraft.util.math.Direction;
 
 public class CapabilityFluidHandler {
 	@CapabilityInject(IFluidHandler.class)
@@ -47,11 +47,11 @@ public class CapabilityFluidHandler {
 
 	private static class DefaultFluidHandlerStorage<T extends IFluidHandler> implements Capability.IStorage<T> {
 		@Override
-		public INBT writeNBT(Capability<T> capability, T instance, Direction side) {
+		public Tag writeNBT(Capability<T> capability, T instance, Direction side) {
 			if (!(instance instanceof FluidTank)) {
 				throw new RuntimeException("Cannot serialize to an instance that isn't the default implementation");
 			}
-			CompoundNBT nbt = new CompoundNBT();
+			CompoundTag nbt = new CompoundTag();
 			FluidTank tank = (FluidTank) instance;
 			FluidStack fluid = tank.getFluid();
 			fluid.writeToNBT(nbt);
@@ -60,11 +60,11 @@ public class CapabilityFluidHandler {
 		}
 
 		@Override
-		public void readNBT(Capability<T> capability, T instance, Direction side, INBT nbt) {
+		public void readNBT(Capability<T> capability, T instance, Direction side, Tag nbt) {
 			if (!(instance instanceof FluidTank)) {
 				throw new RuntimeException("Cannot deserialize to an instance that isn't the default implementation");
 			}
-			CompoundNBT tags = (CompoundNBT) nbt;
+			CompoundTag tags = (CompoundTag) nbt;
 			FluidTank tank = (FluidTank) instance;
 			tank.setCapacity(tags.getInt("Capacity"));
 			tank.readFromNBT(tags);

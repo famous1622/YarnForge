@@ -1,0 +1,19 @@
+--- a/net/minecraft/world/gen/feature/MegaPineTreeFeature.java
++++ b/net/minecraft/world/gen/feature/MegaPineTreeFeature.java
+@@ -20,6 +20,7 @@
+    public MegaPineTreeFeature(Function<Dynamic<?>, ? extends DefaultFeatureConfig> configFactoryIn, boolean doBlockNotifyOnPlace, boolean useBaseHeightIn) {
+       super(configFactoryIn, doBlockNotifyOnPlace, 13, 15, LOG, LEAVES);
+       this.field_13677 = useBaseHeightIn;
++      setSapling((net.minecraftforge.common.IPlantable)Blocks.SPRUCE_SAPLING);
+    }
+ 
+    public boolean generate(Set<BlockPos> changedBlocks, ModifiableTestableWorld worldIn, Random rand, BlockPos position, MutableIntBoundingBox p_208519_5_) {
+@@ -98,7 +99,7 @@
+    private void prepareGroundColumn(ModifiableTestableWorld worldIn, BlockPos pos) {
+       for(int i = 2; i >= -3; --i) {
+          BlockPos blockpos = pos.up(i);
+-         if (isNaturalDirtOrGrass(worldIn, blockpos)) {
++         if (isSoil(worldIn, blockpos, getSapling())) {
+             this.setBlockState(worldIn, blockpos, PODZOL);
+             break;
+          }

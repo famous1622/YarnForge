@@ -22,11 +22,11 @@ package net.minecraftforge.client.event;
 import net.minecraftforge.eventbus.api.Cancelable;
 import net.minecraftforge.eventbus.api.Event;
 
-import net.minecraft.client.renderer.ActiveRenderInfo;
-import net.minecraft.client.renderer.WorldRenderer;
-import net.minecraft.util.math.BlockRayTraceResult;
-import net.minecraft.util.math.EntityRayTraceResult;
-import net.minecraft.util.math.RayTraceResult;
+import net.minecraft.client.render.Camera;
+import net.minecraft.client.render.WorldRenderer;
+import net.minecraft.util.hit.BlockHitResult;
+import net.minecraft.util.hit.EntityHitResult;
+import net.minecraft.util.hit.HitResult;
 
 /**
  * An event called whenever the selection highlight around blocks is about to be rendered.
@@ -36,12 +36,12 @@ import net.minecraft.util.math.RayTraceResult;
 @Cancelable
 public class DrawBlockHighlightEvent extends Event {
 	private final WorldRenderer context;
-	private final ActiveRenderInfo info;
-	private final RayTraceResult target;
+	private final Camera info;
+	private final HitResult target;
 	private final int subID;
 	private final float partialTicks;
 
-	public DrawBlockHighlightEvent(WorldRenderer context, ActiveRenderInfo info, RayTraceResult target, int subID, float partialTicks) {
+	public DrawBlockHighlightEvent(WorldRenderer context, Camera info, HitResult target, int subID, float partialTicks) {
 		this.context = context;
 		this.info = info;
 		this.target = target;
@@ -53,11 +53,11 @@ public class DrawBlockHighlightEvent extends Event {
 		return context;
 	}
 
-	public ActiveRenderInfo getInfo() {
+	public Camera getInfo() {
 		return info;
 	}
 
-	public RayTraceResult getTarget() {
+	public HitResult getTarget() {
 		return target;
 	}
 
@@ -74,13 +74,13 @@ public class DrawBlockHighlightEvent extends Event {
 	 */
 	@Cancelable
 	public static class HighlightBlock extends DrawBlockHighlightEvent {
-		public HighlightBlock(WorldRenderer context, ActiveRenderInfo info, RayTraceResult target, int subID, float partialTicks) {
+		public HighlightBlock(WorldRenderer context, Camera info, HitResult target, int subID, float partialTicks) {
 			super(context, info, target, subID, partialTicks);
 		}
 
 		@Override
-		public BlockRayTraceResult getTarget() {
-			return (BlockRayTraceResult) super.target;
+		public BlockHitResult getTarget() {
+			return (BlockHitResult) super.target;
 		}
 	}
 
@@ -90,13 +90,13 @@ public class DrawBlockHighlightEvent extends Event {
 	 */
 	@Cancelable
 	public static class HighlightEntity extends DrawBlockHighlightEvent {
-		public HighlightEntity(WorldRenderer context, ActiveRenderInfo info, RayTraceResult target, int subID, float partialTicks) {
+		public HighlightEntity(WorldRenderer context, Camera info, HitResult target, int subID, float partialTicks) {
 			super(context, info, target, subID, partialTicks);
 		}
 
 		@Override
-		public EntityRayTraceResult getTarget() {
-			return (EntityRayTraceResult) super.target;
+		public EntityHitResult getTarget() {
+			return (EntityHitResult) super.target;
 		}
 	}
 }

@@ -1,0 +1,161 @@
+--- a/net/minecraft/client/render/GameRenderer.java
++++ b/net/minecraft/client/render/GameRenderer.java
+@@ -66,8 +66,8 @@
+ import net.minecraftforge.api.distmarker.OnlyIn;
+ import org.apache.logging.log4j.LogManager;
+ import org.apache.logging.log4j.Logger;
+-import net.minecraft.client.util.math.Matrix4f;
+ 
++import net.minecraft.client.util.math.Matrix4f;
+ 
+ @OnlyIn(Dist.CLIENT)
+ public class GameRenderer implements AutoCloseable, SynchronousResourceReloadListener {
+@@ -167,6 +167,8 @@
+             this.loadShader(new Identifier("shaders/post/spider.json"));
+          } else if (entityIn instanceof EndermanEntity) {
+             this.loadShader(new Identifier("shaders/post/invert.json"));
++         } else {
++            net.minecraftforge.client.ForgeHooksClient.loadEntityShader(entityIn, this);
+          }
+ 
+       }
+@@ -348,7 +350,7 @@
+             d0 = d0 * 60.0D / 70.0D;
+          }
+ 
+-         return d0;
++         return net.minecraftforge.client.ForgeHooksClient.getFOVModifier(this, p_215311_1_, p_215311_2_, d0);
+       }
+    }
+ 
+@@ -434,6 +436,7 @@
+          }
+ 
+          boolean flag = this.client.getCameraEntity() instanceof LivingEntity && ((LivingEntity)this.client.getCameraEntity()).isSleeping();
++         if (!net.minecraftforge.client.ForgeHooksClient.renderFirstPersonHand(client.worldRenderer, p_215308_2_))
+          if (this.client.options.perspective == 0 && !flag && !this.client.options.hudHidden && this.client.interactionManager.getCurrentGameMode() != GameMode.SPECTATOR) {
+             this.enableLightmap();
+             this.firstPersonRenderer.renderFirstPersonItem(p_215308_2_);
+@@ -522,6 +525,10 @@
+             GlStateManager.matrixMode(5888);
+             GlStateManager.loadIdentity();
+             this.client.window.method_4493(MinecraftClient.IS_SYSTEM_MAC);
++            // Forge: Fix MC-112292
++            minecraft.client.render.block.entity.BlockEntityRenderDispatcher.INSTANCE.textureManager = this.client.getTextureManager();
++            // Forge: also fix rendering text before entering world (not part of MC-112292, but the same reason)
++            minecraft.client.render.block.entity.BlockEntityRenderDispatcher.INSTANCE.fontRenderer = this.client.textRenderer;
+          }
+ 
+          if (this.client.overlay != null) {
+@@ -541,7 +548,7 @@
+             GlStateManager.clear(256, MinecraftClient.IS_SYSTEM_MAC);
+ 
+             try {
+-               this.client.currentScreen.render(i, j, this.client.getLastFrameDuration());
++               net.minecraftforge.client.ForgeHooksClient.drawScreen(this.client.currentScreen, i, j, this.client.getLastFrameDuration());
+             } catch (Throwable throwable) {
+                CrashReport crashreport1 = CrashReport.create(throwable, "Rendering screen");
+                CrashReportSection crashreportcategory1 = crashreport1.addElement("Screen render details");
+@@ -653,7 +660,7 @@
+       double d2 = activerenderinfo.getPos().z;
+       icamera.setOrigin(d0, d1, d2);
+       if (this.client.options.viewDistance >= 4) {
+-         this.backgroundRenderer.applyFog(activerenderinfo, -1);
++         this.backgroundRenderer.setupFog(activerenderinfo, -1, partialTicks);
+          this.client.getProfiler().swap("sky");
+          GlStateManager.matrixMode(5889);
+          GlStateManager.loadIdentity();
+@@ -666,14 +673,14 @@
+          GlStateManager.matrixMode(5888);
+       }
+ 
+-      this.backgroundRenderer.applyFog(activerenderinfo, 0);
++      this.backgroundRenderer.setupFog(activerenderinfo, 0, partialTicks);
+       GlStateManager.shadeModel(7425);
+       if (activerenderinfo.getPos().y < 128.0D) {
+          this.renderAboveClouds(activerenderinfo, worldrenderer, partialTicks, d0, d1, d2);
+       }
+ 
+       this.client.getProfiler().swap("prepareterrain");
+-      this.backgroundRenderer.applyFog(activerenderinfo, 0);
++      this.backgroundRenderer.setupFog(activerenderinfo, 0, partialTicks);
+       this.client.getTextureManager().bindTexture(SpriteAtlasTexture.BLOCK_ATLAS_TEX);
+       GuiLighting.disable();
+       this.client.getProfiler().swap("terrain_setup");
+@@ -687,7 +694,9 @@
+       GlStateManager.disableAlphaTest();
+       worldrenderer.renderLayer(BlockRenderLayer.SOLID, activerenderinfo);
+       GlStateManager.enableAlphaTest();
++      this.client.getTextureManager().getTexture(SpriteAtlasTexture.BLOCK_ATLAS_TEX).pushFilter(false, this.client.options.mipmapLevels > 0); // FORGE: fix flickering leaves when mods mess up the blurMipmap settings
+       worldrenderer.renderLayer(BlockRenderLayer.CUTOUT_MIPPED, activerenderinfo);
++      this.client.getTextureManager().getTexture(SpriteAtlasTexture.BLOCK_ATLAS_TEX).popFilter();
+       this.client.getTextureManager().getTexture(SpriteAtlasTexture.BLOCK_ATLAS_TEX).pushFilter(false, false);
+       worldrenderer.renderLayer(BlockRenderLayer.CUTOUT, activerenderinfo);
+       this.client.getTextureManager().getTexture(SpriteAtlasTexture.BLOCK_ATLAS_TEX).popFilter();
+@@ -706,6 +715,7 @@
+       if (flag && this.client.hitResult != null) {
+          GlStateManager.disableAlphaTest();
+          this.client.getProfiler().swap("outline");
++         if (!net.minecraftforge.client.ForgeHooksClient.onDrawBlockHighlight(worldrenderer, activerenderinfo, client.hitResult, 0, partialTicks))
+          worldrenderer.drawHighlightedBlockOutline(activerenderinfo, this.client.hitResult, 0);
+          GlStateManager.enableAlphaTest();
+       }
+@@ -722,7 +732,7 @@
+       this.client.getTextureManager().getTexture(SpriteAtlasTexture.BLOCK_ATLAS_TEX).popFilter();
+       GlStateManager.disableBlend();
+       this.enableLightmap();
+-      this.backgroundRenderer.applyFog(activerenderinfo, 0);
++      this.backgroundRenderer.setupFog(activerenderinfo, 0, partialTicks);
+       this.client.getProfiler().swap("particles");
+       particlemanager.renderParticles(activerenderinfo, partialTicks);
+       this.disableLightmap();
+@@ -736,7 +746,7 @@
+       GlStateManager.enableCull();
+       GlStateManager.blendFuncSeparate(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA, GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ZERO);
+       GlStateManager.alphaFunc(516, 0.1F);
+-      this.backgroundRenderer.applyFog(activerenderinfo, 0);
++      this.backgroundRenderer.setupFog(activerenderinfo, 0, partialTicks);
+       GlStateManager.enableBlend();
+       GlStateManager.depthMask(false);
+       this.client.getTextureManager().bindTexture(SpriteAtlasTexture.BLOCK_ATLAS_TEX);
+@@ -753,6 +763,9 @@
+          this.renderAboveClouds(activerenderinfo, worldrenderer, partialTicks, d0, d1, d2);
+       }
+ 
++      this.client.getProfiler().swap("forge_render_last");
++      net.minecraftforge.client.ForgeHooksClient.dispatchRenderLast(worldrenderer, partialTicks);
++
+       this.client.getProfiler().swap("hand");
+       if (this.renderHand) {
+          GlStateManager.clear(256, MinecraftClient.IS_SYSTEM_MAC);
+@@ -769,7 +782,7 @@
+          GlStateManager.multMatrix(Matrix4f.method_4929(this.getFov(p_215313_1_, p_215313_3_, true), (float)this.client.window.getFramebufferWidth() / (float)this.client.window.getFramebufferHeight(), 0.05F, this.viewDistance * 4.0F));
+          GlStateManager.matrixMode(5888);
+          GlStateManager.pushMatrix();
+-         this.backgroundRenderer.applyFog(p_215313_1_, 0);
++         this.backgroundRenderer.setupFog(p_215313_1_, 0, p_215313_3_);
+          p_215313_2_.renderClouds(p_215313_3_, p_215313_4_, p_215313_6_, p_215313_8_);
+          GlStateManager.disableFog();
+          GlStateManager.popMatrix();
+@@ -855,6 +868,11 @@
+    }
+ 
+    protected void renderWeather(float partialTicks) {
++      net.minecraftforge.client.IRenderHandler renderer = this.client.world.getDimension().getWeatherRenderer();
++      if (renderer != null) {
++         renderer.render(this.ticks, partialTicks, this.client.world, this.client);
++         return;
++      }
+       float f = this.client.world.getRainGradient(partialTicks);
+       if (!(f <= 0.0F)) {
+          this.enableLightmap();
+@@ -1087,4 +1105,9 @@
+    public Camera getCamera() {
+       return this.camera;
+    }
++
++   @Override
++   public net.minecraftforge.resource.IResourceType getResourceType() {
++      return net.minecraftforge.resource.VanillaResourceType.SHADERS;
++   }
+ }

@@ -25,19 +25,19 @@ import java.util.concurrent.ConcurrentMap;
 import net.minecraftforge.client.ForgeHooksClient;
 import org.apache.commons.lang3.tuple.Pair;
 
-import net.minecraft.client.renderer.BufferBuilder;
-import net.minecraft.client.renderer.Tessellator;
-import net.minecraft.client.renderer.model.BakedQuad;
-import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
-import net.minecraft.client.renderer.vertex.VertexFormat;
-import net.minecraft.client.renderer.vertex.VertexFormatElement;
-import net.minecraft.client.renderer.vertex.VertexFormatElement.Usage;
-import net.minecraft.util.Direction;
+import net.minecraft.client.render.BufferBuilder;
+import net.minecraft.client.render.Tessellator;
+import net.minecraft.client.render.model.BakedQuad;
+import net.minecraft.client.render.VertexFormats;
+import net.minecraft.client.render.VertexFormat;
+import net.minecraft.client.render.VertexFormatElement;
+import net.minecraft.client.render.VertexFormatElement.Type;
+import net.minecraft.util.math.Direction;
 
 public class LightUtil {
 	private static final ConcurrentMap<Pair<VertexFormat, VertexFormat>, int[]> formatMaps = new ConcurrentHashMap<>();
-	private static final VertexFormat DEFAULT_FROM = VertexLighterFlat.withNormal(DefaultVertexFormats.BLOCK);
-	private static final VertexFormat DEFAULT_TO = DefaultVertexFormats.ITEM;
+	private static final VertexFormat DEFAULT_FROM = VertexLighterFlat.withNormal(VertexFormats.POSITION_COLOR_UV_LMAP);
+	private static final VertexFormat DEFAULT_TO = VertexFormats.POSITION_COLOR_UV_NORMAL;
 	private static final int[] DEFAULT_MAPPING = generateMapping(DEFAULT_FROM, DEFAULT_TO);
 	private static final ThreadLocal<ItemPipeline> itemPipeline = ThreadLocal.withInitial(ItemPipeline::new);
 	private static IVertexConsumer tessellator = null;
@@ -84,8 +84,8 @@ public class LightUtil {
 	public static void putBakedQuad(IVertexConsumer consumer, BakedQuad quad) {
 		consumer.setTexture(quad.getSprite());
 		consumer.setQuadOrientation(quad.getFace());
-		if (quad.hasTintIndex()) {
-			consumer.setQuadTint(quad.getTintIndex());
+		if (quad.hasColor()) {
+			consumer.setQuadTint(quad.getColorIndex());
 		}
 		consumer.setApplyDiffuseLighting(quad.shouldApplyDiffuseLighting());
 		float[] data = new float[4];
@@ -124,7 +124,7 @@ public class LightUtil {
 			int e2;
 			for (e2 = 0; e2 < toCount; e2++) {
 				VertexFormatElement current = to.getElement(e2);
-				if (expected.getUsage() == current.getUsage() && expected.getIndex() == current.getIndex()) {
+				if (expected.getType() == current.getType() && expected.getIndex() == current.getIndex()) {
 					break;
 				}
 			}
@@ -136,9 +136,9 @@ public class LightUtil {
 	public static void unpack(int[] from, float[] to, VertexFormat formatFrom, int v, int e) {
 		int length = 4 < to.length ? 4 : to.length;
 		VertexFormatElement element = formatFrom.getElement(e);
-		int vertexStart = v * formatFrom.getSize() + formatFrom.getOffset(e);
-		int count = element.getElementCount();
-		VertexFormatElement.Type type = element.getType();
+		int vertexStart = v * formatFrom.getVertexSize() + formatFrom.getElementOffset(e);
+		int count = element.getCount();
+		VertexFormatElement.Format type = element.getFormat();
 		int size = type.getSize();
 		int mask = (256 << (8 * (size - 1))) - 1;
 		for (int i = 0; i < length; i++) {
@@ -152,17 +152,17 @@ public class LightUtil {
 					bits |= from[index + 1] << ((4 - offset) * 8);
 				}
 				bits &= mask;
-				if (type == VertexFormatElement.Type.FLOAT) {
+				if (type == VertexFormatElement.Format.FLOAT) {
 					to[i] = Float.intBitsToFloat(bits);
-				} else if (type == VertexFormatElement.Type.UBYTE || type == VertexFormatElement.Type.USHORT) {
+				} else if (type == VertexFormatElement.Format.UBYTE || type == VertexFormatElement.Format.USHORT) {
 					to[i] = (float) bits / mask;
-				} else if (type == VertexFormatElement.Type.UINT) {
+				} else if (type == VertexFormatElement.Format.UINT) {
 					to[i] = (float) ((double) (bits & 0xFFFFFFFFL) / 0xFFFFFFFFL);
-				} else if (type == VertexFormatElement.Type.BYTE) {
+				} else if (type == VertexFormatElement.Format.BYTE) {
 					to[i] = ((float) (byte) bits) / (mask >> 1);
-				} else if (type == VertexFormatElement.Type.SHORT) {
+				} else if (type == VertexFormatElement.Format.SHORT) {
 					to[i] = ((float) (short) bits) / (mask >> 1);
-				} else if (type == VertexFormatElement.Type.INT) {
+				} else if (type == VertexFormatElement.Format.INT) {
 					to[i] = (float) ((double) (bits & 0xFFFFFFFFL) / (0xFFFFFFFFL >> 1));
 				}
 			} else {
@@ -173,9 +173,9 @@ public class LightUtil {
 
 	public static void pack(float[] from, int[] to, VertexFormat formatTo, int v, int e) {
 		VertexFormatElement element = formatTo.getElement(e);
-		int vertexStart = v * formatTo.getSize() + formatTo.getOffset(e);
-		int count = element.getElementCount();
-		VertexFormatElement.Type type = element.getType();
+		int vertexStart = v * formatTo.getVertexSize() + formatTo.getElementOffset(e);
+		int count = element.getCount();
+		VertexFormatElement.Format type = element.getFormat();
 		int size = type.getSize();
 		int mask = (256 << (8 * (size - 1))) - 1;
 		for (int i = 0; i < 4; i++) {
@@ -185,12 +185,12 @@ public class LightUtil {
 				int offset = pos & 3;
 				int bits = 0;
 				float f = i < from.length ? from[i] : 0;
-				if (type == VertexFormatElement.Type.FLOAT) {
+				if (type == VertexFormatElement.Format.FLOAT) {
 					bits = Float.floatToRawIntBits(f);
 				} else if (
-						type == VertexFormatElement.Type.UBYTE ||
-								type == VertexFormatElement.Type.USHORT ||
-								type == VertexFormatElement.Type.UINT
+						type == VertexFormatElement.Format.UBYTE ||
+								type == VertexFormatElement.Format.USHORT ||
+								type == VertexFormatElement.Format.UINT
 				) {
 					bits = Math.round(f * mask);
 				} else {
@@ -207,7 +207,7 @@ public class LightUtil {
 	public static IVertexConsumer getTessellator() {
 		if (tessellator == null) {
 			Tessellator tes = Tessellator.getInstance();
-			BufferBuilder wr = tes.getBuffer();
+			BufferBuilder wr = tes.getBufferBuilder();
 			tessellator = new VertexBufferConsumer(wr);
 		}
 		return tessellator;
@@ -238,8 +238,8 @@ public class LightUtil {
 
 	public static void renderQuadColor(BufferBuilder buffer, BakedQuad quad, int auxColor) {
 		if (quad.getFormat().equals(buffer.getVertexFormat())) {
-			buffer.addVertexData(quad.getVertexData());
-			if (buffer.getVertexFormat().hasColor()) {
+			buffer.putVertexData(quad.getVertexData());
+			if (buffer.getVertexFormat().hasColorElement()) {
 				ForgeHooksClient.putQuadColor(buffer, quad, auxColor);
 			}
 		} else {
@@ -273,7 +273,7 @@ public class LightUtil {
 
 		@Override
 		public void put(int element, float... data) {
-			if (getVertexFormat().getElement(element).getUsage() == Usage.COLOR) {
+			if (getVertexFormat().getElement(element).getType() == Type.COLOR) {
 				System.arraycopy(auxColor, 0, buf, 0, buf.length);
 				int n = Math.min(4, data.length);
 				for (int i = 0; i < n; i++) {

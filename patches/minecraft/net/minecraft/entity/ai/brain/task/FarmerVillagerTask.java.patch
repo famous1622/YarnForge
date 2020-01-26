@@ -1,0 +1,31 @@
+--- a/net/minecraft/entity/ai/brain/task/FarmerVillagerTask.java
++++ b/net/minecraft/entity/ai/brain/task/FarmerVillagerTask.java
+@@ -22,7 +22,6 @@
+ import net.minecraft.sound.SoundEvents;
+ import net.minecraft.util.math.BlockPos;
+ import net.minecraft.entity.ai.brain.BlockPosLookTarget;
+-import net.minecraft.world.GameRules;
+ import net.minecraft.server.world.ServerWorld;
+ 
+ public class FarmerVillagerTask extends Task<VillagerEntity> {
+@@ -39,7 +38,7 @@
+    }
+ 
+    protected boolean shouldRun(ServerWorld worldIn, VillagerEntity owner) {
+-      if (!worldIn.getGameRules().getBoolean(GameRules.MOB_GRIEFING)) {
++      if (!net.minecraftforge.event.ForgeEventFactory.getMobGriefingEvent(worldIn, owner)) {
+          return false;
+       } else if (owner.getVillagerData().getProfession() != VillagerProfession.FARMER) {
+          return false;
+@@ -136,6 +135,11 @@
+                   } else if (itemstack.getItem() == Items.BEETROOT_SEEDS) {
+                      worldIn.setBlockState(this.field_18858, Blocks.BEETROOTS.getDefaultState(), 3);
+                      flag = true;
++                  } else if (itemstack.getItem() instanceof net.minecraftforge.common.IPlantable) {
++                     if (((net.minecraftforge.common.IPlantable)itemstack.getItem()).getPlantType(worldIn, field_18858) == net.minecraftforge.common.PlantType.Crop) {
++                        worldIn.setBlockState(field_18858, ((net.minecraftforge.common.IPlantable)itemstack.getItem()).getPlant(worldIn, field_18858),3);
++                        flag = true;
++                     }
+                   }
+                }
+ 

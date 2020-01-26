@@ -1,0 +1,24 @@
+--- a/net/minecraft/client/resource/FoliageColormapResourceSupplier.java
++++ b/net/minecraft/client/resource/FoliageColormapResourceSupplier.java
+@@ -7,10 +7,10 @@
+ import net.minecraft.client.color.world.FoliageColors;
+ import net.minecraftforge.api.distmarker.Dist;
+ import net.minecraftforge.api.distmarker.OnlyIn;
++
+ import net.minecraft.client.util.RawTextureDataLoader;
+ import net.minecraft.resource.SinglePreparationResourceReloadListener;
+ 
+-
+ @OnlyIn(Dist.CLIENT)
+ public class FoliageColormapResourceSupplier extends SinglePreparationResourceReloadListener<int[]> {
+    private static final Identifier FOLIAGE_COLORMAP_LOC = new Identifier("textures/colormap/foliage.png");
+@@ -26,4 +26,9 @@
+    protected void apply(int[] splashList, ResourceManager resourceManagerIn, Profiler profilerIn) {
+       FoliageColors.setColorMap(splashList);
+    }
++
++   //@Override //Forge: TODO: Filtered resource reloading
++   public net.minecraftforge.resource.IResourceType getResourceType() {
++      return net.minecraftforge.resource.VanillaResourceType.TEXTURES;
++   }
+ }

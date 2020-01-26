@@ -23,16 +23,14 @@ import java.io.File;
 
 import javax.annotation.Nonnull;
 
-import net.minecraftforge.common.MinecraftForge;
-import net.minecraftforge.event.ForgeEventFactory;
 import net.minecraftforge.event.entity.living.LivingEvent;
 import net.minecraftforge.eventbus.api.Cancelable;
 
 import net.minecraft.block.BlockState;
 import net.minecraft.entity.Entity;
-import net.minecraft.entity.item.ItemEntity;
+import net.minecraft.entity.ItemEntity;
 import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.inventory.IInventory;
+import net.minecraft.inventory.Inventory;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.dimension.DimensionType;
@@ -423,9 +421,9 @@ public class PlayerEvent extends LivingEvent {
 	public static class ItemCraftedEvent extends PlayerEvent {
 		@Nonnull
 		private final ItemStack crafting;
-		private final IInventory craftMatrix;
+		private final Inventory craftMatrix;
 
-		public ItemCraftedEvent(PlayerEntity player, @Nonnull ItemStack crafting, IInventory craftMatrix) {
+		public ItemCraftedEvent(PlayerEntity player, @Nonnull ItemStack crafting, Inventory craftMatrix) {
 			super(player);
 			this.crafting = crafting;
 			this.craftMatrix = craftMatrix;
@@ -436,7 +434,7 @@ public class PlayerEvent extends LivingEvent {
 			return this.crafting;
 		}
 
-		public IInventory getInventory() {
+		public Inventory getInventory() {
 			return this.craftMatrix;
 		}
 	}

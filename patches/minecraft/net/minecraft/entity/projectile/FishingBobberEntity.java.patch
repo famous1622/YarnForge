@@ -1,76 +1,103 @@
 --- a/net/minecraft/entity/projectile/FishingBobberEntity.java
 +++ b/net/minecraft/entity/projectile/FishingBobberEntity.java
-@@ -210,8 +210,8 @@
-    private boolean func_190625_o() {
-       ItemStack itemstack = this.field_146042_b.func_184614_ca();
-       ItemStack itemstack1 = this.field_146042_b.func_184592_cb();
--      boolean flag = itemstack.func_77973_b() == Items.field_151112_aM;
--      boolean flag1 = itemstack1.func_77973_b() == Items.field_151112_aM;
-+      boolean flag = itemstack.func_77973_b() instanceof net.minecraft.item.FishingRodItem;
-+      boolean flag1 = itemstack1.func_77973_b() instanceof net.minecraft.item.FishingRodItem;
-       if (!this.field_146042_b.field_70128_L && this.field_146042_b.func_70089_S() && (flag || flag1) && !(this.func_70068_e(this.field_146042_b) > 1024.0D)) {
+@@ -5,7 +5,6 @@
+ import javax.annotation.Nullable;
+ import net.minecraft.advancement.criterion.Criterions;
+ import net.minecraft.block.Block;
+-import net.minecraft.block.Blocks;
+ import net.minecraft.entity.Entity;
+ import net.minecraft.entity.EntityType;
+ import net.minecraft.entity.MovementType;
+@@ -15,7 +14,6 @@
+ import net.minecraft.server.network.ServerPlayerEntity;
+ import net.minecraft.fluid.FluidState;
+ import net.minecraft.item.ItemStack;
+-import net.minecraft.item.Items;
+ import net.minecraft.nbt.CompoundTag;
+ import net.minecraft.network.Packet;
+ import net.minecraft.entity.data.TrackedData;
+@@ -42,8 +40,9 @@
+ import net.minecraft.world.loot.LootTables;
+ import net.minecraftforge.api.distmarker.Dist;
+ import net.minecraftforge.api.distmarker.OnlyIn;
+-import net.minecraft.entity.ProjectileUtil;
+ 
++import net.minecraft;
++import net.minecraft.entity.ProjectileUtil;
+ 
+ public class FishingBobberEntity extends Entity {
+    private static final TrackedData<Integer> HOOK_ENTITY_ID = DataTracker.registerData(FishingBobberEntity.class, TrackedDataHandlerRegistry.INTEGER);
+@@ -212,8 +211,8 @@
+    private boolean method_6959() {
+       ItemStack itemstack = this.owner.getMainHandStack();
+       ItemStack itemstack1 = this.owner.getOffHandStack();
+-      boolean flag = itemstack.getItem() == Items.FISHING_ROD;
+-      boolean flag1 = itemstack1.getItem() == Items.FISHING_ROD;
++      boolean flag = itemstack.getItem() instanceof net.minecraft.item.FishingRodItem;
++      boolean flag1 = itemstack1.getItem() instanceof net.minecraft.item.FishingRodItem;
+       if (!this.owner.removed && this.owner.isAlive() && (flag || flag1) && !(this.squaredDistanceTo(this.owner) > 1024.0D)) {
           return false;
        } else {
-@@ -295,7 +295,7 @@
-             double d1 = (double)((float)MathHelper.func_76128_c(this.func_174813_aQ().field_72338_b) + 1.0F);
-             double d2 = this.field_70161_v + (double)(f2 * (float)this.field_146038_az * 0.1F);
-             Block block = serverworld.func_180495_p(new BlockPos(d0, d1 - 1.0D, d2)).func_177230_c();
--            if (block == Blocks.field_150355_j) {
-+            if (serverworld.func_180495_p(new BlockPos((int)d0, (int)d1 - 1, (int)d2)).func_185904_a() == net.minecraft.block.material.Material.field_151586_h) {
-                if (this.field_70146_Z.nextFloat() < 0.15F) {
-                   serverworld.func_195598_a(ParticleTypes.field_197612_e, d0, d1 - (double)0.1F, d2, 1, (double)f1, 0.1D, (double)f2, 0.0D);
+@@ -297,7 +296,7 @@
+             double d1 = (double)((float)MathHelper.floor(this.getBoundingBox().minY) + 1.0F);
+             double d2 = this.z + (double)(f2 * (float)this.field_7172 * 0.1F);
+             Block block = serverworld.getBlockState(new BlockPos(d0, d1 - 1.0D, d2)).getBlock();
+-            if (block == Blocks.WATER) {
++            if (serverworld.getBlockState(new BlockPos((int)d0, (int)d1 - 1, (int)d2)).getMaterial() == net.minecraft.block.Material.WATER) {
+                if (this.random.nextFloat() < 0.15F) {
+                   serverworld.spawnParticles(ParticleTypes.BUBBLE, d0, d1 - (double)0.1F, d2, 1, (double)f1, 0.1D, (double)f2, 0.0D);
                 }
-@@ -332,7 +332,7 @@
-             double d5 = (double)((float)MathHelper.func_76128_c(this.func_174813_aQ().field_72338_b) + 1.0F);
-             double d6 = this.field_70161_v + (double)(MathHelper.func_76134_b(f6) * f7 * 0.1F);
-             Block block1 = serverworld.func_180495_p(new BlockPos(d4, d5 - 1.0D, d6)).func_177230_c();
--            if (block1 == Blocks.field_150355_j) {
-+            if (serverworld.func_180495_p(new BlockPos(d4, d5 - 1.0D, d6)).func_185904_a() == net.minecraft.block.material.Material.field_151586_h) {
-                serverworld.func_195598_a(ParticleTypes.field_218422_X, d4, d5, d6, 2 + this.field_70146_Z.nextInt(2), (double)0.1F, 0.0D, (double)0.1F, 0.0D);
+@@ -334,7 +333,7 @@
+             double d5 = (double)((float)MathHelper.floor(this.getBoundingBox().minY) + 1.0F);
+             double d6 = this.z + (double)(MathHelper.cos(f6) * f7 * 0.1F);
+             Block block1 = serverworld.getBlockState(new BlockPos(d4, d5 - 1.0D, d6)).getBlock();
+-            if (block1 == Blocks.WATER) {
++            if (serverworld.getBlockState(new BlockPos(d4, d5 - 1.0D, d6)).getMaterial() == net.minecraft.block.Material.WATER) {
+                serverworld.spawnParticles(ParticleTypes.SPLASH, d4, d5, d6, 2 + this.random.nextInt(2), (double)0.1F, 0.0D, (double)0.1F, 0.0D);
              }
           }
-@@ -357,6 +357,7 @@
-    public int func_146034_e(ItemStack p_146034_1_) {
-       if (!this.field_70170_p.field_72995_K && this.field_146042_b != null) {
+@@ -359,6 +358,7 @@
+    public int method_6957(ItemStack p_146034_1_) {
+       if (!this.world.isClient && this.owner != null) {
           int i = 0;
 +         net.minecraftforge.event.entity.player.ItemFishedEvent event = null;
-          if (this.field_146043_c != null) {
-             this.func_184527_k();
-             CriteriaTriggers.field_204811_D.func_204820_a((ServerPlayerEntity)this.field_146042_b, p_146034_1_, this, Collections.emptyList());
-@@ -364,8 +365,15 @@
-             i = this.field_146043_c instanceof ItemEntity ? 3 : 5;
-          } else if (this.field_146045_ax > 0) {
-             LootContext.Builder lootcontext$builder = (new LootContext.Builder((ServerWorld)this.field_70170_p)).func_216015_a(LootParameters.field_216286_f, new BlockPos(this)).func_216015_a(LootParameters.field_216289_i, p_146034_1_).func_216023_a(this.field_70146_Z).func_186469_a((float)this.field_191518_aw + this.field_146042_b.func_184817_da());
-+            lootcontext$builder.func_216015_a(LootParameters.field_216284_d, this.field_146042_b).func_216015_a(LootParameters.field_216281_a, this);
-             LootTable loottable = this.field_70170_p.func_73046_m().func_200249_aQ().func_186521_a(LootTables.field_186387_al);
-             List<ItemStack> list = loottable.func_216113_a(lootcontext$builder.func_216022_a(LootParameterSets.field_216262_c));
-+            event = new net.minecraftforge.event.entity.player.ItemFishedEvent(list, this.field_146051_au ? 2 : 1, this);
+          if (this.hookedEntity != null) {
+             this.method_6954();
+             Criterions.FISHING_ROD_HOOKED.handle((ServerPlayerEntity)this.owner, p_146034_1_, this, Collections.emptyList());
+@@ -366,8 +366,15 @@
+             i = this.hookedEntity instanceof ItemEntity ? 3 : 5;
+          } else if (this.field_7173 > 0) {
+             LootContext.Builder lootcontext$builder = (new LootContext.Builder((ServerWorld)this.world)).put(LootContextParameters.POSITION, new BlockPos(this)).put(LootContextParameters.TOOL, p_146034_1_).setRandom(this.random).setLuck((float)this.lureLevel + this.owner.getLuck());
++            lootcontext$builder.put(LootContextParameters.KILLER_ENTITY, this.owner).put(LootContextParameters.THIS_ENTITY, this);
+             LootSupplier loottable = this.world.getServer().getLootManager().getSupplier(LootTables.FISHING_GAMEPLAY);
+             List<ItemStack> list = loottable.getDrops(lootcontext$builder.build(LootContextTypes.FISHING));
++            event = new net.minecraftforge.event.entity.player.ItemFishedEvent(list, this.field_7176 ? 2 : 1, this);
 +            net.minecraftforge.common.MinecraftForge.EVENT_BUS.post(event);
 +            if (event.isCanceled()) {
-+               this.func_70106_y();
++               this.remove();
 +               return event.getRodDamage();
 +            }
-             CriteriaTriggers.field_204811_D.func_204820_a((ServerPlayerEntity)this.field_146042_b, p_146034_1_, this, list);
+             Criterions.FISHING_ROD_HOOKED.handle((ServerPlayerEntity)this.owner, p_146034_1_, this, list);
  
              for(ItemStack itemstack : list) {
-@@ -390,7 +398,7 @@
+@@ -392,7 +399,7 @@
           }
  
-          this.func_70106_y();
+          this.remove();
 -         return i;
 +         return event == null ? i : event.getRodDamage();
        } else {
           return 0;
        }
-@@ -416,8 +424,9 @@
+@@ -418,8 +425,9 @@
        return false;
     }
  
--   public void func_70106_y() {
--      super.func_70106_y();
+-   public void remove() {
+-      super.remove();
 +   @Override
 +   public void remove(boolean keepData) {
 +      super.remove(keepData);
-       if (this.field_146042_b != null) {
-          this.field_146042_b.field_71104_cf = null;
+       if (this.owner != null) {
+          this.owner.fishHook = null;
        }

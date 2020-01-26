@@ -1,0 +1,28 @@
+--- a/net/minecraft/client/render/model/MultipartUnbakedModel.java
++++ b/net/minecraft/client/render/model/MultipartUnbakedModel.java
+@@ -24,8 +24,9 @@
+ import net.minecraft.util.Identifier;
+ import net.minecraftforge.api.distmarker.Dist;
+ import net.minecraftforge.api.distmarker.OnlyIn;
+-import net.minecraft.client.render.model.json.MultipartModelComponent;
+ 
++import net.minecraft;
++import net.minecraft.client.render.model.json.MultipartModelComponent;
+ 
+ @OnlyIn(Dist.CLIENT)
+ public class MultipartUnbakedModel implements UnbakedModel {
+@@ -79,11 +80,12 @@
+    }
+ 
+    @Nullable
+-   public BakedModel bake(ModelLoader p_217641_1_, Function<Identifier, Sprite> p_217641_2_, ModelBakeSettings p_217641_3_) {
++   @Override
++   public BakedModel bake(ModelLoader p_217641_1_, Function<Identifier, Sprite> p_217641_2_, ModelBakeSettings p_217641_3_, net.minecraft.client.render.VertexFormat format) {
+       MultipartBakedModel.Builder multipartbakedmodel$builder = new MultipartBakedModel.Builder();
+ 
+       for(MultipartModelComponent selector : this.getComponents()) {
+-         BakedModel ibakedmodel = selector.getModel().bake(p_217641_1_, p_217641_2_, p_217641_3_);
++         BakedModel ibakedmodel = selector.getModel().bake(p_217641_1_, p_217641_2_, p_217641_3_, format);
+          if (ibakedmodel != null) {
+             multipartbakedmodel$builder.addComponent(selector.getPredicate(this.stateFactory), ibakedmodel);
+          }

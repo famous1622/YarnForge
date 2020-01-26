@@ -1,0 +1,34 @@
+--- a/net/minecraft/server/network/packet/HandshakeC2SPacket.java
++++ b/net/minecraft/server/network/packet/HandshakeC2SPacket.java
+@@ -14,6 +14,7 @@
+    private String address;
+    private int port;
+    private NetworkState state;
++   private String fmlVersion = net.minecraftforge.fml.network.FMLNetworkConstants.NETVERSION;
+ 
+    public HandshakeC2SPacket() {
+    }
+@@ -31,11 +32,13 @@
+       this.address = buf.readString(255);
+       this.port = buf.readUnsignedShort();
+       this.state = NetworkState.byId(buf.readVarInt());
++      this.fmlVersion = net.minecraftforge.fml.network.NetworkHooks.getFMLVersion(this.address);
++      this.address = this.address.split("\0")[0];
+    }
+ 
+    public void write(PacketByteBuf buf) throws IOException {
+       buf.writeVarInt(this.version);
+-      buf.writeString(this.address);
++      buf.writeString(this.address + "\0"+net.minecraftforge.fml.network.FMLNetworkConstants.NETVERSION+"\0");
+       buf.writeShort(this.port);
+       buf.writeVarInt(this.state.getId());
+    }
+@@ -51,4 +54,8 @@
+    public int getProtocolVersion() {
+       return this.version;
+    }
++
++   public String getFMLVersion() {
++      return this.fmlVersion;
++   }
+ }

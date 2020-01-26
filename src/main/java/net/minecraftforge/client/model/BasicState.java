@@ -21,12 +21,12 @@ package net.minecraftforge.client.model;
 
 import net.minecraftforge.common.model.IModelState;
 
-import net.minecraft.client.renderer.texture.ISprite;
+import net.minecraft.client.render.model.ModelBakeSettings;
 
 /**
  * Adapter from {@link IModelState} to the vanilla transform description class {@link ISprite}.
  */
-public class BasicState implements ISprite {
+public class BasicState implements ModelBakeSettings {
 	private final IModelState defaultState;
 	private final boolean uvLock;
 
@@ -41,7 +41,7 @@ public class BasicState implements ISprite {
 	}
 
 	@Override
-	public boolean isUvLock() {
+	public boolean isUvLocked() {
 		return uvLock;
 	}
 }

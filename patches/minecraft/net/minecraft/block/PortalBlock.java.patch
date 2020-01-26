@@ -1,0 +1,11 @@
+--- a/net/minecraft/block/PortalBlock.java
++++ b/net/minecraft/block/PortalBlock.java
+@@ -68,7 +68,7 @@
+ 
+    public boolean createPortalAt(IWorld worldIn, BlockPos pos) {
+       PortalBlock.AreaHelper netherportalblock$size = this.createAreaHelper(worldIn, pos);
+-      if (netherportalblock$size != null) {
++      if (netherportalblock$size != null && !net.minecraftforge.event.ForgeEventFactory.onTrySpawnPortal(worldIn, pos, netherportalblock$size)) {
+          netherportalblock$size.createPortal();
+          return true;
+       } else {

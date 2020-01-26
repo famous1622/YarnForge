@@ -1,0 +1,25 @@
+--- a/net/minecraft/client/render/Camera.java
++++ b/net/minecraft/client/render/Camera.java
+@@ -53,6 +53,10 @@
+          this.setRotation(direction != null ? direction.asRotation() - 180.0F : 0.0F, 0.0F);
+          this.moveBy(0.0D, 0.3D, 0.0D);
+       }
++      net.minecraftforge.client.event.EntityViewRenderEvent.CameraSetup cameraSetup = net.minecraftforge.client.ForgeHooksClient.onCameraSetup(net.minecraft.client.MinecraftClient.getInstance().gameRenderer, this, partialTicks, this.yaw, this.pitch, 0f);
++      this.pitch = cameraSetup.getPitch();
++      this.yaw = cameraSetup.getYaw();
++      GlStateManager.rotatef(cameraSetup.getRoll(), 0, 0, 1);
+ 
+       GlStateManager.rotatef(this.pitch, 1.0F, 0.0F, 0.0F);
+       GlStateManager.rotatef(this.yaw + 180.0F, 0.0F, 1.0F, 0.0F);
+@@ -172,4 +176,11 @@
+       this.focusedEntity = null;
+       this.ready = false;
+    }
++
++   public net.minecraft.block.BlockState getBlockAtCamera() {
++      if (!this.ready)
++         return net.minecraft.block.Blocks.AIR.getDefaultState();
++      else
++         return this.area.getBlockState(this.blockPos).getStateAtViewpoint(this.area, this.blockPos, this.pos);
++   }
+ }

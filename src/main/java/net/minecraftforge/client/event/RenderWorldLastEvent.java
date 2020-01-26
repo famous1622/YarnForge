@@ -19,7 +19,7 @@
 
 package net.minecraftforge.client.event;
 
-import net.minecraft.client.renderer.WorldRenderer;
+import net.minecraft.client.render.WorldRenderer;
 
 public class RenderWorldLastEvent extends net.minecraftforge.eventbus.api.Event {
 	private final WorldRenderer context;

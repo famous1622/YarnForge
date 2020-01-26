@@ -1,0 +1,21 @@
+--- a/net/minecraft/world/chunk/light/LevelPropagator.java
++++ b/net/minecraft/world/chunk/light/LevelPropagator.java
+@@ -210,4 +210,18 @@
+    protected abstract void setLevel(long sectionPosIn, int level);
+ 
+    protected abstract int getPropagatedLevel(long startPos, long endPos, int startLevel);
++
++   // FORGE START
++
++   protected int queuedUpdateSize() {
++      return idToLevel.size();
++   }
++
++   public final void bulkCancel(java.util.function.LongPredicate pred) {
++      ((Long2ByteOpenHashMap)idToLevel).keySet().forEach((long l) -> {
++          if (pred.test(l)) {
++              remove(l);
++          }
++      });
++   }
+ }

@@ -27,39 +27,39 @@ import net.minecraftforge.common.capabilities.ICapabilitySerializable;
 
 import net.minecraft.block.BlockState;
 import net.minecraft.entity.Entity;
-import net.minecraft.entity.EntityClassification;
+import net.minecraft.entity.EntityCategory;
 import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.item.ArmorStandEntity;
-import net.minecraft.entity.item.BoatEntity;
-import net.minecraft.entity.item.EnderCrystalEntity;
-import net.minecraft.entity.item.ItemEntity;
-import net.minecraft.entity.item.ItemFrameEntity;
-import net.minecraft.entity.item.LeashKnotEntity;
-import net.minecraft.entity.item.PaintingEntity;
-import net.minecraft.entity.item.minecart.AbstractMinecartEntity;
+import net.minecraft.entity.decoration.ArmorStandEntity;
+import net.minecraft.entity.vehicle.BoatEntity;
+import net.minecraft.entity.decoration.EnderCrystalEntity;
+import net.minecraft.entity.ItemEntity;
+import net.minecraft.entity.decoration.ItemFrameEntity;
+import net.minecraft.entity.decoration.LeadKnotEntity;
+import net.minecraft.entity.decoration.painting.PaintingEntity;
+import net.minecraft.entity.vehicle.AbstractMinecartEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
 import net.minecraft.item.SpawnEggItem;
-import net.minecraft.nbt.CompoundNBT;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.RayTraceResult;
+import net.minecraft.util.hit.HitResult;
 
-public interface IForgeEntity extends ICapabilitySerializable<CompoundNBT> {
+public interface IForgeEntity extends ICapabilitySerializable<CompoundTag> {
 	default Entity getEntity() {
 		return (Entity) this;
 	}
 
-	default void deserializeNBT(CompoundNBT nbt) {
-		getEntity().read(nbt);
+	default void deserializeNBT(CompoundTag nbt) {
+		getEntity().fromTag(nbt);
 	}
 
-	default CompoundNBT serializeNBT() {
-		CompoundNBT ret = new CompoundNBT();
-		String id = getEntity().getEntityString();
+	default CompoundTag serializeNBT() {
+		CompoundTag ret = new CompoundTag();
+		String id = getEntity().getSavedEntityId();
 		if (id != null) {
-			ret.putString("id", getEntity().getEntityString());
+			ret.putString("id", getEntity().getSavedEntityId());
 		}
-		return getEntity().writeWithoutTypeId(ret);
+		return getEntity().toTag(ret);
 	}
 
 	boolean canUpdate();
@@ -78,7 +78,7 @@ public interface IForgeEntity extends ICapabilitySerializable<CompoundNBT> {
 	 *
 	 * @return A NBTTagCompound
 	 */
-	CompoundNBT getPersistentData();
+	CompoundTag getPersistentData();
 
 	/**
 	 * Used in model rendering to determine if the entity riding this entity should be in the 'sitting' position.
@@ -95,13 +95,13 @@ public interface IForgeEntity extends ICapabilitySerializable<CompoundNBT> {
 	 * @param target The full target the player is looking at
 	 * @return A ItemStack to add to the player's inventory, empty ItemStack if nothing should be added.
 	 */
-	default ItemStack getPickedResult(RayTraceResult target) {
+	default ItemStack getPickedResult(HitResult target) {
 		if (this instanceof PaintingEntity) {
 			return new ItemStack(Items.PAINTING);
-		} else if (this instanceof LeashKnotEntity) {
+		} else if (this instanceof LeadKnotEntity) {
 			return new ItemStack(Items.LEAD);
 		} else if (this instanceof ItemFrameEntity) {
-			ItemStack held = ((ItemFrameEntity) this).getDisplayedItem();
+			ItemStack held = ((ItemFrameEntity) this).getHeldItemStack();
 			if (held.isEmpty()) {
 				return new ItemStack(Items.ITEM_FRAME);
 			} else {
@@ -110,13 +110,13 @@ public interface IForgeEntity extends ICapabilitySerializable<CompoundNBT> {
 		} else if (this instanceof AbstractMinecartEntity) {
 			return ((AbstractMinecartEntity) this).getCartItem();
 		} else if (this instanceof BoatEntity) {
-			return new ItemStack(((BoatEntity) this).getItemBoat());
+			return new ItemStack(((BoatEntity) this).asItem());
 		} else if (this instanceof ArmorStandEntity) {
 			return new ItemStack(Items.ARMOR_STAND);
 		} else if (this instanceof EnderCrystalEntity) {
 			return new ItemStack(Items.END_CRYSTAL);
 		} else {
-			SpawnEggItem egg = SpawnEggItem.getEgg(getEntity().getType());
+			SpawnEggItem egg = SpawnEggItem.forEntity(getEntity().getType());
 			if (egg != null) return new ItemStack(egg);
 		}
 		return ItemStack.EMPTY;
@@ -157,8 +157,8 @@ public interface IForgeEntity extends ICapabilitySerializable<CompoundNBT> {
 	 * @param forSpawnCount If this is being invoked to check spawn count caps.
 	 * @return If the creature is of the type provided
 	 */
-	default EntityClassification getClassification(boolean forSpawnCount) {
-		return getEntity().getType().getClassification();
+	default EntityCategory getClassification(boolean forSpawnCount) {
+		return getEntity().getType().getCategory();
 	}
 
 	/**

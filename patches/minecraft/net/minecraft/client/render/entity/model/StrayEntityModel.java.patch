@@ -1,0 +1,36 @@
+--- a/net/minecraft/client/render/entity/model/StrayEntityModel.java
++++ b/net/minecraft/client/render/entity/model/StrayEntityModel.java
+@@ -3,14 +3,13 @@
+ import net.minecraft.entity.ai.RangedAttackMob;
+ import net.minecraft.entity.mob.MobEntity;
+ import net.minecraft.item.ItemStack;
+-import net.minecraft.item.Items;
+ import net.minecraft.util.Hand;
+ import net.minecraft.util.Arm;
+ import net.minecraft.util.math.MathHelper;
+ import net.minecraftforge.api.distmarker.Dist;
+ import net.minecraftforge.api.distmarker.OnlyIn;
+-import net.minecraft.client.model.Cuboid;
+ 
++import net.minecraft.client.model.Cuboid;
+ 
+ @OnlyIn(Dist.CLIENT)
+ public class StrayEntityModel<T extends MobEntity & RangedAttackMob> extends BipedEntityModel<T> {
+@@ -43,7 +42,7 @@
+       this.rightArmPose = BipedEntityModel.ArmPose.EMPTY;
+       this.leftArmPose = BipedEntityModel.ArmPose.EMPTY;
+       ItemStack itemstack = entityIn.getStackInHand(Hand.MAIN_HAND);
+-      if (itemstack.getItem() == Items.BOW && entityIn.isAttacking()) {
++      if (itemstack.getItem() instanceof net.minecraft.item.BowItem && entityIn.isAttacking()) {
+          if (entityIn.getMainArm() == Arm.RIGHT) {
+             this.rightArmPose = BipedEntityModel.ArmPose.BOW_AND_ARROW;
+          } else {
+@@ -57,7 +56,7 @@
+    public void setAngles(T entityIn, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch, float scaleFactor) {
+       super.setAngles(entityIn, limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch, scaleFactor);
+       ItemStack itemstack = entityIn.getMainHandStack();
+-      if (entityIn.isAttacking() && (itemstack.isEmpty() || itemstack.getItem() != Items.BOW)) {
++      if (entityIn.isAttacking() && (itemstack.isEmpty() || !(itemstack.getItem() instanceof net.minecraft.item.BowItem))) {
+          float f = MathHelper.sin(this.handSwingProgress * (float)Math.PI);
+          float f1 = MathHelper.sin((1.0F - (1.0F - this.handSwingProgress) * (1.0F - this.handSwingProgress)) * (float)Math.PI);
+          this.rightArm.roll = 0.0F;

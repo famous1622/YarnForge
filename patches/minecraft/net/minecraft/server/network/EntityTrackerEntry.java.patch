@@ -1,0 +1,29 @@
+--- a/net/minecraft/server/network/EntityTrackerEntry.java
++++ b/net/minecraft/server/network/EntityTrackerEntry.java
+@@ -77,9 +77,8 @@
+       if (this.entity instanceof ItemFrameEntity && this.field_14040 % 10 == 0) {
+          ItemFrameEntity itemframeentity = (ItemFrameEntity)this.entity;
+          ItemStack itemstack = itemframeentity.getHeldItemStack();
+-         if (itemstack.getItem() instanceof FilledMapItem) {
+-            MapState mapdata = FilledMapItem.getOrCreateMapState(itemstack, this.field_18258);
+-
++         MapState mapdata = FilledMapItem.getOrCreateMapState(itemstack, this.field_18258);
++         if (mapdata != null) {
+             for(ServerPlayerEntity serverplayerentity : this.field_18258.getPlayers()) {
+                mapdata.update(serverplayerentity, itemstack);
+                Packet<?> ipacket = ((FilledMapItem)itemstack.getItem()).createSyncPacket(itemstack, this.field_18258, serverplayerentity);
+@@ -183,12 +182,14 @@
+    public void stopTracking(ServerPlayerEntity p_219454_1_) {
+       this.entity.onStoppedTrackingBy(p_219454_1_);
+       p_219454_1_.onStoppedTracking(this.entity);
++      net.minecraftforge.event.ForgeEventFactory.onStopEntityTracking(this.entity, p_219454_1_);
+    }
+ 
+    public void startTracking(ServerPlayerEntity p_219455_1_) {
+       this.sendPackets(p_219455_1_.networkHandler::sendPacket);
+       this.entity.onStartedTrackingBy(p_219455_1_);
+       p_219455_1_.onStartedTracking(this.entity);
++      net.minecraftforge.event.ForgeEventFactory.onStartEntityTracking(this.entity, p_219455_1_);
+    }
+ 
+    public void sendPackets(Consumer<Packet<?>> p_219452_1_) {

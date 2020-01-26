@@ -19,7 +19,6 @@
 
 package net.minecraftforge.logging;
 
-import static net.minecraftforge.client.model.ModelLoader.getInventoryVariant;
 
 import java.util.Collection;
 
@@ -31,16 +30,16 @@ import net.minecraftforge.registries.ForgeRegistries;
 import org.apache.logging.log4j.message.SimpleMessage;
 
 import net.minecraft.block.BlockState;
-import net.minecraft.client.renderer.BlockModelShapes;
-import net.minecraft.client.renderer.model.ModelResourceLocation;
+import net.minecraft.client.render.block.BlockModels;
+import net.minecraft.client.util.ModelIdentifier;
 
 public class ModelLoaderErrorMessage extends SimpleMessage {
-	private static Multimap<ModelResourceLocation, BlockState> reverseBlockMap = HashMultimap.create();
-	private static Multimap<ModelResourceLocation, String> reverseItemMap = HashMultimap.create();
-	private final ModelResourceLocation resourceLocation;
+	private static Multimap<ModelIdentifier, BlockState> reverseBlockMap = HashMultimap.create();
+	private static Multimap<ModelIdentifier, String> reverseItemMap = HashMultimap.create();
+	private final ModelIdentifier resourceLocation;
 	private final Exception exception;
 
-	public ModelLoaderErrorMessage(ModelResourceLocation resourceLocation, Exception exception) {
+	public ModelLoaderErrorMessage(ModelIdentifier resourceLocation, Exception exception) {
 		// if we're logging these error messages, this will get built for reference
 		buildLookups();
 		this.resourceLocation = resourceLocation;
@@ -51,12 +50,12 @@ public class ModelLoaderErrorMessage extends SimpleMessage {
 		if (!reverseBlockMap.isEmpty()) return;
 
 		ForgeRegistries.BLOCKS.getValues().stream()
-				.flatMap(block -> block.getStateContainer().getValidStates().stream())
-				.forEach(state -> reverseBlockMap.put(BlockModelShapes.getModelLocation(state), state));
+				.flatMap(block -> block.getStateFactory().getStates().stream())
+				.forEach(state -> reverseBlockMap.put(BlockModels.getModelId(state), state));
 
 		ForgeRegistries.ITEMS.forEach(item ->
 		{
-			ModelResourceLocation memory = getInventoryVariant(ForgeRegistries.ITEMS.getKey(item).toString());
+			ModelIdentifier memory = getInventoryVariant(ForgeRegistries.ITEMS.getKey(item).toString());
 			reverseItemMap.put(memory, item.getRegistryName().toString());
 		});
 

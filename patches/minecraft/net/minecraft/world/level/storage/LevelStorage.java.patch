@@ -1,0 +1,39 @@
+--- a/net/minecraft/world/level/storage/LevelStorage.java
++++ b/net/minecraft/world/level/storage/LevelStorage.java
+@@ -35,10 +35,10 @@
+ import org.apache.commons.lang3.StringUtils;
+ import org.apache.logging.log4j.LogManager;
+ import org.apache.logging.log4j.Logger;
++
+ import net.minecraft.world.WorldSaveHandler;
+ import net.minecraft.world.level.LevelProperties;
+ 
+-
+ public class LevelStorage {
+    private static final Logger LOGGER = LogManager.getLogger();
+    private static final DateTimeFormatter TIME_FORMATTER = (new DateTimeFormatterBuilder()).appendValue(ChronoField.YEAR, 4, 10, SignStyle.EXCEEDS_PAD).appendLiteral('-').appendValue(ChronoField.MONTH_OF_YEAR, 2).appendLiteral('-').appendValue(ChronoField.DAY_OF_MONTH, 2).appendLiteral('_').appendValue(ChronoField.HOUR_OF_DAY, 2).appendLiteral('-').appendValue(ChronoField.MINUTE_OF_HOUR, 2).appendLiteral('-').appendValue(ChronoField.SECOND_OF_MINUTE, 2).toFormatter();
+@@ -140,13 +140,23 @@
+ 
+    @Nullable
+    public static LevelProperties readLevelProperties(File p_215780_0_, DataFixer p_215780_1_) {
++       return getWorldData(p_215780_0_, p_215780_1_, null);
++   }
++
++   @Nullable
++   public static LevelProperties getWorldData(File p_215780_0_, DataFixer p_215780_1_, @Nullable WorldSaveHandler saveHandler) {
+       try {
+          CompoundTag compoundnbt = NbtIo.readCompressed(new FileInputStream(p_215780_0_));
+          CompoundTag compoundnbt1 = compoundnbt.getCompound("Data");
+          CompoundTag compoundnbt2 = compoundnbt1.containsKey("Player", 10) ? compoundnbt1.getCompound("Player") : null;
+          compoundnbt1.remove("Player");
+          int i = compoundnbt1.containsKey("DataVersion", 99) ? compoundnbt1.getInt("DataVersion") : -1;
+-         return new LevelProperties(TagHelper.update(p_215780_1_, DataFixTypes.LEVEL, compoundnbt1, i), p_215780_1_, i, compoundnbt2);
++         LevelProperties ret = new LevelProperties(TagHelper.update(p_215780_1_, DataFixTypes.LEVEL, compoundnbt1, i), p_215780_1_, i, compoundnbt2);
++         if (saveHandler != null)
++            net.minecraftforge.fml.WorldPersistenceHooks.handleWorldDataLoad(saveHandler, ret, compoundnbt);
++         return ret;
++      } catch (net.minecraftforge.fml.StartupQuery.AbortedException e) {
++          throw e;
+       } catch (Exception exception) {
+          LOGGER.error("Exception reading {}", p_215780_0_, exception);
+          return null;

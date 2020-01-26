@@ -1,0 +1,93 @@
+--- a/net/minecraft/client/render/block/entity/BlockEntityRenderDispatcher.java
++++ b/net/minecraft/client/render/block/entity/BlockEntityRenderDispatcher.java
+@@ -38,6 +38,8 @@
+ import net.minecraftforge.api.distmarker.Dist;
+ import net.minecraftforge.api.distmarker.OnlyIn;
+ 
++import net.minecraft;
++
+ @OnlyIn(Dist.CLIENT)
+ public class BlockEntityRenderDispatcher {
+    private final Map<Class<? extends BlockEntity>, BlockEntityRenderer<? extends BlockEntity>> renderers = Maps.newHashMap();
+@@ -89,7 +91,7 @@
+ 
+    @Nullable
+    public <T extends BlockEntity> BlockEntityRenderer<T> get(@Nullable BlockEntity tileEntityIn) {
+-      return tileEntityIn == null ? null : this.get(tileEntityIn.getClass());
++      return tileEntityIn == null || tileEntityIn.isInvalid() ? null : this.get(tileEntityIn.getClass());
+    }
+ 
+    public void configure(World p_217665_1_, TextureManager p_217665_2_, TextRenderer p_217665_3_, Camera p_217665_4_, HitResult p_217665_5_) {
+@@ -105,12 +107,14 @@
+ 
+    public void render(BlockEntity tileentityIn, float partialTicks, int destroyStage) {
+       if (tileentityIn.getSquaredDistance(this.cameraEntity.getPos().x, this.cameraEntity.getPos().y, this.cameraEntity.getPos().z) < tileentityIn.getSquaredRenderDistance()) {
++         if(!drawingBatch || !tileentityIn.hasFastRenderer()) {
+          GuiLighting.enable();
+          int i = this.world.getLightmapIndex(tileentityIn.getPos(), 0);
+          int j = i % 65536;
+          int k = i / 65536;
+          GLX.glMultiTexCoord2f(GLX.GL_TEXTURE1, (float)j, (float)k);
+          GlStateManager.color4f(1.0F, 1.0F, 1.0F, 1.0F);
++         }
+          BlockPos blockpos = tileentityIn.getPos();
+          this.renderEntity(tileentityIn, (double)blockpos.getX() - renderOffsetX, (double)blockpos.getY() - renderOffsetY, (double)blockpos.getZ() - renderOffsetZ, partialTicks, destroyStage, false);
+       }
+@@ -130,6 +134,10 @@
+       if (tileentityrenderer != null) {
+          try {
+             if (hasNoBlock || tileEntityIn.hasWorld() && tileEntityIn.getType().supports(tileEntityIn.getCachedState().getBlock())) {
++
++               if(drawingBatch && tileEntityIn.hasFastRenderer())
++                  tileentityrenderer.renderTileEntityFast(tileEntityIn, x, y, z, partialTicks, destroyStage, batchBuffer.getBufferBuilder());
++               else
+                tileentityrenderer.render(tileEntityIn, x, y, z, partialTicks, destroyStage);
+             }
+          } catch (Throwable throwable) {
+@@ -153,4 +161,46 @@
+    public TextRenderer getFontRenderer() {
+       return this.fontRenderer;
+    }
++
++   /**
++    * Buffer used for batched TESRs
++    */
++   private net.minecraft.client.render.Tessellator batchBuffer = new net.minecraft.client.render.Tessellator(0x200000);
++   private boolean drawingBatch = false;
++
++   /**
++    * Prepare for a batched TESR rendering.
++    * You probably shouldn't call this manually.
++    */
++   public void preDrawBatch() {
++       batchBuffer.getBufferBuilder().begin(org.lwjgl.opengl.GL11.GL_QUADS, net.minecraft.client.render.VertexFormats.POSITION_COLOR_UV_LMAP);
++       drawingBatch = true;
++   }
++
++   /**
++    * Render all TESRs batched so far.
++    * You probably shouldn't call this manually.
++    */
++   public void drawBatch() {
++      textureManager.bindTexture(net.minecraft.client.texture.SpriteAtlasTexture.BLOCK_ATLAS_TEX);
++      net.minecraft.client.render.GuiLighting.disable();
++      GlStateManager.blendFunc(org.lwjgl.opengl.GL11.GL_SRC_ALPHA, org.lwjgl.opengl.GL11.GL_ONE_MINUS_SRC_ALPHA);
++      GlStateManager.enableBlend();
++      GlStateManager.disableCull();
++
++      if (net.minecraft.client.MinecraftClient.isAmbientOcclusionEnabled())
++         GlStateManager.shadeModel(org.lwjgl.opengl.GL11.GL_SMOOTH);
++      else
++         GlStateManager.shadeModel(org.lwjgl.opengl.GL11.GL_FLAT);
++
++      batchBuffer.draw();
++
++      net.minecraft.client.render.GuiLighting.enable();
++      drawingBatch = false;
++   }
++
++   //Internal, Do not call Use ClientRegistry.
++   public synchronized <T extends BlockEntity> void setSpecialRenderer(Class<T> tileEntityClass, BlockEntityRenderer<? super T> specialRenderer) {
++      this.renderers.put(tileEntityClass, specialRenderer);
++   }
+ }

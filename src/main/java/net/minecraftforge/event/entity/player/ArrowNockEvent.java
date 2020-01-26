@@ -21,11 +21,10 @@ package net.minecraftforge.event.entity.player;
 
 import javax.annotation.Nonnull;
 
-import net.minecraftforge.common.MinecraftForge;
 
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
-import net.minecraft.util.ActionResult;
+import net.minecraft.util.TypedActionResult;
 import net.minecraft.util.Hand;
 import net.minecraft.world.World;
 
@@ -41,7 +40,7 @@ public class ArrowNockEvent extends PlayerEvent {
 	private final Hand hand;
 	private final World world;
 	private final boolean hasAmmo;
-	private ActionResult<ItemStack> action;
+	private TypedActionResult<ItemStack> action;
 
 	public ArrowNockEvent(PlayerEntity player, @Nonnull ItemStack item, Hand hand, World world, boolean hasAmmo) {
 		super(player);
@@ -68,11 +67,11 @@ public class ArrowNockEvent extends PlayerEvent {
 		return this.hasAmmo;
 	}
 
-	public ActionResult<ItemStack> getAction() {
+	public TypedActionResult<ItemStack> getAction() {
 		return this.action;
 	}
 
-	public void setAction(ActionResult<ItemStack> action) {
+	public void setAction(TypedActionResult<ItemStack> action) {
 		this.action = action;
 	}
 }

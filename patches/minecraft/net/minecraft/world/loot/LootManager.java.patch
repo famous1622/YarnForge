@@ -1,0 +1,26 @@
+--- a/net/minecraft/world/loot/LootManager.java
++++ b/net/minecraft/world/loot/LootManager.java
+@@ -20,12 +20,12 @@
+ import net.minecraft.world.loot.function.LootFunctions;
+ import org.apache.logging.log4j.LogManager;
+ import org.apache.logging.log4j.Logger;
++
+ import net.minecraft.util.BoundedIntUnaryOperator;
+ import net.minecraft.world.loot.context.LootContext;
+ import net.minecraft.world.loot.entry.LootEntries;
+ import net.minecraft.world.loot.entry.LootEntry;
+ 
+-
+ public class LootManager extends JsonDataLoader {
+    private static final Logger LOGGER = LogManager.getLogger();
+    private static final Gson GSON = (new GsonBuilder()).registerTypeAdapter(UniformLootTableRange.class, new UniformLootTableRange.Serializer()).registerTypeAdapter(BinomialLootTableRange.class, new BinomialLootTableRange.Serializer()).registerTypeAdapter(ConstantLootTableRange.class, new ConstantLootTableRange.Serializer()).registerTypeAdapter(BoundedIntUnaryOperator.class, new BoundedIntUnaryOperator.Serializer()).registerTypeAdapter(LootPool.class, new LootPool.Serializer()).registerTypeAdapter(LootSupplier.class, new LootSupplier.Serializer()).registerTypeHierarchyAdapter(LootEntry.class, new LootEntries.Serializer()).registerTypeHierarchyAdapter(LootFunction.class, new LootFunctions.Factory()).registerTypeHierarchyAdapter(LootCondition.class, new LootConditions.Factory()).registerTypeHierarchyAdapter(LootContext.EntityTarget.class, new LootContext.EntityTarget.Serializer()).create();
+@@ -48,7 +48,8 @@
+ 
+       splashList.forEach((p_223385_1_, p_223385_2_) -> {
+          try {
+-            LootSupplier loottable = GSON.fromJson(p_223385_2_, LootSupplier.class);
++            net.minecraft.resource.Resource res = resourceManagerIn.getResource(getPreparedPath(p_223385_1_));
++            LootSupplier loottable = net.minecraftforge.common.ForgeHooks.loadLootTable(GSON, p_223385_1_, p_223385_2_, res == null || !res.getResourcePackName().equals("Default"), this);
+             builder.put(p_223385_1_, loottable);
+          } catch (Exception exception) {
+             LOGGER.error("Couldn't parse loot table {}", p_223385_1_, exception);

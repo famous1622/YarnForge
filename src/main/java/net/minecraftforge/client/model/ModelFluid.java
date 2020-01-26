@@ -51,23 +51,23 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import net.minecraft.block.BlockState;
-import net.minecraft.client.renderer.model.BakedQuad;
-import net.minecraft.client.renderer.model.IBakedModel;
-import net.minecraft.client.renderer.model.IUnbakedModel;
-import net.minecraft.client.renderer.model.ItemCameraTransforms.TransformType;
-import net.minecraft.client.renderer.model.ItemOverrideList;
-import net.minecraft.client.renderer.model.ModelBakery;
-import net.minecraft.client.renderer.texture.ISprite;
-import net.minecraft.client.renderer.texture.TextureAtlasSprite;
-import net.minecraft.client.renderer.vertex.VertexFormat;
+import net.minecraft.client.render.model.BakedQuad;
+import net.minecraft.client.render.model.BakedModel;
+import net.minecraft.client.render.model.UnbakedModel;
+import net.minecraft.client.render.model.json.ModelTransformation.Type;
+import net.minecraft.client.render.model.json.ModelItemPropertyOverrideList;
+import net.minecraft.client.render.model.ModelLoader;
+import net.minecraft.client.render.model.ModelBakeSettings;
+import net.minecraft.client.texture.Sprite;
+import net.minecraft.client.render.VertexFormat;
 import net.minecraft.fluid.Fluid;
 import net.minecraft.fluid.Fluids;
-import net.minecraft.resources.IResourceManager;
-import net.minecraft.util.Direction;
-import net.minecraft.util.ResourceLocation;
+import net.minecraft.resource.ResourceManager;
+import net.minecraft.util.math.Direction;
+import net.minecraft.util.Identifier;
 import net.minecraft.util.math.MathHelper;
 
-public final class ModelFluid implements IUnbakedModel {
+public final class ModelFluid implements UnbakedModel {
 	public static final ModelFluid WATER = new ModelFluid(Fluids.WATER);
 	public static final ModelFluid LAVA = new ModelFluid(Fluids.LAVA);
 	private static final Logger LOGGER = LogManager.getLogger();
@@ -78,7 +78,7 @@ public final class ModelFluid implements IUnbakedModel {
 	}
 
 	@Override
-	public Collection<ResourceLocation> getTextures(Function<ResourceLocation, IUnbakedModel> modelGetter, Set<String> missingTextureErrors) {
+	public Collection<Identifier> getTextureDependencies(Function<Identifier, UnbakedModel> modelGetter, Set<String> missingTextureErrors) {
 		FluidAttributes attrs = fluid.getAttributes();
 		return attrs.getOverlayTexture() != null
 				? ImmutableSet.of(attrs.getStillTexture(), attrs.getFlowingTexture(), attrs.getOverlayTexture())
@@ -86,13 +86,13 @@ public final class ModelFluid implements IUnbakedModel {
 	}
 
 	@Override
-	public Collection<ResourceLocation> getDependencies() {
+	public Collection<Identifier> getModelDependencies() {
 		return Collections.emptyList();
 	}
 
 	@Nullable
 	@Override
-	public IBakedModel bake(ModelBakery bakery, Function<ResourceLocation, TextureAtlasSprite> spriteGetter, ISprite sprite, VertexFormat format) {
+	public BakedModel bake(ModelLoader bakery, Function<Identifier, Sprite> spriteGetter, ModelBakeSettings sprite, VertexFormat format) {
 		FluidAttributes attrs = fluid.getAttributes();
 		return new CachingBakedFluid(
 				sprite.getState().apply(Optional.empty()),
@@ -127,11 +127,11 @@ public final class ModelFluid implements IUnbakedModel {
 		INSTANCE;
 
 		@Override
-		public void onResourceManagerReload(IResourceManager resourceManager) {
+		public void apply(ResourceManager resourceManager) {
 		}
 
 		@Override
-		public boolean accepts(ResourceLocation modelLocation) {
+		public boolean accepts(Identifier modelLocation) {
 			return modelLocation.getNamespace().equals(ForgeVersion.MOD_ID) && (
 					modelLocation.getPath().equals("fluid") ||
 							modelLocation.getPath().equals("models/block/fluid") ||
@@ -139,7 +139,7 @@ public final class ModelFluid implements IUnbakedModel {
 		}
 
 		@Override
-		public IUnbakedModel loadModel(ResourceLocation modelLocation) {
+		public UnbakedModel loadModel(Identifier modelLocation) {
 			return WATER;
 		}
 	}
@@ -166,7 +166,7 @@ public final class ModelFluid implements IUnbakedModel {
 			}
 		});
 
-		public CachingBakedFluid(Optional<TRSRTransformation> transformation, ImmutableMap<TransformType, TRSRTransformation> transforms, VertexFormat format, int color, TextureAtlasSprite still, TextureAtlasSprite flowing, Optional<TextureAtlasSprite> overlay, boolean gas, Optional<IModelData> stateOption) {
+		public CachingBakedFluid(Optional<TRSRTransformation> transformation, ImmutableMap<Type, TRSRTransformation> transforms, VertexFormat format, int color, Sprite still, Sprite flowing, Optional<Sprite> overlay, boolean gas, Optional<IModelData> stateOption) {
 			super(transformation, transforms, format, color, still, flowing, overlay, gas, stateOption.isPresent(), getCorners(stateOption), getFlow(stateOption), getOverlay(stateOption));
 		}
 
@@ -258,21 +258,21 @@ public final class ModelFluid implements IUnbakedModel {
 		}
 	}
 
-	private static class BakedFluid implements IBakedModel {
+	private static class BakedFluid implements BakedModel {
 		private static final int[] x = {0, 0, 1, 1};
 		private static final int[] z = {0, 1, 1, 0};
 		private static final float eps = 1e-3f;
 
 		protected final Optional<TRSRTransformation> transformation;
-		protected final ImmutableMap<TransformType, TRSRTransformation> transforms;
+		protected final ImmutableMap<Type, TRSRTransformation> transforms;
 		protected final VertexFormat format;
 		protected final int color;
-		protected final TextureAtlasSprite still, flowing;
-		protected final Optional<TextureAtlasSprite> overlay;
+		protected final Sprite still, flowing;
+		protected final Optional<Sprite> overlay;
 		protected final boolean gas;
 		protected final ImmutableMap<Direction, ImmutableList<BakedQuad>> faceQuads;
 
-		public BakedFluid(Optional<TRSRTransformation> transformation, ImmutableMap<TransformType, TRSRTransformation> transforms, VertexFormat format, int color, TextureAtlasSprite still, TextureAtlasSprite flowing, Optional<TextureAtlasSprite> overlay, boolean gas, boolean statePresent, int[] cornerRound, int flowRound, boolean[] sideOverlays) {
+		public BakedFluid(Optional<TRSRTransformation> transformation, ImmutableMap<Type, TRSRTransformation> transforms, VertexFormat format, int color, Sprite still, Sprite flowing, Optional<Sprite> overlay, boolean gas, boolean statePresent, int[] cornerRound, int flowRound, boolean[] sideOverlays) {
 			this.transformation = transformation;
 			this.transforms = transforms;
 			this.format = format;
@@ -304,7 +304,7 @@ public final class ModelFluid implements IUnbakedModel {
 				boolean isFlowing = flowRound > -1000;
 
 				float flow = isFlowing ? (float) Math.toRadians(flowRound) : 0f;
-				TextureAtlasSprite topSprite = isFlowing ? flowing : still;
+				Sprite topSprite = isFlowing ? flowing : still;
 				float scale = isFlowing ? 4f : 8f;
 
 				float c = MathHelper.cos(flow) * scale;
@@ -345,8 +345,8 @@ public final class ModelFluid implements IUnbakedModel {
 
 				// sides
 				for (int i = 0; i < 4; i++) {
-					Direction side = Direction.byHorizontalIndex((5 - i) % 4); // [W, S, E, N]
-					boolean useOverlay = overlay.isPresent() && sideOverlays[side.getHorizontalIndex()];
+					Direction side = Direction.fromHorizontal((5 - i) % 4); // [W, S, E, N]
+					boolean useOverlay = overlay.isPresent() && sideOverlays[side.getHorizontal()];
 					int si = i; // local var for lambda capture
 
 					VertexParameter sideX = j -> x[(si + x[j]) % 4];
@@ -380,7 +380,7 @@ public final class ModelFluid implements IUnbakedModel {
 			return ImmutableMap.copyOf(faceQuads);
 		}
 
-		private BakedQuad buildQuad(Direction side, TextureAtlasSprite texture, boolean flip, boolean offset, VertexParameter x, VertexParameter y, VertexParameter z, VertexParameter u, VertexParameter v) {
+		private BakedQuad buildQuad(Direction side, Sprite texture, boolean flip, boolean offset, VertexParameter x, VertexParameter y, VertexParameter z, VertexParameter u, VertexParameter v) {
 			UnpackedBakedQuad.Builder builder = new UnpackedBakedQuad.Builder(format);
 
 			builder.setQuadOrientation(side);
@@ -395,8 +395,8 @@ public final class ModelFluid implements IUnbakedModel {
 				putVertex(
 						consumer, side, offset,
 						x.get(vertex), y.get(vertex), z.get(vertex),
-						texture.getInterpolatedU(u.get(vertex)),
-						texture.getInterpolatedV(v.get(vertex))
+						texture.getU(u.get(vertex)),
+						texture.getV(v.get(vertex))
 				);
 			}
 
@@ -405,11 +405,11 @@ public final class ModelFluid implements IUnbakedModel {
 
 		private void putVertex(IVertexConsumer consumer, Direction side, boolean offset, float x, float y, float z, float u, float v) {
 			for (int e = 0; e < format.getElementCount(); e++) {
-				switch (format.getElement(e).getUsage()) {
+				switch (format.getElement(e).getType()) {
 				case POSITION:
-					float dx = offset ? side.getDirectionVec().getX() * eps : 0f;
-					float dy = offset ? side.getDirectionVec().getY() * eps : 0f;
-					float dz = offset ? side.getDirectionVec().getZ() * eps : 0f;
+					float dx = offset ? side.getVector().getX() * eps : 0f;
+					float dy = offset ? side.getVector().getY() * eps : 0f;
+					float dz = offset ? side.getVector().getZ() * eps : 0f;
 					consumer.put(e, x - dx, y - dy, z - dz, 1f);
 					break;
 				case COLOR:
@@ -420,9 +420,9 @@ public final class ModelFluid implements IUnbakedModel {
 					consumer.put(e, r, g, b, a);
 					break;
 				case NORMAL:
-					float offX = (float) side.getXOffset();
-					float offY = (float) side.getYOffset();
-					float offZ = (float) side.getZOffset();
+					float offX = (float) side.getOffsetX();
+					float offY = (float) side.getOffsetY();
+					float offZ = (float) side.getOffsetZ();
 					consumer.put(e, offX, offY, offZ, 0f);
 					break;
 				case UV:
@@ -439,22 +439,22 @@ public final class ModelFluid implements IUnbakedModel {
 		}
 
 		@Override
-		public boolean isAmbientOcclusion() {
+		public boolean useAmbientOcclusion() {
 			return true;
 		}
 
 		@Override
-		public boolean isGui3d() {
+		public boolean hasDepthInGui() {
 			return false;
 		}
 
 		@Override
-		public boolean isBuiltInRenderer() {
+		public boolean isBuiltin() {
 			return false;
 		}
 
 		@Override
-		public TextureAtlasSprite getParticleTexture() {
+		public Sprite getSprite() {
 			return still;
 		}
 
@@ -464,12 +464,12 @@ public final class ModelFluid implements IUnbakedModel {
 		}
 
 		@Override
-		public ItemOverrideList getOverrides() {
-			return ItemOverrideList.EMPTY;
+		public ModelItemPropertyOverrideList getItemPropertyOverrides() {
+			return ModelItemPropertyOverrideList.EMPTY;
 		}
 
 		@Override
-		public Pair<? extends IBakedModel, Matrix4f> handlePerspective(TransformType type) {
+		public Pair<? extends BakedModel, Matrix4f> handlePerspective(Type type) {
 			return PerspectiveMapWrapper.handlePerspective(this, transforms, type);
 		}
 

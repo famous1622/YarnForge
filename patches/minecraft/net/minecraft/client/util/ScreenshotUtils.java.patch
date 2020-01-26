@@ -1,0 +1,40 @@
+--- a/net/minecraft/client/util/ScreenshotUtils.java
++++ b/net/minecraft/client/util/ScreenshotUtils.java
+@@ -34,19 +34,34 @@
+       NativeImage nativeimage = method_1663(width, height, buffer);
+       File file1 = new File(gameDirectory, "screenshots");
+       file1.mkdir();
+-      File file2;
++      File target;
+       if (screenshotName == null) {
+-         file2 = getScreenshotFilename(file1);
++         target = getScreenshotFilename(file1);
+       } else {
+-         file2 = new File(file1, screenshotName);
++         target = new File(file1, screenshotName);
+       }
+ 
++      try {
++         target = target.getCanonicalFile(); // FORGE: Fix errors on Windows with paths that include \.\
++      } catch (java.io.IOException e) {}
++      net.minecraftforge.client.event.ScreenshotEvent event = net.minecraftforge.client.ForgeHooksClient.onScreenshot(nativeimage, target);
++      if (event.isCanceled()) {
++         p_148259_5_.accept(event.getCancelMessage());
++         return;
++      } else {
++         target = event.getScreenshotFile();
++      }
++
++      final File file2 = target;
+       ResourceImpl.RESOURCE_IO_EXECUTOR.execute(() -> {
+          try {
+             nativeimage.writeFile(file2);
+             Text itextcomponent = (new LiteralText(file2.getName())).formatted(Formatting.UNDERLINE).styled((p_212451_1_) -> {
+                p_212451_1_.setClickEvent(new ClickEvent(ClickEvent.Action.OPEN_FILE, file2.getAbsolutePath()));
+             });
++            if (event.getResultMessage() != null) {
++               p_148259_5_.accept(event.getResultMessage());
++            } else
+             p_148259_5_.accept(new TranslatableText("screenshot.success", itextcomponent));
+          } catch (Exception exception) {
+             LOGGER.warn("Couldn't save screenshot", (Throwable)exception);

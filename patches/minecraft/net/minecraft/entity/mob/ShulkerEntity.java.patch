@@ -1,0 +1,23 @@
+--- a/net/minecraft/entity/mob/ShulkerEntity.java
++++ b/net/minecraft/entity/mob/ShulkerEntity.java
+@@ -248,6 +248,7 @@
+          this.x = (double)blockpos.getX() + 0.5D;
+          this.y = (double)blockpos.getY();
+          this.z = (double)blockpos.getZ() + 0.5D;
++         if (this.isAddedToWorld() && this.world instanceof net.minecraft.server.world.ServerWorld) ((net.minecraft.server.world.ServerWorld)this.world).checkChunk(this); // Forge - Process chunk registration after moving.
+          this.prevX = this.x;
+          this.prevY = this.y;
+          this.prevZ = this.z;
+@@ -314,6 +315,12 @@
+                }
+ 
+                if (flag) {
++                  net.minecraftforge.event.entity.living.EnderTeleportEvent event = new net.minecraftforge.event.entity.living.EnderTeleportEvent(this, blockpos1.getX(), blockpos1.getY(), blockpos1.getZ(), 0);
++                  if (net.minecraftforge.common.MinecraftForge.EVENT_BUS.post(event)) flag = false;
++                  blockpos1 = new BlockPos(event.getTargetX(), event.getTargetY(), event.getTargetZ());
++               }
++
++               if (flag) {
+                   this.playSound(SoundEvents.ENTITY_SHULKER_TELEPORT, 1.0F, 1.0F);
+                   this.dataTracker.set(ATTACHED_BLOCK, Optional.of(blockpos1));
+                   this.dataTracker.set(PEEK_AMOUNT, (byte)0);

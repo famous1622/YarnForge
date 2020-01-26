@@ -30,24 +30,24 @@ import net.minecraft.block.BlockState;
 import net.minecraft.enchantment.Enchantment;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.MobEntity;
-import net.minecraft.entity.item.ItemEntity;
+import net.minecraft.entity.mob.MobEntity;
+import net.minecraft.entity.ItemEntity;
 import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.inventory.EquipmentSlotType;
+import net.minecraft.entity.EquipmentSlot;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
-import net.minecraft.item.ItemUseContext;
-import net.minecraft.nbt.CompoundNBT;
-import net.minecraft.stats.Stats;
-import net.minecraft.util.ActionResultType;
-import net.minecraft.util.CachedBlockInfo;
+import net.minecraft.item.ItemUsageContext;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.stat.Stats;
+import net.minecraft.util.ActionResult;
+import net.minecraft.block.pattern.CachedBlockPosition;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 
 /*
  * Extension added to ItemStack that bounces to ItemSack sensitive Item methods. Typically this is just for convince.
  */
-public interface IForgeItemStack extends ICapabilitySerializable<CompoundNBT> {
+public interface IForgeItemStack extends ICapabilitySerializable<CompoundTag> {
 	// Helpers for accessing Item data
 	default ItemStack getStack() {
 		return (ItemStack) this;
@@ -101,26 +101,26 @@ public interface IForgeItemStack extends ICapabilitySerializable<CompoundNBT> {
 		return getStack().getItem().getToolTypes(getStack());
 	}
 
-	default ActionResultType onItemUseFirst(ItemUseContext context) {
+	default ActionResult onItemUseFirst(ItemUsageContext context) {
 		PlayerEntity entityplayer = context.getPlayer();
-		BlockPos blockpos = context.getPos();
-		CachedBlockInfo blockworldstate = new CachedBlockInfo(context.getWorld(), blockpos, false);
-		if (entityplayer != null && !entityplayer.abilities.allowEdit && !getStack().canPlaceOn(context.getWorld().getTags(), blockworldstate)) {
-			return ActionResultType.PASS;
+		BlockPos blockpos = context.getBlockPos();
+		CachedBlockPosition blockworldstate = new CachedBlockPosition(context.getWorld(), blockpos, false);
+		if (entityplayer != null && !entityplayer.abilities.allowModifyWorld && !getStack().canPlaceOn(context.getWorld().getTagManager(), blockworldstate)) {
+			return ActionResult.PASS;
 		} else {
 			Item item = getStack().getItem();
-			ActionResultType enumactionresult = item.onItemUseFirst(getStack(), context);
-			if (entityplayer != null && enumactionresult == ActionResultType.SUCCESS) {
-				entityplayer.addStat(Stats.ITEM_USED.get(item));
+			ActionResult enumactionresult = item.onItemUseFirst(getStack(), context);
+			if (entityplayer != null && enumactionresult == ActionResult.SUCCESS) {
+				entityplayer.incrementStat(Stats.USED.getOrCreateStat(item));
 			}
 
 			return enumactionresult;
 		}
 	}
 
-	default CompoundNBT serializeNBT() {
-		CompoundNBT ret = new CompoundNBT();
-		getStack().write(ret);
+	default CompoundTag serializeNBT() {
+		CompoundTag ret = new CompoundTag();
+		getStack().toTag(ret);
 		return ret;
 	}
 
@@ -185,7 +185,7 @@ public interface IForgeItemStack extends ICapabilitySerializable<CompoundNBT> {
 	 * decide
 	 */
 	@Nullable
-	default EquipmentSlotType getEquipmentSlot() {
+	default EquipmentSlot getEquipmentSlot() {
 		return getStack().getItem().getEquipmentSlot(getStack());
 	}
 
@@ -298,7 +298,7 @@ public interface IForgeItemStack extends ICapabilitySerializable<CompoundNBT> {
 	 * @param entity    The entity trying to equip the armor
 	 * @return True if the given ItemStack can be inserted in the slot
 	 */
-	default boolean canEquip(EquipmentSlotType armorType, Entity entity) {
+	default boolean canEquip(EquipmentSlot armorType, Entity entity) {
 		return getStack().getItem().canEquip(getStack(), armorType, entity);
 	}
 
@@ -340,7 +340,7 @@ public interface IForgeItemStack extends ICapabilitySerializable<CompoundNBT> {
 	 * @return The NBT tag
 	 */
 	@Nullable
-	default CompoundNBT getShareTag() {
+	default CompoundTag getShareTag() {
 		return getStack().getItem().getShareTag(getStack());
 	}
 
@@ -351,7 +351,7 @@ public interface IForgeItemStack extends ICapabilitySerializable<CompoundNBT> {
 	 * @param stack The stack that received NBT
 	 * @param nbt   Received NBT, can be null
 	 */
-	default void readShareTag(@Nullable CompoundNBT nbt) {
+	default void readShareTag(@Nullable CompoundTag nbt) {
 		getStack().getItem().readShareTag(getStack(), nbt);
 	}
 
@@ -363,7 +363,7 @@ public interface IForgeItemStack extends ICapabilitySerializable<CompoundNBT> {
 	 * @param player The Player that is wielding the item
 	 * @return
 	 */
-	default boolean doesSneakBypassUse(net.minecraft.world.IWorldReader world, BlockPos pos, PlayerEntity player) {
+	default boolean doesSneakBypassUse(net.minecraft.world.ViewableWorld world, BlockPos pos, PlayerEntity player) {
 		return getStack().isEmpty() || getStack().getItem().doesSneakBypassUse(getStack(), world, pos, player);
 	}
 
@@ -373,8 +373,8 @@ public interface IForgeItemStack extends ICapabilitySerializable<CompoundNBT> {
 	 * Only used for comparing itemStacks that were transferred from server to client using Item.getNBTShareTag.
 	 */
 	default boolean areShareTagsEqual(ItemStack other) {
-		CompoundNBT shareTagA = getStack().getShareTag();
-		CompoundNBT shareTagB = other.getShareTag();
+		CompoundTag shareTagA = getStack().getShareTag();
+		CompoundTag shareTagB = other.getShareTag();
 		if (shareTagA == null) {
 			return shareTagB == null;
 		} else {
@@ -394,7 +394,7 @@ public interface IForgeItemStack extends ICapabilitySerializable<CompoundNBT> {
 			return other.isEmpty();
 		} else {
 			return !other.isEmpty() && getStack().getCount() == other.getCount() && getStack().getItem() == other.getItem() &&
-					(limitTags ? getStack().areShareTagsEqual(other) : ItemStack.areItemStackTagsEqual(getStack(), other));
+					(limitTags ? getStack().areShareTagsEqual(other) : ItemStack.areTagsEqual(getStack(), other));
 		}
 	}
 

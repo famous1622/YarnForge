@@ -34,13 +34,13 @@ import java.util.stream.Collectors;
 import com.google.common.base.Joiner;
 import net.minecraftforge.fml.loading.moddiscovery.ModFile;
 
-import net.minecraft.resources.ResourcePackInfo;
-import net.minecraft.resources.ResourcePackType;
-import net.minecraft.util.ResourceLocation;
+import net.minecraft.resource.ResourcePackContainer;
+import net.minecraft.resource.ResourceType;
+import net.minecraft.util.Identifier;
 
 public class ModFileResourcePack extends DelegatableResourcePack {
 	private final ModFile modFile;
-	private ResourcePackInfo packInfo;
+	private ResourcePackContainer packInfo;
 
 	public ModFileResourcePack(final ModFile modFile) {
 		super(new File("dummy"));
@@ -57,20 +57,20 @@ public class ModFileResourcePack extends DelegatableResourcePack {
 	}
 
 	@Override
-	public InputStream getInputStream(String name) throws IOException {
+	public InputStream openFile(String name) throws IOException {
 		final Path path = modFile.getLocator().findPath(modFile, name);
 		return Files.newInputStream(path, StandardOpenOption.READ);
 	}
 
 	@Override
-	public boolean resourceExists(String name) {
+	public boolean containsFile(String name) {
 		return Files.exists(modFile.getLocator().findPath(modFile, name));
 	}
 
 	@Override
-	public Collection<ResourceLocation> getAllResourceLocations(ResourcePackType type, String pathIn, int maxDepth, Predicate<String> filter) {
+	public Collection<Identifier> findResources(ResourceType type, String pathIn, int maxDepth, Predicate<String> filter) {
 		try {
-			Path root = modFile.getLocator().findPath(modFile, type.getDirectoryName()).toAbsolutePath();
+			Path root = modFile.getLocator().findPath(modFile, type.getName()).toAbsolutePath();
 			Path inputPath = root.getFileSystem().getPath(pathIn);
 
 			return Files.walk(root).
@@ -82,7 +82,7 @@ public class ModFileResourcePack extends DelegatableResourcePack {
 					// Finally we need to form the RL, so use the first name as the domain, and the rest as the path
 					// It is VERY IMPORTANT that we do not rely on Path.toString as this is inconsistent between operating systems
 					// Join the path names ourselves to force forward slashes
-							map(path -> new ResourceLocation(path.getName(0).toString(), Joiner.on('/').join(path.subpath(1, Math.min(maxDepth, path.getNameCount()))))).
+							map(path -> new Identifier(path.getName(0).toString(), Joiner.on('/').join(path.subpath(1, Math.min(maxDepth, path.getNameCount()))))).
 							collect(Collectors.toList());
 		} catch (IOException e) {
 			return Collections.emptyList();
@@ -90,9 +90,9 @@ public class ModFileResourcePack extends DelegatableResourcePack {
 	}
 
 	@Override
-	public Set<String> getResourceNamespaces(ResourcePackType type) {
+	public Set<String> getNamespaces(ResourceType type) {
 		try {
-			Path root = modFile.getLocator().findPath(modFile, type.getDirectoryName()).toAbsolutePath();
+			Path root = modFile.getLocator().findPath(modFile, type.getName()).toAbsolutePath();
 			return Files.walk(root, 1)
 					.map(path -> root.relativize(path.toAbsolutePath()))
 					.filter(path -> path.getNameCount() > 0) // skip the root entry
@@ -104,19 +104,19 @@ public class ModFileResourcePack extends DelegatableResourcePack {
 		}
 	}
 
-	public InputStream getResourceStream(ResourcePackType type, ResourceLocation location) throws IOException {
+	public InputStream open(ResourceType type, Identifier location) throws IOException {
 		if (location.getPath().startsWith("lang/")) {
-			return super.getResourceStream(ResourcePackType.CLIENT_RESOURCES, location);
+			return super.open(ResourceType.CLIENT_RESOURCES, location);
 		} else {
-			return super.getResourceStream(type, location);
+			return super.open(type, location);
 		}
 	}
 
-	public boolean resourceExists(ResourcePackType type, ResourceLocation location) {
+	public boolean contains(ResourceType type, Identifier location) {
 		if (location.getPath().startsWith("lang/")) {
-			return super.resourceExists(ResourcePackType.CLIENT_RESOURCES, location);
+			return super.contains(ResourceType.CLIENT_RESOURCES, location);
 		} else {
-			return super.resourceExists(type, location);
+			return super.contains(type, location);
 		}
 	}
 
@@ -125,11 +125,11 @@ public class ModFileResourcePack extends DelegatableResourcePack {
 
 	}
 
-	<T extends ResourcePackInfo> T getPackInfo() {
+	<T extends ResourcePackContainer> T getPackInfo() {
 		return (T) this.packInfo;
 	}
 
-	<T extends ResourcePackInfo> void setPackInfo(final T packInfo) {
+	<T extends ResourcePackContainer> void setPackInfo(final T packInfo) {
 		this.packInfo = packInfo;
 	}
 }

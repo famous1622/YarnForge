@@ -22,7 +22,6 @@ package net.minecraftforge.fluids.capability;
 import javax.annotation.Nonnull;
 
 import net.minecraftforge.fluids.FluidStack;
-import net.minecraftforge.fluids.IFluidTank;
 
 /**
  * Implement this interface as a capability which should handle fluids, generally storing them in

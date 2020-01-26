@@ -33,29 +33,29 @@ import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import org.apache.commons.lang3.tuple.Pair;
 
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.chunk.ChunkRenderCache;
-import net.minecraft.client.renderer.texture.NativeImage;
-import net.minecraft.resources.IResource;
-import net.minecraft.resources.IResourceManager;
-import net.minecraft.util.BlockRenderLayer;
-import net.minecraft.util.ResourceLocation;
+import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.render.chunk.ChunkRendererRegion;
+import net.minecraft.client.texture.NativeImage;
+import net.minecraft.resource.Resource;
+import net.minecraft.resource.ResourceManager;
+import net.minecraft.block.BlockRenderLayer;
+import net.minecraft.util.Identifier;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 
 public class MinecraftForgeClient {
-	private static final LoadingCache<Pair<World, BlockPos>, ChunkRenderCache> regionCache = CacheBuilder.newBuilder()
+	private static final LoadingCache<Pair<World, BlockPos>, ChunkRendererRegion> regionCache = CacheBuilder.newBuilder()
 			.maximumSize(500)
 			.concurrencyLevel(5)
 			.expireAfterAccess(1, TimeUnit.SECONDS)
-			.build(new CacheLoader<Pair<World, BlockPos>, ChunkRenderCache>() {
+			.build(new CacheLoader<Pair<World, BlockPos>, ChunkRendererRegion>() {
 				@Override
-				public ChunkRenderCache load(Pair<World, BlockPos> key) {
-					return ChunkRenderCache.generateCache(key.getLeft(), key.getRight().add(-1, -1, -1), key.getRight().add(16, 16, 16), 1);
+				public ChunkRendererRegion load(Pair<World, BlockPos> key) {
+					return ChunkRendererRegion.create(key.getLeft(), key.getRight().add(-1, -1, -1), key.getRight().add(16, 16, 16), 1);
 				}
 			});
 	private static BitSet stencilBits = new BitSet(8);
-	private static HashMap<ResourceLocation, Supplier<NativeImage>> bufferedImageSuppliers = new HashMap<ResourceLocation, Supplier<NativeImage>>();
+	private static HashMap<Identifier, Supplier<NativeImage>> bufferedImageSuppliers = new HashMap<Identifier, Supplier<NativeImage>>();
 
 	static {
 		stencilBits.set(0, 8);
@@ -70,7 +70,7 @@ public class MinecraftForgeClient {
 	 * Useful for creating string and number formatters.
 	 */
 	public static Locale getLocale() {
-		return Minecraft.getInstance().getLanguageManager().getCurrentLanguage().getJavaLocale();
+		return MinecraftClient.getInstance().getLanguageManager().getLanguage().getJavaLocale();
 	}
 
 	/**
@@ -100,7 +100,7 @@ public class MinecraftForgeClient {
 		}
 	}
 
-	public static void onRebuildChunk(World world, BlockPos position, ChunkRenderCache cache) {
+	public static void onRebuildChunk(World world, BlockPos position, ChunkRendererRegion cache) {
 		if (cache == null) {
 			regionCache.invalidate(Pair.of(world, position));
 		} else {
@@ -108,7 +108,7 @@ public class MinecraftForgeClient {
 		}
 	}
 
-	public static ChunkRenderCache getRegionRenderCache(World world, BlockPos pos) {
+	public static ChunkRendererRegion getRegionRenderCache(World world, BlockPos pos) {
 		int x = pos.getX() & ~0xF;
 		int y = pos.getY() & ~0xF;
 		int z = pos.getZ() & ~0xF;
@@ -120,18 +120,18 @@ public class MinecraftForgeClient {
 		regionCache.cleanUp();
 	}
 
-	public static void registerImageLayerSupplier(ResourceLocation resourceLocation, Supplier<NativeImage> supplier) {
+	public static void registerImageLayerSupplier(Identifier resourceLocation, Supplier<NativeImage> supplier) {
 		bufferedImageSuppliers.put(resourceLocation, supplier);
 	}
 
 	@Nonnull
-	public static NativeImage getImageLayer(ResourceLocation resourceLocation, IResourceManager resourceManager) throws IOException {
+	public static NativeImage getImageLayer(Identifier resourceLocation, ResourceManager resourceManager) throws IOException {
 		Supplier<NativeImage> supplier = bufferedImageSuppliers.get(resourceLocation);
 		if (supplier != null) {
 			return supplier.get();
 		}
 
-		IResource iresource1 = resourceManager.getResource(resourceLocation);
+		Resource iresource1 = resourceManager.getResource(resourceLocation);
 		return NativeImage.read(iresource1.getInputStream());
 	}
 }

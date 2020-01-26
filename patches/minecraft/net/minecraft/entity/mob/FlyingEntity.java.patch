@@ -1,0 +1,33 @@
+--- a/net/minecraft/entity/mob/FlyingEntity.java
++++ b/net/minecraft/entity/mob/FlyingEntity.java
+@@ -5,10 +5,10 @@
+ import net.minecraft.util.math.MathHelper;
+ import net.minecraft.util.math.Vec3d;
+ import net.minecraft.world.World;
++
+ import net.minecraft.entity.EntityType;
+ import net.minecraft.entity.MovementType;
+ 
+-
+ public abstract class FlyingEntity extends MobEntity {
+    protected FlyingEntity(EntityType<? extends FlyingEntity> type, World p_i48578_2_) {
+       super(type, p_i48578_2_);
+@@ -30,15 +30,16 @@
+          this.move(MovementType.SELF, this.getVelocity());
+          this.setVelocity(this.getVelocity().multiply(0.5D));
+       } else {
++         BlockPos ground = new BlockPos(this.x, this.getBoundingBox().minY - 1.0D, this.z);
+          float f = 0.91F;
+          if (this.onGround) {
+-            f = this.world.getBlockState(new BlockPos(this.x, this.getBoundingBox().minY - 1.0D, this.z)).getBlock().getSlipperiness() * 0.91F;
++            f = this.world.getBlockState(ground).getSlipperiness(world, ground, this) * 0.91F;
+          }
+ 
+          float f1 = 0.16277137F / (f * f * f);
+          f = 0.91F;
+          if (this.onGround) {
+-            f = this.world.getBlockState(new BlockPos(this.x, this.getBoundingBox().minY - 1.0D, this.z)).getBlock().getSlipperiness() * 0.91F;
++            f = this.world.getBlockState(ground).getSlipperiness(world, ground, this) * 0.91F;
+          }
+ 
+          this.updateVelocity(this.onGround ? 0.1F * f1 : 0.02F, p_213352_1_);

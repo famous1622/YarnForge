@@ -21,9 +21,7 @@ package net.minecraftforge.client.event;
 
 import net.minecraftforge.eventbus.api.Cancelable;
 import net.minecraftforge.eventbus.api.Event;
-import org.lwjgl.glfw.GLFW;
 
-import net.minecraft.client.util.InputMappings;
 
 public class InputEvent extends Event {
 	/**

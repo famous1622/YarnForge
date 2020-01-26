@@ -1,0 +1,45 @@
+--- a/net/minecraft/client/render/model/BakedModelManager.java
++++ b/net/minecraft/client/render/model/BakedModelManager.java
+@@ -13,12 +13,12 @@
+ import net.minecraft.util.Identifier;
+ import net.minecraftforge.api.distmarker.Dist;
+ import net.minecraftforge.api.distmarker.OnlyIn;
+-import net.minecraft.client.util.ModelIdentifier;
+ 
++import net.minecraft.client.util.ModelIdentifier;
+ 
+ @OnlyIn(Dist.CLIENT)
+ public class BakedModelManager extends SinglePreparationResourceReloadListener<ModelLoader> {
+-   private Map<Identifier, BakedModel> modelMap;
++   private Map<Identifier, BakedModel> modelMap = new java.util.HashMap<>();
+    private final SpriteAtlasTexture spriteAtlas;
+    private final BlockModels blockStateMaps;
+    private final BlockColors colorMap;
+@@ -45,7 +45,7 @@
+ 
+    protected ModelLoader prepare(ResourceManager resourceManagerIn, Profiler profilerIn) {
+       profilerIn.startTick();
+-      ModelLoader modelbakery = new ModelLoader(resourceManagerIn, this.spriteAtlas, this.colorMap, profilerIn);
++      net.minecraftforge.client.model.ModelLoader modelbakery = new net.minecraftforge.client.model.ModelLoader(resourceManagerIn, this.spriteAtlas, this.colorMap, profilerIn);
+       profilerIn.endTick();
+       return modelbakery;
+    }
+@@ -57,6 +57,7 @@
+       this.modelMap = splashList.getBakedModelMap();
+       this.field_20278 = splashList.method_21605();
+       this.missingModel = this.modelMap.get(ModelLoader.MISSING);
++      net.minecraftforge.client.ForgeHooksClient.onModelBake(this, this.modelMap, (net.minecraftforge.client.model.ModelLoader) splashList);
+       profilerIn.swap("cache");
+       this.blockStateMaps.reload();
+       profilerIn.pop();
+@@ -80,4 +81,10 @@
+          return true;
+       }
+    }
++
++   // TODO
++   //@Override
++   public net.minecraftforge.resource.IResourceType getResourceType() {
++      return net.minecraftforge.resource.VanillaResourceType.MODELS;
++   }
+ }

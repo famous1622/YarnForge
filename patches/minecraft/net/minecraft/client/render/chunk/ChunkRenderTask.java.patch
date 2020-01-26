@@ -1,0 +1,27 @@
+--- a/net/minecraft/client/render/chunk/ChunkRenderTask.java
++++ b/net/minecraft/client/render/chunk/ChunkRenderTask.java
+@@ -21,12 +21,15 @@
+    private ChunkRenderData renderData;
+    private ChunkRenderTask.Stage stage = ChunkRenderTask.Stage.PENDING;
+    private boolean cancelled;
++   private java.util.Map<net.minecraft.util.math.BlockPos, net.minecraftforge.client.model.data.IModelData> modelData;
+ 
+    public ChunkRenderTask(ChunkRenderer chunkRenderIn, ChunkRenderTask.Mode typeIn, double distanceSqIn, @Nullable ChunkRendererRegion chunkRenderCacheIn) {
+       this.chunkRenderer = chunkRenderIn;
+       this.mode = typeIn;
+       this.squaredCameraDistance = distanceSqIn;
+       this.region = chunkRenderCacheIn;
++
++      modelData = net.minecraftforge.client.model.ModelDataManager.getModelData(net.minecraft.client.MinecraftClient.getInstance().world, new net.minecraft.util.math.ChunkPos(chunkRenderIn.getOrigin()));
+    }
+ 
+    public ChunkRenderTask.Stage getStage() {
+@@ -139,4 +142,8 @@
+       REBUILD_CHUNK,
+       RESORT_TRANSPARENCY;
+    }
++   
++   public net.minecraftforge.client.model.data.IModelData getModelData(net.minecraft.util.math.BlockPos pos) {
++       return modelData.getOrDefault(pos, net.minecraftforge.client.model.data.EmptyModelData.INSTANCE);
++   }
+ }

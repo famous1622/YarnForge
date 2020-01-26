@@ -1,0 +1,26 @@
+--- a/net/minecraft/data/server/RecipesProvider.java
++++ b/net/minecraft/data/server/RecipesProvider.java
+@@ -33,6 +33,7 @@
+ import net.minecraft.util.Identifier;
+ import org.apache.logging.log4j.LogManager;
+ import org.apache.logging.log4j.Logger;
++
+ import net.minecraft.data.DataCache;
+ import net.minecraft.data.DataGenerator;
+ import net.minecraft.data.DataProvider;
+@@ -43,7 +44,6 @@
+ import net.minecraft.data.server.recipe.ShapelessRecipeJsonFactory;
+ import net.minecraft.data.server.recipe.SingleItemRecipeJsonFactory;
+ 
+-
+ public class RecipesProvider implements DataProvider {
+    private static final Logger LOGGER = LogManager.getLogger();
+    private static final Gson GSON = (new GsonBuilder()).setPrettyPrinting().create();
+@@ -68,6 +68,7 @@
+ 
+          }
+       });
++      if (this.getClass() == RecipesProvider.class) //Forge: Subclasses don't need this.
+       this.method_10427(cache, Advancement.Task.create().criterion("impossible", new ImpossibleCriterion.Conditions()).toJson(), path.resolve("data/minecraft/advancements/recipes/root.json"));
+    }
+ 

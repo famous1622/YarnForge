@@ -21,15 +21,14 @@ package net.minecraftforge.event.entity.living;
 
 import javax.annotation.Nullable;
 
-import net.minecraftforge.common.MinecraftForge;
-import net.minecraftforge.event.ForgeEventFactory;
-import net.minecraftforge.eventbus.api.Event;
 
-import net.minecraft.entity.MobEntity;
-import net.minecraft.entity.SpawnReason;
+import net.minecraft.entity.mob.MobEntity;
+import net.minecraft.entity.SpawnType;
 import net.minecraft.world.IWorld;
 import net.minecraft.world.World;
-import net.minecraft.world.spawner.AbstractSpawner;
+import net.minecraft.world.MobSpawnerLogic;
+
+import net.minecraftforge.eventbus.api.Event.HasResult;
 
 /**
  * LivingSpawnEvent is fired for any events associated with Living Entities spawn status. <br>
@@ -84,8 +83,8 @@ public class LivingSpawnEvent extends LivingEvent {
 	@HasResult
 	public static class CheckSpawn extends LivingSpawnEvent {
 		@Nullable
-		private final AbstractSpawner spawner;
-		private final SpawnReason spawnReason;
+		private final MobSpawnerLogic spawner;
+		private final SpawnType spawnReason;
 
 		/**
 		 * CheckSpawn is fired when an Entity is about to be spawned.
@@ -98,7 +97,7 @@ public class LivingSpawnEvent extends LivingEvent {
 		 * @param spawner position of the MobSpawner
 		 *                null if it this spawn is coming from a WorldSpawner
 		 */
-		public CheckSpawn(MobEntity entity, IWorld world, double x, double y, double z, @Nullable AbstractSpawner spawner, SpawnReason spawnReason) {
+		public CheckSpawn(MobEntity entity, IWorld world, double x, double y, double z, @Nullable MobSpawnerLogic spawner, SpawnType spawnReason) {
 			super(entity, world, x, y, z);
 			this.spawner = spawner;
 			this.spawnReason = spawnReason;
@@ -109,11 +108,11 @@ public class LivingSpawnEvent extends LivingEvent {
 		}
 
 		@Nullable
-		public AbstractSpawner getSpawner() {
+		public MobSpawnerLogic getSpawner() {
 			return spawner;
 		}
 
-		public SpawnReason getSpawnReason() {
+		public SpawnType getSpawnReason() {
 			return spawnReason;
 		}
 	}
@@ -134,24 +133,24 @@ public class LivingSpawnEvent extends LivingEvent {
 	@net.minecraftforge.eventbus.api.Cancelable
 	public static class SpecialSpawn extends LivingSpawnEvent {
 		@Nullable
-		private final AbstractSpawner spawner;
-		private final SpawnReason spawnReason;
+		private final MobSpawnerLogic spawner;
+		private final SpawnType spawnReason;
 
 		/**
 		 * @param spawner the position of a tileentity or approximate position of an entity that initiated the spawn if any
 		 */
-		public SpecialSpawn(MobEntity entity, World world, double x, double y, double z, @Nullable AbstractSpawner spawner, SpawnReason spawnReason) {
+		public SpecialSpawn(MobEntity entity, World world, double x, double y, double z, @Nullable MobSpawnerLogic spawner, SpawnType spawnReason) {
 			super(entity, world, x, y, z);
 			this.spawner = spawner;
 			this.spawnReason = spawnReason;
 		}
 
 		@Nullable
-		public AbstractSpawner getSpawner() {
+		public MobSpawnerLogic getSpawner() {
 			return spawner;
 		}
 
-		public SpawnReason getSpawnReason() {
+		public SpawnType getSpawnReason() {
 			return spawnReason;
 		}
 	}
@@ -171,7 +170,7 @@ public class LivingSpawnEvent extends LivingEvent {
 	@HasResult
 	public static class AllowDespawn extends LivingSpawnEvent {
 		public AllowDespawn(MobEntity entity) {
-			super(entity, entity.world, entity.posX, entity.posY, entity.posZ);
+			super(entity, entity.world, entity.x, entity.y, entity.z);
 		}
 
 	}

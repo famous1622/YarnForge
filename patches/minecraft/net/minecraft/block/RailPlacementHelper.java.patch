@@ -1,0 +1,57 @@
+--- a/net/minecraft/block/RailPlacementHelper.java
++++ b/net/minecraft/block/RailPlacementHelper.java
+@@ -15,14 +15,16 @@
+    private BlockState state;
+    private final boolean allowCurves;
+    private final List<BlockPos> neighbors = Lists.newArrayList();
++   private final boolean canMakeSlopes;
+ 
+    public RailPlacementHelper(World p_i47755_1_, BlockPos p_i47755_2_, BlockState p_i47755_3_) {
+       this.world = p_i47755_1_;
+       this.pos = p_i47755_2_;
+       this.state = p_i47755_3_;
+       this.block = (AbstractRailBlock)p_i47755_3_.getBlock();
+-      RailShape railshape = p_i47755_3_.get(this.block.getShapeProperty());
+-      this.allowCurves = this.block.canMakeCurves();
++      RailShape railshape = this.block.getRailDirection(state, p_i47755_1_, p_i47755_2_, null);
++      this.allowCurves = !this.block.isFlexibleRail(state, p_i47755_1_, p_i47755_2_);
++      this.canMakeSlopes = this.block.canMakeSlopes(state, p_i47755_1_, p_i47755_2_);
+       this.computeNeighbors(railshape);
+    }
+ 
+@@ -178,7 +180,7 @@
+          }
+       }
+ 
+-      if (railshape == RailShape.NORTH_SOUTH) {
++      if (railshape == RailShape.NORTH_SOUTH && canMakeSlopes) {
+          if (AbstractRailBlock.isRail(this.world, blockpos.up())) {
+             railshape = RailShape.ASCENDING_NORTH;
+          }
+@@ -188,7 +190,7 @@
+          }
+       }
+ 
+-      if (railshape == RailShape.EAST_WEST) {
++      if (railshape == RailShape.EAST_WEST && canMakeSlopes) {
+          if (AbstractRailBlock.isRail(this.world, blockpos3.up())) {
+             railshape = RailShape.ASCENDING_EAST;
+          }
+@@ -298,7 +300,7 @@
+          }
+       }
+ 
+-      if (railshape == RailShape.NORTH_SOUTH) {
++      if (railshape == RailShape.NORTH_SOUTH && canMakeSlopes) {
+          if (AbstractRailBlock.isRail(this.world, blockpos.up())) {
+             railshape = RailShape.ASCENDING_NORTH;
+          }
+@@ -308,7 +310,7 @@
+          }
+       }
+ 
+-      if (railshape == RailShape.EAST_WEST) {
++      if (railshape == RailShape.EAST_WEST && canMakeSlopes) {
+          if (AbstractRailBlock.isRail(this.world, blockpos3.up())) {
+             railshape = RailShape.ASCENDING_EAST;
+          }

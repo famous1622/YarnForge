@@ -1,0 +1,39 @@
+--- a/net/minecraft/world/gen/feature/SpruceTreeFeature.java
++++ b/net/minecraft/world/gen/feature/SpruceTreeFeature.java
+@@ -16,6 +16,7 @@
+ 
+    public SpruceTreeFeature(Function<Dynamic<?>, ? extends DefaultFeatureConfig> p_i51429_1_, boolean p_i51429_2_) {
+       super(p_i51429_1_, p_i51429_2_);
++      setSapling((net.minecraftforge.common.IPlantable)Blocks.SPRUCE_SAPLING);
+    }
+ 
+    public boolean generate(Set<BlockPos> changedBlocks, ModifiableTestableWorld worldIn, Random rand, BlockPos position, MutableIntBoundingBox p_208519_5_) {
+@@ -24,7 +25,7 @@
+       int k = i - j;
+       int l = 2 + rand.nextInt(2);
+       boolean flag = true;
+-      if (position.getY() >= 1 && position.getY() + i + 1 <= 256) {
++      if (position.getY() >= 1 && position.getY() + i + 1 <= worldIn.getMaxHeight()) {
+          for(int i1 = position.getY(); i1 <= position.getY() + 1 + i && flag; ++i1) {
+             int j1;
+             if (i1 - position.getY() < j) {
+@@ -37,7 +38,7 @@
+ 
+             for(int k1 = position.getX() - j1; k1 <= position.getX() + j1 && flag; ++k1) {
+                for(int l1 = position.getZ() - j1; l1 <= position.getZ() + j1 && flag; ++l1) {
+-                  if (i1 >= 0 && i1 < 256) {
++                  if (i1 >= 0 && i1 < worldIn.getMaxHeight()) {
+                      blockpos$mutableblockpos.set(k1, i1, l1);
+                      if (!isAirOrLeaves(worldIn, blockpos$mutableblockpos)) {
+                         flag = false;
+@@ -51,8 +52,8 @@
+ 
+          if (!flag) {
+             return false;
+-         } else if (isDirtOrGrass(worldIn, position.down()) && position.getY() < 256 - i - 1) {
+-            this.setToDirt(worldIn, position.down());
++         } else if (isSoil(worldIn, position.down(), getSapling()) && position.getY() < worldIn.getMaxHeight() - i - 1) {
++            this.setDirtAt(worldIn, position.down(), position);
+             int i3 = rand.nextInt(2);
+             int j3 = 1;
+             int k3 = 0;

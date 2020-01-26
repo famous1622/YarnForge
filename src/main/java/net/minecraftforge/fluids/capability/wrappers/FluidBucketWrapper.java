@@ -37,8 +37,10 @@ import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
 import net.minecraft.item.MilkBucketItem;
-import net.minecraft.util.Direction;
-import net.minecraft.util.ResourceLocation;
+import net.minecraft.util.math.Direction;
+import net.minecraft.util.Identifier;
+
+import net.minecraftforge.fluids.capability.IFluidHandler.FluidAction;
 
 /**
  * Wrapper for vanilla and forge buckets.
@@ -61,7 +63,7 @@ public class FluidBucketWrapper implements IFluidHandlerItem, ICapabilityProvide
 	}
 
 	public boolean canFillFluidType(FluidStack fluid) {
-		if (fluid.getFluid() == Fluids.WATER || fluid.getFluid() == Fluids.LAVA || fluid.getFluid().getRegistryName().equals(new ResourceLocation("milk"))) {
+		if (fluid.getFluid() == Fluids.WATER || fluid.getFluid() == Fluids.LAVA || fluid.getFluid().getRegistryName().equals(new Identifier("milk"))) {
 			return true;
 		}
 		return fluid.getFluid().getAttributes().getBucket(fluid) != null;

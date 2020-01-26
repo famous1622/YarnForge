@@ -1,0 +1,115 @@
+--- a/net/minecraft/client/render/model/BakedQuadFactory.java
++++ b/net/minecraft/client/render/model/BakedQuadFactory.java
+@@ -10,11 +10,12 @@
+ import net.minecraft.util.math.Vec3i;
+ import net.minecraftforge.api.distmarker.Dist;
+ import net.minecraftforge.api.distmarker.OnlyIn;
++
++import net.minecraft;
+ import net.minecraft.client.render.model.json.ModelElementFace;
+ import net.minecraft.client.render.model.json.ModelElementTexture;
+ import net.minecraft.client.render.model.json.ModelRotation;
+ 
+-
+ @OnlyIn(Dist.CLIENT)
+ public class BakedQuadFactory {
+    private static final float field_4260 = 1.0F / (float)Math.cos((double)((float)Math.PI / 8F)) - 1.0F;
+@@ -42,9 +43,15 @@
+    };
+ 
+    public BakedQuad bake(Vector3f p_217648_1_, Vector3f p_217648_2_, ModelElementFace p_217648_3_, Sprite p_217648_4_, Direction p_217648_5_, ModelBakeSettings p_217648_6_, @Nullable ModelRotation p_217648_7_, boolean p_217648_8_) {
++       return makeBakedQuad(p_217648_1_, p_217648_2_, p_217648_3_, p_217648_4_, p_217648_5_, p_217648_6_, p_217648_7_, p_217648_8_);
++   }
++
++   public BakedQuad makeBakedQuad(Vector3f p_217648_1_, Vector3f p_217648_2_, ModelElementFace p_217648_3_, Sprite p_217648_4_, Direction p_217648_5_, ModelBakeSettings p_217648_6_, @Nullable ModelRotation p_217648_7_, boolean p_217648_8_) {
+       ModelElementTexture blockfaceuv = p_217648_3_.textureData;
++      net.minecraftforge.common.model.TRSRTransformation transform = p_217648_6_.getState().apply(java.util.Optional.empty())
++              .orElse(net.minecraftforge.common.model.TRSRTransformation.identity());
+       if (p_217648_6_.isUvLocked()) {
+-         blockfaceuv = this.uvLock(p_217648_3_.textureData, p_217648_5_, p_217648_6_.getRotation());
++         blockfaceuv = net.minecraftforge.client.ForgeHooksClient.applyUVLock(p_217648_3_.textureData, p_217648_5_, transform);
+       }
+ 
+       float[] afloat = new float[blockfaceuv.uvs.length];
+@@ -58,14 +65,15 @@
+       blockfaceuv.uvs[2] = MathHelper.lerp(f2, blockfaceuv.uvs[2], f3);
+       blockfaceuv.uvs[1] = MathHelper.lerp(f2, blockfaceuv.uvs[1], f4);
+       blockfaceuv.uvs[3] = MathHelper.lerp(f2, blockfaceuv.uvs[3], f4);
+-      int[] aint = this.method_3458(blockfaceuv, p_217648_4_, p_217648_5_, this.method_3459(p_217648_1_, p_217648_2_), p_217648_6_.getRotation(), p_217648_7_, p_217648_8_);
++      int[] aint = this.makeQuadVertexData(blockfaceuv, p_217648_4_, p_217648_5_, this.method_3459(p_217648_1_, p_217648_2_), transform, p_217648_7_, false); // FORGE: *Must* pass false here, shade value is applied at render time
+       Direction direction = method_3467(aint);
+       System.arraycopy(afloat, 0, blockfaceuv.uvs, 0, afloat.length);
+       if (p_217648_7_ == null) {
+          this.method_3462(aint, direction);
+       }
+ 
+-      return new BakedQuad(aint, p_217648_3_.tintIndex, direction, p_217648_4_);
++      net.minecraftforge.client.ForgeHooksClient.fillNormal(aint, direction);
++      return new BakedQuad(aint, p_217648_3_.tintIndex, direction, p_217648_4_, p_217648_8_, net.minecraft.client.render.VertexFormats.POSITION_COLOR_UV_NORMAL);
+    }
+ 
+    private ModelElementTexture uvLock(ModelElementTexture blockFaceUVIn, Direction facing, ModelRotation modelRotationIn) {
+@@ -73,10 +81,14 @@
+    }
+ 
+    private int[] method_3458(ModelElementTexture uvs, Sprite sprite, Direction orientation, float[] posDiv16, ModelRotation rotationIn, @Nullable ModelRotation partRotation, boolean shade) {
++      return makeQuadVertexData(uvs, sprite, orientation, posDiv16, (net.minecraftforge.common.model.ITransformation)rotationIn, partRotation, shade);
++   }
++
++   private int[] makeQuadVertexData(ModelElementTexture uvs, Sprite sprite, Direction orientation, float[] posDiv16, net.minecraftforge.common.model.ITransformation rotationIn, ModelRotation partRotation, boolean shade) {
+       int[] aint = new int[28];
+ 
+       for(int i = 0; i < 4; ++i) {
+-         this.method_3461(aint, i, orientation, uvs, posDiv16, sprite, rotationIn, partRotation, shade);
++         this.fillVertexData(aint, i, orientation, uvs, posDiv16, sprite, rotationIn, partRotation, shade);
+       }
+ 
+       return aint;
+@@ -117,12 +129,16 @@
+    }
+ 
+    private void method_3461(int[] vertexData, int vertexIndex, Direction facing, ModelElementTexture blockFaceUVIn, float[] posDiv16, Sprite sprite, ModelRotation rotationIn, @Nullable ModelRotation partRotation, boolean shade) {
+-      Direction direction = rotationIn.apply(facing);
++      fillVertexData(vertexData, vertexIndex, facing, blockFaceUVIn, posDiv16, sprite, (net.minecraftforge.common.model.ITransformation)rotationIn, partRotation, shade);
++   }
++
++   private void fillVertexData(int[] vertexData, int vertexIndex, Direction facing, ModelElementTexture blockFaceUVIn, float[] posDiv16, Sprite sprite, net.minecraftforge.common.model.ITransformation rotationIn, @Nullable ModelRotation partRotation, boolean shade) {
++      Direction direction = rotationIn.rotateTransform(facing);
+       int i = shade ? this.method_3457(direction) : -1;
+       CubeFace.Corner facedirection$vertexinformation = CubeFace.method_3163(facing).getCorner(vertexIndex);
+       Vector3f vector3f = new Vector3f(posDiv16[facedirection$vertexinformation.xSide], posDiv16[facedirection$vertexinformation.ySide], posDiv16[facedirection$vertexinformation.zSide]);
+       this.method_3463(vector3f, partRotation);
+-      int j = this.method_3455(vector3f, facing, vertexIndex, rotationIn);
++      int j = this.rotateVertex(vector3f, facing, vertexIndex, rotationIn);
+       this.method_3460(vertexData, j, vertexIndex, vector3f, i, sprite, blockFaceUVIn);
+    }
+ 
+@@ -132,8 +148,8 @@
+       faceData[i + 1] = Float.floatToRawIntBits(position.getY());
+       faceData[i + 2] = Float.floatToRawIntBits(position.getZ());
+       faceData[i + 3] = shadeColor;
+-      faceData[i + 4] = Float.floatToRawIntBits(sprite.getU((double)faceUV.getU(vertexIndex)));
+-      faceData[i + 4 + 1] = Float.floatToRawIntBits(sprite.getV((double)faceUV.getV(vertexIndex)));
++      faceData[i + 4] = Float.floatToRawIntBits(sprite.getU((double)faceUV.getU(vertexIndex) * .999 + faceUV.getU((vertexIndex + 2) % 4) * .001));
++      faceData[i + 4 + 1] = Float.floatToRawIntBits(sprite.getV((double)faceUV.getV(vertexIndex) * .999 + faceUV.getV((vertexIndex + 2) % 4) * .001));
+    }
+ 
+    private void method_3463(Vector3f vec, @Nullable ModelRotation partRotation) {
+@@ -175,11 +191,15 @@
+    }
+ 
+    public int method_3455(Vector3f p_199335_1_, Direction p_199335_2_, int p_199335_3_, ModelRotation p_199335_4_) {
++      return rotateVertex(p_199335_1_, p_199335_2_, p_199335_3_, (net.minecraftforge.common.model.ITransformation)p_199335_4_);
++   }
++
++   public int rotateVertex(Vector3f p_199335_1_, Direction p_199335_2_, int p_199335_3_, net.minecraftforge.common.model.ITransformation p_199335_4_) {
+       if (p_199335_4_ == ModelRotation.X0_Y0) {
+          return p_199335_3_;
+       } else {
+-         this.method_3464(p_199335_1_, new Vector3f(0.5F, 0.5F, 0.5F), p_199335_4_.getQuaternion(), new Vector3f(1.0F, 1.0F, 1.0F));
+-         return p_199335_4_.method_4706(p_199335_2_, p_199335_3_);
++         net.minecraftforge.client.ForgeHooksClient.transform(p_199335_1_, p_199335_4_.getMatrixVec());
++         return p_199335_4_.rotate(p_199335_2_, p_199335_3_);
+       }
+    }
+ 

@@ -19,11 +19,11 @@
 
 package net.minecraftforge.client.model.pipeline;
 
-import net.minecraft.client.renderer.model.BakedQuad;
-import net.minecraft.client.renderer.texture.TextureAtlasSprite;
-import net.minecraft.client.renderer.vertex.VertexFormat;
-import net.minecraft.client.renderer.vertex.VertexFormatElement;
-import net.minecraft.util.Direction;
+import net.minecraft.client.render.model.BakedQuad;
+import net.minecraft.client.texture.Sprite;
+import net.minecraft.client.render.VertexFormat;
+import net.minecraft.client.render.VertexFormatElement;
+import net.minecraft.util.math.Direction;
 
 // advantages: non-fixed-length vertex format, no overhead of packing and unpacking attributes to transform the model
 // disadvantages: (possibly) larger memory footprint, overhead on packing the attributes at the final rendering stage
@@ -32,8 +32,8 @@ public class UnpackedBakedQuad extends BakedQuad {
 	protected final VertexFormat format;
 	protected boolean packed = false;
 
-	public UnpackedBakedQuad(float[][][] unpackedData, int tint, Direction orientation, TextureAtlasSprite texture, boolean applyDiffuseLighting, VertexFormat format) {
-		super(new int[format.getSize() /* / 4 * 4 */], tint, orientation, texture, applyDiffuseLighting, format);
+	public UnpackedBakedQuad(float[][][] unpackedData, int tint, Direction orientation, Sprite texture, boolean applyDiffuseLighting, VertexFormat format) {
+		super(new int[format.getVertexSize() /* / 4 * 4 */], tint, orientation, texture, applyDiffuseLighting, format);
 		this.unpackedData = unpackedData;
 		this.format = format;
 	}
@@ -55,8 +55,8 @@ public class UnpackedBakedQuad extends BakedQuad {
 	public void pipe(IVertexConsumer consumer) {
 		int[] eMap = LightUtil.mapFormats(consumer.getVertexFormat(), format);
 
-		if (hasTintIndex()) {
-			consumer.setQuadTint(getTintIndex());
+		if (hasColor()) {
+			consumer.setQuadTint(getColorIndex());
 		}
 		consumer.setTexture(sprite);
 		consumer.setApplyDiffuseLighting(applyDiffuseLighting);
@@ -78,7 +78,7 @@ public class UnpackedBakedQuad extends BakedQuad {
 		private final float eps = 1f / 0x100;
 		private int tint = -1;
 		private Direction orientation;
-		private TextureAtlasSprite texture;
+		private Sprite texture;
 		private boolean applyDiffuseLighting = true;
 		private int vertices = 0;
 		private int elements = 0;
@@ -111,7 +111,7 @@ public class UnpackedBakedQuad extends BakedQuad {
 
 		// FIXME: move (or at least add) into constructor
 		@Override
-		public void setTexture(TextureAtlasSprite texture) {
+		public void setTexture(Sprite texture) {
 			this.texture = texture;
 		}
 
@@ -154,7 +154,7 @@ public class UnpackedBakedQuad extends BakedQuad {
 				int uve = 0;
 				while (uve < format.getElementCount()) {
 					VertexFormatElement e = format.getElement(uve);
-					if (e.getUsage() == VertexFormatElement.Usage.UV && e.getIndex() == 0) {
+					if (e.getType() == VertexFormatElement.Type.UV && e.getIndex() == 0) {
 						break;
 					}
 					uve++;

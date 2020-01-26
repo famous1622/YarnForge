@@ -1,0 +1,21 @@
+--- a/net/minecraft/block/entity/ConduitBlockEntity.java
++++ b/net/minecraft/block/entity/ConduitBlockEntity.java
+@@ -27,8 +27,8 @@
+ import net.minecraft.util.math.Vec3d;
+ import net.minecraftforge.api.distmarker.Dist;
+ import net.minecraftforge.api.distmarker.OnlyIn;
+-import net.minecraft.util.Tickable;
+ 
++import net.minecraft.util.Tickable;
+ 
+ public class ConduitBlockEntity extends BlockEntity implements Tickable {
+    private static final Block[] ACTIVATING_BLOCKS = new Block[]{Blocks.PRISMARINE, Blocks.PRISMARINE_BRICKS, Blocks.SEA_LANTERN, Blocks.DARK_PRISMARINE};
+@@ -133,7 +133,7 @@
+                   BlockPos blockpos1 = this.pos.add(j1, k1, l1);
+                   BlockState blockstate = this.world.getBlockState(blockpos1);
+ 
+-                  for(Block block : ACTIVATING_BLOCKS) {
++                  for(Block block : net.minecraftforge.common.Tags.Blocks.SUPPORTS_CONDUIT.values()) {
+                      if (blockstate.getBlock() == block) {
+                         this.activatingBlocks.add(blockpos1);
+                      }

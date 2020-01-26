@@ -1,0 +1,67 @@
+--- a/net/minecraft/block/TntBlock.java
++++ b/net/minecraft/block/TntBlock.java
+@@ -28,10 +28,14 @@
+       this.setDefaultState(this.getDefaultState().with(UNSTABLE, Boolean.valueOf(false)));
+    }
+ 
++   public void catchFire(BlockState state, World world, BlockPos pos, @Nullable minecraft.util.math.Direction face, @Nullable LivingEntity igniter) {
++      primeTnt(world, pos, igniter);
++   }
++
+    public void onBlockAdded(BlockState state, World worldIn, BlockPos pos, BlockState oldState, boolean isMoving) {
+       if (oldState.getBlock() != state.getBlock()) {
+          if (worldIn.isReceivingRedstonePower(pos)) {
+-            primeTnt(worldIn, pos);
++            catchFire(state, worldIn, pos, null, null);
+             worldIn.clearBlockState(pos, false);
+          }
+ 
+@@ -40,7 +44,7 @@
+ 
+    public void neighborUpdate(BlockState state, World worldIn, BlockPos pos, Block blockIn, BlockPos fromPos, boolean isMoving) {
+       if (worldIn.isReceivingRedstonePower(pos)) {
+-         primeTnt(worldIn, pos);
++         catchFire(state, worldIn, pos, null, null);
+          worldIn.clearBlockState(pos, false);
+       }
+ 
+@@ -48,7 +52,7 @@
+ 
+    public void onBreak(World worldIn, BlockPos pos, BlockState state, PlayerEntity player) {
+       if (!worldIn.isClient() && !player.isCreative() && state.get(UNSTABLE)) {
+-         primeTnt(worldIn, pos);
++         catchFire(state, worldIn, pos, null, null);
+       }
+ 
+       super.onBreak(worldIn, pos, state, player);
+@@ -62,10 +66,12 @@
+       }
+    }
+ 
++   @Deprecated //Forge: Prefer using IForgeBlock#catchFire
+    public static void primeTnt(World p_196534_0_, BlockPos worldIn) {
+       primeTnt(p_196534_0_, worldIn, (LivingEntity)null);
+    }
+ 
++   @Deprecated //Forge: Prefer using IForgeBlock#catchFire
+    private static void primeTnt(World p_196535_0_, BlockPos p_196535_1_, @Nullable LivingEntity p_196535_2_) {
+       if (!p_196535_0_.isClient) {
+          TntEntity tntentity = new TntEntity(p_196535_0_, (double)((float)p_196535_1_.getX() + 0.5F), (double)p_196535_1_.getY(), (double)((float)p_196535_1_.getZ() + 0.5F), p_196535_2_);
+@@ -80,7 +86,7 @@
+       if (item != Items.FLINT_AND_STEEL && item != Items.FIRE_CHARGE) {
+          return super.activate(state, worldIn, pos, player, handIn, hit);
+       } else {
+-         primeTnt(worldIn, pos, player);
++         catchFire(state, worldIn, pos, hit.getSide(), player);
+          worldIn.setBlockState(pos, Blocks.AIR.getDefaultState(), 11);
+          if (item == Items.FLINT_AND_STEEL) {
+             itemstack.damage(1, player, (p_220287_1_) -> {
+@@ -100,7 +106,7 @@
+          Entity entity = abstractarrowentity.getOwner();
+          if (abstractarrowentity.isOnFire()) {
+             BlockPos blockpos = hit.getBlockPos();
+-            primeTnt(worldIn, blockpos, entity instanceof LivingEntity ? (LivingEntity)entity : null);
++            catchFire(state, worldIn, blockpos, null, entity instanceof LivingEntity ? (LivingEntity)entity : null);
+             worldIn.clearBlockState(blockpos, false);
+          }
+       }

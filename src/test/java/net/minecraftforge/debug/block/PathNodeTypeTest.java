@@ -28,11 +28,11 @@ import net.minecraftforge.registries.ObjectHolder;
 
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
-import net.minecraft.block.material.Material;
-import net.minecraft.entity.MobEntity;
-import net.minecraft.pathfinding.PathNodeType;
+import net.minecraft.block.Material;
+import net.minecraft.entity.mob.MobEntity;
+import net.minecraft.entity.ai.pathing.PathNodeType;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.IBlockReader;
+import net.minecraft.world.BlockView;
 
 @Mod(PathNodeTypeTest.MOD_ID)
 @Mod.EventBusSubscriber
@@ -46,9 +46,9 @@ public class PathNodeTypeTest {
 
 	@SubscribeEvent
 	public static void register(RegistryEvent.Register<Block> event) {
-		event.getRegistry().register((new Block(Block.Properties.create(Material.ROCK)) {
+		event.getRegistry().register((new Block(Block.Settings.of(Material.STONE)) {
 			@Override
-			public PathNodeType getAiPathNodeType(BlockState state, IBlockReader world, BlockPos pos, @Nullable MobEntity entity) {
+			public PathNodeType getAiPathNodeType(BlockState state, BlockView world, BlockPos pos, @Nullable MobEntity entity) {
 				return PathNodeType.DOOR_OPEN;
 			}
 		}).setRegistryName(MOD_ID, BLOCK_ID));

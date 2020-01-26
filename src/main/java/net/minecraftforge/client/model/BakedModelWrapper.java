@@ -30,16 +30,16 @@ import net.minecraftforge.client.model.data.IModelData;
 import org.apache.commons.lang3.tuple.Pair;
 
 import net.minecraft.block.BlockState;
-import net.minecraft.client.renderer.model.BakedQuad;
-import net.minecraft.client.renderer.model.IBakedModel;
-import net.minecraft.client.renderer.model.ItemCameraTransforms;
-import net.minecraft.client.renderer.model.ItemOverrideList;
-import net.minecraft.client.renderer.texture.TextureAtlasSprite;
-import net.minecraft.util.Direction;
+import net.minecraft.client.render.model.BakedQuad;
+import net.minecraft.client.render.model.BakedModel;
+import net.minecraft.client.render.model.json.ModelTransformation;
+import net.minecraft.client.render.model.json.ModelItemPropertyOverrideList;
+import net.minecraft.client.texture.Sprite;
+import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.IEnviromentBlockReader;
+import net.minecraft.world.ExtendedBlockView;
 
-public abstract class BakedModelWrapper<T extends IBakedModel> implements IBakedModel {
+public abstract class BakedModelWrapper<T extends BakedModel> implements BakedModel {
 	protected final T originalModel;
 
 	public BakedModelWrapper(T originalModel) {
@@ -52,8 +52,8 @@ public abstract class BakedModelWrapper<T extends IBakedModel> implements IBaked
 	}
 
 	@Override
-	public boolean isAmbientOcclusion() {
-		return originalModel.isAmbientOcclusion();
+	public boolean useAmbientOcclusion() {
+		return originalModel.useAmbientOcclusion();
 	}
 
 	@Override
@@ -62,37 +62,37 @@ public abstract class BakedModelWrapper<T extends IBakedModel> implements IBaked
 	}
 
 	@Override
-	public boolean isGui3d() {
-		return originalModel.isGui3d();
+	public boolean hasDepthInGui() {
+		return originalModel.hasDepthInGui();
 	}
 
 	@Override
-	public boolean isBuiltInRenderer() {
-		return originalModel.isBuiltInRenderer();
+	public boolean isBuiltin() {
+		return originalModel.isBuiltin();
 	}
 
 	@Override
-	public TextureAtlasSprite getParticleTexture() {
-		return originalModel.getParticleTexture();
+	public Sprite getSprite() {
+		return originalModel.getSprite();
 	}
 
 	@Override
-	public ItemCameraTransforms getItemCameraTransforms() {
-		return originalModel.getItemCameraTransforms();
+	public ModelTransformation getTransformation() {
+		return originalModel.getTransformation();
 	}
 
 	@Override
-	public ItemOverrideList getOverrides() {
-		return originalModel.getOverrides();
+	public ModelItemPropertyOverrideList getItemPropertyOverrides() {
+		return originalModel.getItemPropertyOverrides();
 	}
 
 	@Override
-	public Pair<? extends IBakedModel, Matrix4f> handlePerspective(ItemCameraTransforms.TransformType cameraTransformType) {
+	public Pair<? extends BakedModel, Matrix4f> handlePerspective(ModelTransformation.Type cameraTransformType) {
 		return originalModel.handlePerspective(cameraTransformType);
 	}
 
 	@Override
-	public TextureAtlasSprite getParticleTexture(@Nonnull IModelData data) {
+	public Sprite getParticleTexture(@Nonnull IModelData data) {
 		return originalModel.getParticleTexture(data);
 	}
 
@@ -104,7 +104,7 @@ public abstract class BakedModelWrapper<T extends IBakedModel> implements IBaked
 
 	@Nonnull
 	@Override
-	public IModelData getModelData(@Nonnull IEnviromentBlockReader world, @Nonnull BlockPos pos, @Nonnull BlockState state, @Nonnull IModelData tileData) {
+	public IModelData getModelData(@Nonnull ExtendedBlockView world, @Nonnull BlockPos pos, @Nonnull BlockState state, @Nonnull IModelData tileData) {
 		return originalModel.getModelData(world, pos, state, tileData);
 	}
 }

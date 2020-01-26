@@ -24,9 +24,9 @@ import java.util.Map;
 import net.minecraftforge.client.model.ModelLoader;
 import net.minecraftforge.eventbus.api.Event;
 
-import net.minecraft.client.renderer.model.IBakedModel;
-import net.minecraft.client.renderer.model.ModelManager;
-import net.minecraft.util.ResourceLocation;
+import net.minecraft.client.render.model.BakedModel;
+import net.minecraft.client.render.model.BakedModelManager;
+import net.minecraft.util.Identifier;
 
 /**
  * Fired when the ModelManager is notified of the resource manager reloading.
@@ -34,21 +34,21 @@ import net.minecraft.util.ResourceLocation;
  */
 // TODO: try to merge with ICustomModelLoader
 public class ModelBakeEvent extends Event {
-	private final ModelManager modelManager;
-	private final Map<ResourceLocation, IBakedModel> modelRegistry;
+	private final BakedModelManager modelManager;
+	private final Map<Identifier, BakedModel> modelRegistry;
 	private final ModelLoader modelLoader;
 
-	public ModelBakeEvent(ModelManager modelManager, Map<ResourceLocation, IBakedModel> modelRegistry, ModelLoader modelLoader) {
+	public ModelBakeEvent(BakedModelManager modelManager, Map<Identifier, BakedModel> modelRegistry, ModelLoader modelLoader) {
 		this.modelManager = modelManager;
 		this.modelRegistry = modelRegistry;
 		this.modelLoader = modelLoader;
 	}
 
-	public ModelManager getModelManager() {
+	public BakedModelManager getModelManager() {
 		return modelManager;
 	}
 
-	public Map<ResourceLocation, IBakedModel> getModelRegistry() {
+	public Map<Identifier, BakedModel> getModelRegistry() {
 		return modelRegistry;
 	}
 

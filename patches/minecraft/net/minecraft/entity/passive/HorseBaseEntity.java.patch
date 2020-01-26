@@ -1,0 +1,58 @@
+--- a/net/minecraft/entity/passive/HorseBaseEntity.java
++++ b/net/minecraft/entity/passive/HorseBaseEntity.java
+@@ -228,9 +228,10 @@
+             }
+          }
+ 
+-         BlockState blockstate = this.world.getBlockState(new BlockPos(this.x, this.y - 0.2D - (double)this.prevYaw, this.z));
++         BlockPos pos = new BlockPos(this.x, this.y - 0.2D - (double) this.prevYaw, this.z);
++         BlockState blockstate = this.world.getBlockState(pos);
+          if (!blockstate.isAir() && !this.isSilent()) {
+-            BlockSoundGroup soundtype = blockstate.getSoundGroup();
++            BlockSoundGroup soundtype = blockstate.getSoundType(world, pos, this);
+             this.world.playSound((PlayerEntity)null, this.x, this.y, this.z, soundtype.getStepSound(), this.getSoundCategory(), soundtype.getVolume() * 0.5F, soundtype.getPitch() * 0.75F);
+          }
+ 
+@@ -258,6 +259,7 @@
+ 
+       this.items.addListener(this);
+       this.updateSaddle();
++      this.itemHandler = net.minecraftforge.common.util.LazyOptional.of(() -> new net.minecraftforge.items.wrapper.InvWrapper(this.items));
+    }
+ 
+    protected void updateSaddle() {
+@@ -319,9 +321,9 @@
+    protected void playStepSound(BlockPos pos, BlockState blockIn) {
+       if (!blockIn.getMaterial().isLiquid()) {
+          BlockState blockstate = this.world.getBlockState(pos.up());
+-         BlockSoundGroup soundtype = blockIn.getSoundGroup();
++         BlockSoundGroup soundtype = blockIn.getSoundType(world, pos, this);
+          if (blockstate.getBlock() == Blocks.SNOW) {
+-            soundtype = blockstate.getSoundGroup();
++            soundtype = blockstate.getSoundType(world, pos, this);
+          }
+ 
+          if (this.hasPassengers() && this.field_6964) {
+@@ -942,4 +944,22 @@
+ 
+       return spawnDataIn;
+    }
++
++   private net.minecraftforge.common.util.LazyOptional<?> itemHandler = null;
++
++   @Override
++   public <T> net.minecraftforge.common.util.LazyOptional<T> getCapability(net.minecraftforge.common.capabilities.Capability<T> capability, @Nullable minecraft.util.math.Direction facing) {
++      if (this.isAlive() && capability == net.minecraftforge.items.CapabilityItemHandler.ITEM_HANDLER_CAPABILITY && itemHandler != null)
++         return itemHandler.cast();
++      return super.getCapability(capability, facing);
++   }
++
++   @Override
++   public void remove(boolean keepData) {
++      super.remove(keepData);
++      if (!keepData && itemHandler != null) {
++         itemHandler.invalidate();
++         itemHandler = null;
++      }
++   }
+ }

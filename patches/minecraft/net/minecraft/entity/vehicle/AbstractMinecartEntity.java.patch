@@ -1,0 +1,258 @@
+--- a/net/minecraft/entity/vehicle/AbstractMinecartEntity.java
++++ b/net/minecraft/entity/vehicle/AbstractMinecartEntity.java
+@@ -35,7 +35,7 @@
+ import net.minecraftforge.api.distmarker.Dist;
+ import net.minecraftforge.api.distmarker.OnlyIn;
+ 
+-public abstract class AbstractMinecartEntity extends Entity {
++public abstract class AbstractMinecartEntity extends Entity implements net.minecraftforge.common.extensions.IForgeEntityMinecart {
+    private static final TrackedData<Integer> DAMAGE_WOBBLE_TICKS = DataTracker.registerData(AbstractMinecartEntity.class, TrackedDataHandlerRegistry.INTEGER);
+    private static final TrackedData<Integer> DAMAGE_WOBBLE_SIDE = DataTracker.registerData(AbstractMinecartEntity.class, TrackedDataHandlerRegistry.INTEGER);
+    private static final TrackedData<Float> DAMAGE_WOBBLE_STRENGTH = DataTracker.registerData(AbstractMinecartEntity.class, TrackedDataHandlerRegistry.FLOAT);
+@@ -56,6 +56,7 @@
+    private double field_7655;
+    @OnlyIn(Dist.CLIENT)
+    private double field_7656;
++   private boolean canBePushed = true;
+ 
+    protected AbstractMinecartEntity(EntityType<?> type, World p_i48538_2_) {
+       super(type, p_i48538_2_);
+@@ -102,11 +103,12 @@
+ 
+    @Nullable
+    public Box getHardCollisionBox(Entity entityIn) {
++      if (getCollisionHandler() != null) return getCollisionHandler().getCollisionBox(this, entityIn);
+       return entityIn.isPushable() ? entityIn.getBoundingBox() : null;
+    }
+ 
+    public boolean isPushable() {
+-      return true;
++      return canBePushed;
+    }
+ 
+    public double getMountedHeightOffset() {
+@@ -214,9 +216,9 @@
+ 
+          BlockPos blockpos = new BlockPos(i, j, k);
+          BlockState blockstate = this.world.getBlockState(blockpos);
+-         if (blockstate.matches(BlockTags.RAILS)) {
++         if (canUseRail() && blockstate.matches(BlockTags.RAILS)) {
+             this.method_7513(blockpos, blockstate);
+-            if (blockstate.getBlock() == Blocks.ACTIVATOR_RAIL) {
++            if (blockstate.getBlock() instanceof PoweredRailBlock && ((PoweredRailBlock)blockstate.getBlock()).isActivatorRail()) {
+                this.onActivatorRail(i, j, k, blockstate.get(PoweredRailBlock.POWERED));
+             }
+          } else {
+@@ -241,8 +243,11 @@
+          }
+ 
+          this.setRotation(this.yaw, this.pitch);
+-         if (this.getMinecartType() == AbstractMinecartEntity.Type.RIDEABLE && squaredHorizontalLength(this.getVelocity()) > 0.01D) {
+-            List<Entity> list = this.world.getEntities(this, this.getBoundingBox().expand((double)0.2F, 0.0D, (double)0.2F), EntityPredicates.canBePushedBy(this));
++         Box box;
++         if (getCollisionHandler() != null) box = getCollisionHandler().getMinecartCollisionBox(this);
++         else                               box = this.getBoundingBox().expand(0.2F, 0.0D, 0.2F);
++         if (canBeRidden() && squaredHorizontalLength(this.getVelocity()) > 0.01D) {
++            List<Entity> list = this.world.getEntities(this, box, EntityPredicates.canBePushedBy(this));
+             if (!list.isEmpty()) {
+                for(int l = 0; l < list.size(); ++l) {
+                   Entity entity1 = list.get(l);
+@@ -254,7 +259,7 @@
+                }
+             }
+          } else {
+-            for(Entity entity : this.world.getEntities(this, this.getBoundingBox().expand((double)0.2F, 0.0D, (double)0.2F))) {
++            for(Entity entity : this.world.getEntities(this, box)) {
+                if (!this.hasPassenger(entity) && entity.isPushable() && entity instanceof AbstractMinecartEntity) {
+                   entity.pushAwayFrom(this);
+                }
+@@ -262,6 +267,7 @@
+          }
+ 
+          this.checkWaterState();
++         //net.minecraftforge.common.MinecraftForge.EVENT_BUS.post(new net.minecraftforge.event.entity.minecart.MinecartUpdateEvent(this, this.getCurrentRailPosition()));
+       }
+    }
+ 
+@@ -273,16 +279,24 @@
+    }
+ 
+    protected void method_7512() {
+-      double d0 = this.method_7504();
++      double d0 = onGround ? this.method_7504() : getMaxSpeedAirLateral();
+       Vec3d vec3d = this.getVelocity();
+       this.setVelocity(MathHelper.clamp(vec3d.x, -d0, d0), vec3d.y, MathHelper.clamp(vec3d.z, -d0, d0));
++
++      if(getMaxSpeedAirVertical() > 0 && getVelocity().y > getMaxSpeedAirVertical()) {
++          if(Math.abs(getVelocity().x) < 0.3f && Math.abs(getVelocity().z) < 0.3f)
++              setVelocity(new Vec3d(getVelocity().x, 0.15f, getVelocity().z));
++          else
++              setVelocity(new Vec3d(getVelocity().x, getMaxSpeedAirVertical(), getVelocity().z));
++      }
++
+       if (this.onGround) {
+          this.setVelocity(this.getVelocity().multiply(0.5D));
+       }
+ 
+       this.move(MovementType.SELF, this.getVelocity());
+       if (!this.onGround) {
+-         this.setVelocity(this.getVelocity().multiply(0.95D));
++         this.setVelocity(this.getVelocity().multiply(getDragAir()));
+       }
+ 
+    }
+@@ -294,29 +308,29 @@
+       boolean flag = false;
+       boolean flag1 = false;
+       AbstractRailBlock abstractrailblock = (AbstractRailBlock)state.getBlock();
+-      if (abstractrailblock == Blocks.POWERED_RAIL) {
++      if (abstractrailblock instanceof PoweredRailBlock && !((PoweredRailBlock)abstractrailblock).isActivatorRail()) {
+          flag = state.get(PoweredRailBlock.POWERED);
+          flag1 = !flag;
+       }
+ 
+-      double d0 = 0.0078125D;
++      double d0 = getSlopeAdjustment();
+       Vec3d vec3d1 = this.getVelocity();
+-      RailShape railshape = state.get(abstractrailblock.getShapeProperty());
++      RailShape railshape = ((AbstractRailBlock)state.getBlock()).getRailDirection(state, this.world, pos, this);
+       switch(railshape) {
+       case ASCENDING_EAST:
+-         this.setVelocity(vec3d1.add(-0.0078125D, 0.0D, 0.0D));
++         this.setVelocity(vec3d1.add(-1*d0, 0.0D, 0.0D));
+          ++this.y;
+          break;
+       case ASCENDING_WEST:
+-         this.setVelocity(vec3d1.add(0.0078125D, 0.0D, 0.0D));
++         this.setVelocity(vec3d1.add(d0, 0.0D, 0.0D));
+          ++this.y;
+          break;
+       case ASCENDING_NORTH:
+-         this.setVelocity(vec3d1.add(0.0D, 0.0D, 0.0078125D));
++         this.setVelocity(vec3d1.add(0.0D, 0.0D, d0));
+          ++this.y;
+          break;
+       case ASCENDING_SOUTH:
+-         this.setVelocity(vec3d1.add(0.0D, 0.0D, -0.0078125D));
++         this.setVelocity(vec3d1.add(0.0D, 0.0D, -1*d0));
+          ++this.y;
+       }
+ 
+@@ -345,7 +359,7 @@
+          }
+       }
+ 
+-      if (flag1) {
++      if (flag1 && shouldDoRailFunctions()) {
+          double d19 = Math.sqrt(squaredHorizontalLength(this.getVelocity()));
+          if (d19 < 0.03D) {
+             this.setVelocity(Vec3d.ZERO);
+@@ -376,10 +390,7 @@
+       this.x = d20 + d1 * d11;
+       this.z = d7 + d2 * d11;
+       this.setPosition(this.x, this.y, this.z);
+-      double d21 = this.hasPassengers() ? 0.75D : 1.0D;
+-      double d22 = this.method_7504();
+-      vec3d1 = this.getVelocity();
+-      this.move(MovementType.SELF, new Vec3d(MathHelper.clamp(d21 * vec3d1.x, -d22, d22), 0.0D, MathHelper.clamp(d21 * vec3d1.z, -d22, d22)));
++      this.moveMinecartOnRail(pos);
+       if (aint[0][1] != 0 && MathHelper.floor(this.x) - pos.getX() == aint[0][0] && MathHelper.floor(this.z) - pos.getZ() == aint[0][2]) {
+          this.setPosition(this.x, this.y + (double)aint[0][1], this.z);
+       } else if (aint[1][1] != 0 && MathHelper.floor(this.x) - pos.getX() == aint[1][0] && MathHelper.floor(this.z) - pos.getZ() == aint[1][2]) {
+@@ -407,7 +418,10 @@
+          this.setVelocity(d23 * (double)(j - pos.getX()), vec3d5.y, d23 * (double)(i - pos.getZ()));
+       }
+ 
+-      if (flag) {
++      if (shouldDoRailFunctions())
++          ((AbstractRailBlock)state.getBlock()).onMinecartPass(state, world, pos, this);
++
++      if (flag && shouldDoRailFunctions()) {
+          Vec3d vec3d6 = this.getVelocity();
+          double d24 = Math.sqrt(squaredHorizontalLength(vec3d6));
+          if (d24 > 0.01D) {
+@@ -462,7 +476,7 @@
+ 
+       BlockState blockstate = this.world.getBlockState(new BlockPos(i, j, k));
+       if (blockstate.matches(BlockTags.RAILS)) {
+-         RailShape railshape = blockstate.get(((AbstractRailBlock)blockstate.getBlock()).getShapeProperty());
++         RailShape railshape = ((AbstractRailBlock)blockstate.getBlock()).getRailDirection(blockstate, this.world, new BlockPos(i, j, k), this);
+          y = (double)j;
+          if (railshape.isAscending()) {
+             y = (double)(j + 1);
+@@ -499,7 +513,7 @@
+ 
+       BlockState blockstate = this.world.getBlockState(new BlockPos(i, j, k));
+       if (blockstate.matches(BlockTags.RAILS)) {
+-         RailShape railshape = blockstate.get(((AbstractRailBlock)blockstate.getBlock()).getShapeProperty());
++         RailShape railshape = ((AbstractRailBlock)blockstate.getBlock()).getRailDirection(blockstate, this.world, new BlockPos(i, j, k), this);
+          int[][] aint = field_7664[railshape.getId()];
+          double d0 = (double)i + 0.5D + (double)aint[0][0] * 0.5D;
+          double d1 = (double)j + 0.0625D + (double)aint[0][1] * 0.5D;
+@@ -562,6 +576,11 @@
+    }
+ 
+    public void pushAwayFrom(Entity entityIn) {
++      //net.minecraftforge.common.MinecraftForge.EVENT_BUS.post(new net.minecraftforge.event.entity.minecart.MinecartCollisionEvent(this, entityIn));
++      if (getCollisionHandler() != null) {
++         getCollisionHandler().onEntityCollision(this, entityIn);
++         return;
++      }
+       if (!this.world.isClient) {
+          if (!entityIn.noClip && !this.noClip) {
+             if (!this.hasPassenger(entityIn)) {
+@@ -597,11 +616,11 @@
+ 
+                      Vec3d vec3d2 = this.getVelocity();
+                      Vec3d vec3d3 = entityIn.getVelocity();
+-                     if (((AbstractMinecartEntity)entityIn).getMinecartType() == AbstractMinecartEntity.Type.FURNACE && this.getMinecartType() != AbstractMinecartEntity.Type.FURNACE) {
++                     if (((AbstractMinecartEntity)entityIn).isPoweredCart() && !this.isPoweredCart()) {
+                         this.setVelocity(vec3d2.multiply(0.2D, 1.0D, 0.2D));
+                         this.addVelocity(vec3d3.x - d0, 0.0D, vec3d3.z - d1);
+                         entityIn.setVelocity(vec3d3.multiply(0.95D, 1.0D, 0.95D));
+-                     } else if (((AbstractMinecartEntity)entityIn).getMinecartType() != AbstractMinecartEntity.Type.FURNACE && this.getMinecartType() == AbstractMinecartEntity.Type.FURNACE) {
++                     } else if (!((AbstractMinecartEntity)entityIn).isPoweredCart() && this.isPoweredCart()) {
+                         entityIn.setVelocity(vec3d3.multiply(0.2D, 1.0D, 0.2D));
+                         entityIn.addVelocity(vec3d2.x + d0, 0.0D, vec3d2.z + d1);
+                         this.setVelocity(vec3d2.multiply(0.95D, 1.0D, 0.95D));
+@@ -707,6 +726,40 @@
+       return new EntitySpawnS2CPacket(this);
+    }
+ 
++   private boolean canUseRail = true;
++   @Override public boolean canUseRail() { return canUseRail; }
++   @Override public void setCanUseRail(boolean value) { this.canUseRail = value; }
++   private float currentSpeedOnRail;
++   @Override public float getCurrentCartSpeedCapOnRail() { return currentSpeedOnRail; }
++   @Override public void setCurrentCartSpeedCapOnRail(float value) { currentSpeedOnRail = Math.min(value, getMaxCartSpeedOnRail()); }
++   private float maxSpeedAirLateral = DEFAULT_MAX_SPEED_AIR_LATERAL;
++   @Override public float getMaxSpeedAirLateral() { return maxSpeedAirLateral; }
++   @Override public void setMaxSpeedAirLateral(float value) { maxSpeedAirLateral = value; }
++   private float maxSpeedAirVertical = DEFAULT_MAX_SPEED_AIR_VERTICAL;
++   @Override public float getMaxSpeedAirVertical() { return maxSpeedAirVertical; }
++   @Override public void setMaxSpeedAirVertical(float value) { maxSpeedAirVertical = value; }
++   private double dragAir = DEFAULT_AIR_DRAG;
++   @Override public double getDragAir() { return dragAir; }
++   @Override public void setDragAir(double value) { dragAir = value; }
++   @Override
++   public double getMaxSpeedWithRail() { //Non-default because getMaximumSpeed is protected
++      if (!canUseRail()) return method_7504();
++      BlockPos pos = this.getCurrentRailPosition();
++      BlockState state = getMinecart().world.getBlockState(pos);
++      if (!state.matches(BlockTags.RAILS)) return method_7504();
++
++      float railMaxSpeed = ((AbstractRailBlock)state.getBlock()).getRailMaxSpeed(state, getMinecart().world, pos, getMinecart());
++      return Math.min(railMaxSpeed, getCurrentCartSpeedCapOnRail());
++   }
++   @Override
++   public void moveMinecartOnRail(BlockPos pos) { //Non-default because getMaximumSpeed is protected
++      AbstractMinecartEntity mc = getMinecart();
++      double d21 = mc.hasPassengers() ? 0.75D : 1.0D;
++      double d22 = mc.getMaxSpeedWithRail();
++      Vec3d vec3d1 = mc.getVelocity();
++      mc.move(MovementType.SELF, new Vec3d(MathHelper.clamp(d21 * vec3d1.x, -d22, d22), 0.0D, MathHelper.clamp(d21 * vec3d1.z, -d22, d22)));
++   }
++
+    public static enum Type {
+       RIDEABLE,
+       CHEST,

@@ -1,0 +1,38 @@
+--- a/net/minecraft/client/gui/screen/world/CreateWorldScreen.java
++++ b/net/minecraft/client/gui/screen/world/CreateWorldScreen.java
+@@ -17,10 +17,8 @@
+ import net.minecraftforge.api.distmarker.Dist;
+ import net.minecraftforge.api.distmarker.OnlyIn;
+ import org.apache.commons.lang3.StringUtils;
+-import net.minecraft.client.gui.screen.CustomizeBuffetLevelScreen;
+-import net.minecraft.client.gui.screen.CustomizeFlatLevelScreen;
+-import net.minecraft.client.gui.screen.Screen;
+ 
++import net.minecraft.client.gui.screen.Screen;
+ 
+ @OnlyIn(Dist.CLIENT)
+ public class CreateWorldScreen extends Screen {
+@@ -141,14 +139,7 @@
+       }));
+       this.buttonMapTypeSwitch.visible = false;
+       this.buttonCustomizeType = this.addButton(new ButtonWidget(this.width / 2 + 5, 120, 150, 20, I18n.translate("selectWorld.customizeType"), (p_214314_1_) -> {
+-         if (LevelGeneratorType.TYPES[this.generatorType] == LevelGeneratorType.FLAT) {
+-            this.minecraft.openScreen(new CustomizeFlatLevelScreen(this, this.generatorOptionsTag));
+-         }
+-
+-         if (LevelGeneratorType.TYPES[this.generatorType] == LevelGeneratorType.BUFFET) {
+-            this.minecraft.openScreen(new CustomizeBuffetLevelScreen(this, this.generatorOptionsTag));
+-         }
+-
++         LevelGeneratorType.TYPES[this.generatorType].onCustomizeButton(this.minecraft, CreateWorldScreen.this);
+       }));
+       this.buttonCustomizeType.visible = false;
+       this.buttonCommandsAllowed = this.addButton(new ButtonWidget(this.width / 2 - 155, 151, 150, 20, I18n.translate("selectWorld.allowCommands"), (p_214315_1_) -> {
+@@ -227,6 +218,7 @@
+                i = (long)s.hashCode();
+             }
+          }
++         LevelGeneratorType.TYPES[this.generatorType].onGUICreateWorldPress();
+ 
+          LevelInfo worldsettings = new LevelInfo(i, GameMode.byName(this.gameMode), this.structures, this.field_3178, LevelGeneratorType.TYPES[this.generatorType]);
+          worldsettings.setGeneratorOptions(Dynamic.convert(NbtOps.INSTANCE, JsonOps.INSTANCE, this.generatorOptionsTag));

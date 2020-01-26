@@ -22,19 +22,13 @@ package net.minecraftforge.event.world;
 import java.util.ArrayList;
 import java.util.List;
 
-import net.minecraftforge.eventbus.api.Cancelable;
 import net.minecraftforge.eventbus.api.Event;
 
-import net.minecraft.client.Minecraft;
-import net.minecraft.entity.EntityClassification;
-import net.minecraft.profiler.Profiler;
-import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.integrated.IntegratedServer;
-import net.minecraft.util.IProgressUpdate;
+import net.minecraft.entity.EntityCategory;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.IWorld;
-import net.minecraft.world.WorldSettings;
-import net.minecraft.world.biome.Biome.SpawnListEntry;
+import net.minecraft.world.level.LevelInfo;
+import net.minecraft.world.biome.Biome.SpawnEntry;
 
 /**
  * WorldEvent is fired when an event involving the world occurs.<br>
@@ -125,22 +119,22 @@ public class WorldEvent extends Event {
 	 */
 	@net.minecraftforge.eventbus.api.Cancelable
 	public static class PotentialSpawns extends WorldEvent {
-		private final EntityClassification type;
+		private final EntityCategory type;
 		private final BlockPos pos;
-		private final List<SpawnListEntry> list;
+		private final List<SpawnEntry> list;
 
-		public PotentialSpawns(IWorld world, EntityClassification type, BlockPos pos, List<SpawnListEntry> oldList) {
+		public PotentialSpawns(IWorld world, EntityCategory type, BlockPos pos, List<SpawnEntry> oldList) {
 			super(world);
 			this.pos = pos;
 			this.type = type;
 			if (oldList != null) {
-				this.list = new ArrayList<SpawnListEntry>(oldList);
+				this.list = new ArrayList<SpawnEntry>(oldList);
 			} else {
-				this.list = new ArrayList<SpawnListEntry>();
+				this.list = new ArrayList<SpawnEntry>();
 			}
 		}
 
-		public EntityClassification getType() {
+		public EntityCategory getType() {
 			return type;
 		}
 
@@ -148,7 +142,7 @@ public class WorldEvent extends Event {
 			return pos;
 		}
 
-		public List<SpawnListEntry> getList() {
+		public List<SpawnEntry> getList() {
 			return list;
 		}
 	}
@@ -159,14 +153,14 @@ public class WorldEvent extends Event {
 	 */
 	@net.minecraftforge.eventbus.api.Cancelable
 	public static class CreateSpawnPosition extends WorldEvent {
-		private final WorldSettings settings;
+		private final LevelInfo settings;
 
-		public CreateSpawnPosition(IWorld world, WorldSettings settings) {
+		public CreateSpawnPosition(IWorld world, LevelInfo settings) {
 			super(world);
 			this.settings = settings;
 		}
 
-		public WorldSettings getSettings() {
+		public LevelInfo getSettings() {
 			return settings;
 		}
 	}

@@ -43,9 +43,9 @@ import net.minecraftforge.client.ForgeHooksClient;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.lang3.tuple.Triple;
 
-import net.minecraft.client.renderer.model.ItemTransformVec3f;
-import net.minecraft.client.renderer.model.ModelRotation;
-import net.minecraft.util.Direction;
+import net.minecraft.client.render.model.json.Transformation;
+import net.minecraft.client.render.model.ModelRotation;
+import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.Vec3i;
 
 /*
@@ -123,8 +123,8 @@ public final class TRSRTransformation implements IModelState, ITransformation {
 
 	@Deprecated
 	@OnlyIn(Dist.CLIENT)
-	public static TRSRTransformation from(ItemTransformVec3f transform) {
-		return transform.equals(ItemTransformVec3f.DEFAULT) ? identity : new TRSRTransformation(toVecmath(transform.translation), quatFromXYZDegrees(toVecmath(transform.rotation)), toVecmath(transform.scale), null);
+	public static TRSRTransformation from(Transformation transform) {
+		return transform.equals(Transformation.NONE) ? identity : new TRSRTransformation(toVecmath(transform.translation), quatFromXYZDegrees(toVecmath(transform.rotation)), toVecmath(transform.scale), null);
 	}
 
 	@OnlyIn(Dist.CLIENT)
@@ -481,10 +481,10 @@ public final class TRSRTransformation implements IModelState, ITransformation {
 	}
 
 	public static Direction rotate(Matrix4f matrix, Direction facing) {
-		Vec3i dir = facing.getDirectionVec();
+		Vec3i dir = facing.getVector();
 		Vector4f vec = new Vector4f(dir.getX(), dir.getY(), dir.getZ(), 0);
 		matrix.transform(vec);
-		return Direction.getFacingFromVector(vec.x, vec.y, vec.z);
+		return Direction.getFacing(vec.x, vec.y, vec.z);
 	}
 
 	public static boolean isInteger(Matrix4f matrix) {
@@ -533,17 +533,17 @@ public final class TRSRTransformation implements IModelState, ITransformation {
 	}
 
 	@OnlyIn(Dist.CLIENT)
-	public static Vector3f toVecmath(net.minecraft.client.renderer.Vector3f vec) {
+	public static Vector3f toVecmath(minecraft.client.util.math.Vector3f vec) {
 		return new Vector3f(vec.getX(), vec.getY(), vec.getZ());
 	}
 
 	@OnlyIn(Dist.CLIENT)
-	public static Vector4f toVecmath(net.minecraft.client.renderer.Vector4f vec) {
+	public static Vector4f toVecmath(minecraft.client.util.math.Vector4f vec) {
 		return new Vector4f(vec.getX(), vec.getY(), vec.getZ(), vec.getW());
 	}
 
 	@OnlyIn(Dist.CLIENT)
-	public static Matrix4f toVecmath(net.minecraft.client.renderer.Matrix4f m) {
+	public static Matrix4f toVecmath(minecraft.client.util.math.Matrix4f m) {
 		return new Matrix4f(
 				m.get(0, 0), m.get(1, 0), m.get(2, 0), m.get(3, 0),
 				m.get(0, 1), m.get(1, 1), m.get(2, 1), m.get(3, 1),
@@ -551,23 +551,23 @@ public final class TRSRTransformation implements IModelState, ITransformation {
 				m.get(0, 3), m.get(1, 3), m.get(2, 3), m.get(3, 3));
 	}
 
-	public static Quat4f toVecmath(net.minecraft.client.renderer.Quaternion q) {
+	public static Quat4f toVecmath(net.minecraft.util.math.Quaternion q) {
 		return new Quat4f(q.getX(), q.getY(), q.getZ(), q.getW());
 	}
 
 	@OnlyIn(Dist.CLIENT)
-	public static net.minecraft.client.renderer.Vector3f toMojang(Vector3f vec) {
-		return new net.minecraft.client.renderer.Vector3f(vec.x, vec.y, vec.z);
+	public static minecraft.client.util.math.Vector3f toMojang(Vector3f vec) {
+		return new minecraft.client.util.math.Vector3f(vec.x, vec.y, vec.z);
 	}
 
 	@OnlyIn(Dist.CLIENT)
-	public static net.minecraft.client.renderer.Vector4f toMojang(Vector4f vec) {
-		return new net.minecraft.client.renderer.Vector4f(vec.x, vec.y, vec.z, vec.w);
+	public static minecraft.client.util.math.Vector4f toMojang(Vector4f vec) {
+		return new minecraft.client.util.math.Vector4f(vec.x, vec.y, vec.z, vec.w);
 	}
 
 	@OnlyIn(Dist.CLIENT)
-	public static net.minecraft.client.renderer.Matrix4f toMojang(Matrix4f m) {
-		net.minecraft.client.renderer.Matrix4f r = new net.minecraft.client.renderer.Matrix4f();
+	public static minecraft.client.util.math.Matrix4f toMojang(Matrix4f m) {
+		minecraft.client.util.math.Matrix4f r = new minecraft.client.util.math.Matrix4f();
 		float[] row = new float[4];
 		for (int x = 0; x < 4; x++) {
 			m.getRow(x, row);
@@ -636,8 +636,8 @@ public final class TRSRTransformation implements IModelState, ITransformation {
 	 */
 	@Deprecated
 	@OnlyIn(Dist.CLIENT)
-	public net.minecraft.client.renderer.model.ItemTransformVec3f toItemTransform() {
-		return new ItemTransformVec3f(toMojang(toXYZDegrees(getLeftRot())), toMojang(getTranslation()), toMojang(getScale()));
+	public minecraft.client.render.model.json.Transformation toItemTransform() {
+		return new Transformation(toMojang(toXYZDegrees(getLeftRot())), toMojang(getTranslation()), toMojang(getScale()));
 	}
 
 	public boolean isIdentity() {

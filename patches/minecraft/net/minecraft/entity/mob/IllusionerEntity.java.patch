@@ -1,0 +1,21 @@
+--- a/net/minecraft/entity/mob/IllusionerEntity.java
++++ b/net/minecraft/entity/mob/IllusionerEntity.java
+@@ -40,8 +40,8 @@
+ import net.minecraft.world.World;
+ import net.minecraftforge.api.distmarker.Dist;
+ import net.minecraftforge.api.distmarker.OnlyIn;
+-import net.minecraft.entity.raid.RaiderEntity;
+ 
++import net.minecraft.entity.raid.RaiderEntity;
+ 
+ public class IllusionerEntity extends SpellcastingIllagerEntity implements RangedAttackMob {
+    private int field_7296;
+@@ -186,6 +186,8 @@
+    public void attack(LivingEntity target, float distanceFactor) {
+       ItemStack itemstack = this.getArrowType(this.getStackInHand(ProjectileUtil.getHandPossiblyHolding(this, Items.BOW)));
+       ProjectileEntity abstractarrowentity = ProjectileUtil.createArrowProjectile(this, itemstack, distanceFactor);
++      if (this.getMainHandStack().getItem() instanceof net.minecraft.item.BowItem)
++         abstractarrowentity = ((net.minecraft.item.BowItem)this.getMainHandStack().getItem()).customeArrow(abstractarrowentity);
+       double d0 = target.x - this.x;
+       double d1 = target.getBoundingBox().minY + (double)(target.getHeight() / 3.0F) - abstractarrowentity.y;
+       double d2 = target.z - this.z;

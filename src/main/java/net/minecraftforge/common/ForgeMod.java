@@ -67,12 +67,12 @@ import org.apache.logging.log4j.Marker;
 import org.apache.logging.log4j.MarkerManager;
 
 import net.minecraft.data.DataGenerator;
-import net.minecraft.item.crafting.IRecipe;
-import net.minecraft.item.crafting.IRecipeSerializer;
-import net.minecraft.nbt.CompoundNBT;
-import net.minecraft.util.ResourceLocation;
-import net.minecraft.world.storage.SaveHandler;
-import net.minecraft.world.storage.WorldInfo;
+import net.minecraft.recipe.Recipe;
+import net.minecraft.recipe.RecipeSerializer;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.util.Identifier;
+import net.minecraft.world.WorldSaveHandler;
+import net.minecraft.world.level.LevelProperties;
 
 @Mod("forge")
 public class ForgeMod implements WorldPersistenceHooks.WorldPersistenceHook {
@@ -154,9 +154,9 @@ public class ForgeMod implements WorldPersistenceHooks.WorldPersistenceHook {
 	}
 
 	@Override
-	public CompoundNBT getDataForWriting(SaveHandler handler, WorldInfo info) {
-		CompoundNBT forgeData = new CompoundNBT();
-		CompoundNBT dims = new CompoundNBT();
+	public CompoundTag getDataForWriting(WorldSaveHandler handler, LevelProperties info) {
+		CompoundTag forgeData = new CompoundTag();
+		CompoundTag dims = new CompoundTag();
 		DimensionManager.writeRegistry(dims);
 		if (!dims.isEmpty()) {
 			forgeData.put("dims", dims);
@@ -165,8 +165,8 @@ public class ForgeMod implements WorldPersistenceHooks.WorldPersistenceHook {
 	}
 
 	@Override
-	public void readData(SaveHandler handler, WorldInfo info, CompoundNBT tag) {
-		if (tag.contains("dims", 10)) {
+	public void readData(WorldSaveHandler handler, LevelProperties info, CompoundTag tag) {
+		if (tag.containsKey("dims", 10)) {
 			DimensionManager.readRegistry(tag.getCompound("dims"));
 		}
 	}
@@ -183,14 +183,14 @@ public class ForgeMod implements WorldPersistenceHooks.WorldPersistenceHook {
 		DataGenerator gen = event.getGenerator();
 
 		if (event.includeServer()) {
-			gen.addProvider(new ForgeBlockTagsProvider(gen));
-			gen.addProvider(new ForgeItemTagsProvider(gen));
-			gen.addProvider(new ForgeRecipeProvider(gen));
+			gen.install(new ForgeBlockTagsProvider(gen));
+			gen.install(new ForgeItemTagsProvider(gen));
+			gen.install(new ForgeRecipeProvider(gen));
 		}
 	}
 
 	@SubscribeEvent //ModBus, can't use addListener due to nested genetics.
-	public void registerRecipeSerialziers(RegistryEvent.Register<IRecipeSerializer<?>> event) {
+	public void registerRecipeSerialziers(RegistryEvent.Register<RecipeSerializer<?>> event) {
 		CraftingHelper.register(AndCondition.Serializer.INSTANCE);
 		CraftingHelper.register(FalseCondition.Serializer.INSTANCE);
 		CraftingHelper.register(ItemExistsCondition.Serializer.INSTANCE);
@@ -200,11 +200,11 @@ public class ForgeMod implements WorldPersistenceHooks.WorldPersistenceHook {
 		CraftingHelper.register(TrueCondition.Serializer.INSTANCE);
 		CraftingHelper.register(TagEmptyCondition.Serializer.INSTANCE);
 
-		CraftingHelper.register(new ResourceLocation("forge", "compound"), CompoundIngredient.Serializer.INSTANCE);
-		CraftingHelper.register(new ResourceLocation("forge", "nbt"), IngredientNBT.Serializer.INSTANCE);
-		CraftingHelper.register(new ResourceLocation("minecraft", "item"), VanillaIngredientSerializer.INSTANCE);
+		CraftingHelper.register(new Identifier("forge", "compound"), CompoundIngredient.Serializer.INSTANCE);
+		CraftingHelper.register(new Identifier("forge", "nbt"), IngredientNBT.Serializer.INSTANCE);
+		CraftingHelper.register(new Identifier("minecraft", "item"), VanillaIngredientSerializer.INSTANCE);
 
-		event.getRegistry().register(new ConditionalRecipe.Serializer<IRecipe<?>>().setRegistryName(new ResourceLocation("forge", "conditional")));
+		event.getRegistry().register(new ConditionalRecipe.Serializer<Recipe<?>>().setRegistryName(new Identifier("forge", "conditional")));
 
 	}
 }

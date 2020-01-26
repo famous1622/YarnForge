@@ -48,10 +48,10 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import net.minecraft.client.renderer.model.IUnbakedModel;
-import net.minecraft.client.renderer.model.ModelResourceLocation;
-import net.minecraft.util.IStringSerializable;
-import net.minecraft.util.ResourceLocation;
+import net.minecraft.client.render.model.UnbakedModel;
+import net.minecraft.client.util.ModelIdentifier;
+import net.minecraft.util.StringIdentifiable;
+import net.minecraft.util.Identifier;
 import net.minecraft.util.math.MathHelper;
 
 /**
@@ -64,8 +64,8 @@ public final class Clips {
 	 * Retrieves the clip from the model.
 	 */
 	@OnlyIn(Dist.CLIENT)
-	public static IClip getModelClipNode(ResourceLocation modelLocation, String clipName) {
-		IUnbakedModel model = ModelLoaderRegistry.getModelOrMissing(modelLocation);
+	public static IClip getModelClipNode(Identifier modelLocation, String clipName) {
+		UnbakedModel model = ModelLoaderRegistry.getModelOrMissing(modelLocation);
 		Optional<? extends IClip> clip = model.getClip(clipName);
 		if (clip.isPresent()) {
 			return new ModelClip(clip.get(), modelLocation, clipName);
@@ -112,7 +112,7 @@ public final class Clips {
 	/**
 	 * Clip that does nothing.
 	 */
-	public enum IdentityClip implements IClip, IStringSerializable {
+	public enum IdentityClip implements IClip, StringIdentifiable {
 		INSTANCE;
 
 		@Override
@@ -126,7 +126,7 @@ public final class Clips {
 		}
 
 		@Override
-		public String getName() {
+		public String asString() {
 			return "identity";
 		}
 	}
@@ -154,8 +154,8 @@ public final class Clips {
 				@Override
 				public void write(JsonWriter out, IClip clip) throws IOException {
 					// IdentityClip + ClipReference
-					if (clip instanceof IStringSerializable) {
-						out.value("#" + ((IStringSerializable) clip).getName());
+					if (clip instanceof StringIdentifiable) {
+						out.value("#" + ((StringIdentifiable) clip).asString());
 						return;
 					} else if (clip instanceof TimeClip) {
 						out.beginArray();
@@ -227,11 +227,11 @@ public final class Clips {
 							int at = string.lastIndexOf('@');
 							String location = string.substring(0, at);
 							String clipName = string.substring(at + 1);
-							ResourceLocation model;
+							Identifier model;
 							if (location.indexOf('#') != -1) {
-								model = new ModelResourceLocation(location);
+								model = new ModelIdentifier(location);
 							} else {
-								model = new ResourceLocation(location);
+								model = new Identifier(location);
 							}
 							return getModelClipNode(model, clipName);
 						}
@@ -267,10 +267,10 @@ public final class Clips {
 	 */
 	public static final class ModelClip implements IClip {
 		private final IClip childClip;
-		private final ResourceLocation modelLocation;
+		private final Identifier modelLocation;
 		private final String clipName;
 
-		public ModelClip(IClip childClip, ResourceLocation modelLocation, String clipName) {
+		public ModelClip(IClip childClip, Identifier modelLocation, String clipName) {
 			this.childClip = childClip;
 			this.modelLocation = modelLocation;
 			this.clipName = clipName;
@@ -449,7 +449,7 @@ public final class Clips {
 	 * Reference to another clip.
 	 * Should only exist during debugging.
 	 */
-	public static final class ClipReference implements IClip, IStringSerializable {
+	public static final class ClipReference implements IClip, StringIdentifiable {
 		private final String clipName;
 		private final Function<String, IClip> clipResolver;
 		private IClip clip;
@@ -483,7 +483,7 @@ public final class Clips {
 		}
 
 		@Override
-		public String getName() {
+		public String asString() {
 			return clipName;
 		}
 

@@ -26,12 +26,12 @@ import net.minecraftforge.common.model.IModelPart;
 import net.minecraftforge.common.model.IModelState;
 import net.minecraftforge.common.model.TRSRTransformation;
 
-import net.minecraft.client.renderer.texture.ISprite;
+import net.minecraft.client.render.model.ModelBakeSettings;
 
 /**
  * Simple implementation of IModelState via a map and a default value.
  */
-public final class SimpleModelState implements IModelState, ISprite {
+public final class SimpleModelState implements IModelState, ModelBakeSettings {
 	private final ImmutableMap<? extends IModelPart, TRSRTransformation> map;
 	private final Optional<TRSRTransformation> def;
 

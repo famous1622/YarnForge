@@ -19,13 +19,6 @@
 
 package net.minecraftforge.fml;
 
-import static net.minecraftforge.fml.VersionChecker.Status.AHEAD;
-import static net.minecraftforge.fml.VersionChecker.Status.BETA;
-import static net.minecraftforge.fml.VersionChecker.Status.BETA_OUTDATED;
-import static net.minecraftforge.fml.VersionChecker.Status.FAILED;
-import static net.minecraftforge.fml.VersionChecker.Status.OUTDATED;
-import static net.minecraftforge.fml.VersionChecker.Status.PENDING;
-import static net.minecraftforge.fml.VersionChecker.Status.UP_TO_DATE;
 
 import java.io.IOException;
 import java.io.InputStream;

@@ -25,17 +25,17 @@ import java.util.List;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 
-import net.minecraft.client.gui.AbstractGui;
-import net.minecraft.client.gui.DisplayEffectsScreen;
+import net.minecraft.client.gui.DrawableHelper;
+import net.minecraft.client.gui.screen.ingame.AbstractInventoryScreen;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
-import net.minecraft.potion.Effect;
-import net.minecraft.potion.EffectInstance;
+import net.minecraft.entity.effect.StatusEffect;
+import net.minecraft.entity.effect.StatusEffectInstance;
 
 public interface IForgeEffect {
 
-	default Effect getEffect() {
-		return (Effect) this;
+	default StatusEffect getEffect() {
+		return (StatusEffect) this;
 	}
 
 	/**
@@ -44,7 +44,7 @@ public interface IForgeEffect {
 	 * @param effect the active PotionEffect
 	 * @return true to display it (default), false to hide it.
 	 */
-	default boolean shouldRender(EffectInstance effect) {
+	default boolean shouldRender(StatusEffectInstance effect) {
 		return true;
 	}
 
@@ -54,7 +54,7 @@ public interface IForgeEffect {
 	 * @param effect the active PotionEffect
 	 * @return true to draw the standard text
 	 */
-	default boolean shouldRenderInvText(EffectInstance effect) {
+	default boolean shouldRenderInvText(StatusEffectInstance effect) {
 		return true;
 	}
 
@@ -64,7 +64,7 @@ public interface IForgeEffect {
 	 * @param effect the active PotionEffect
 	 * @return true to display it (default), false to hide it.
 	 */
-	default boolean shouldRenderHUD(EffectInstance effect) {
+	default boolean shouldRenderHUD(StatusEffectInstance effect) {
 		return true;
 	}
 
@@ -79,7 +79,7 @@ public interface IForgeEffect {
 	 * @param z      the z level
 	 */
 	@OnlyIn(Dist.CLIENT)
-	default void renderInventoryEffect(EffectInstance effect, DisplayEffectsScreen<?> gui, int x, int y, float z) {
+	default void renderInventoryEffect(StatusEffectInstance effect, AbstractInventoryScreen<?> gui, int x, int y, float z) {
 	}
 
 	/**
@@ -94,7 +94,7 @@ public interface IForgeEffect {
 	 * @param alpha  the alpha value, blinks when the potion is about to run out
 	 */
 	@OnlyIn(Dist.CLIENT)
-	default void renderHUDEffect(EffectInstance effect, AbstractGui gui, int x, int y, float z, float alpha) {
+	default void renderHUDEffect(StatusEffectInstance effect, DrawableHelper gui, int x, int y, float z, float alpha) {
 	}
 
 	/**
@@ -117,7 +117,7 @@ public interface IForgeEffect {
 	 * @param potionEffect the {@code PotionEffect} instance containing the potion
 	 * @return a value used to sort {@code PotionEffect}s in GUIs
 	 */
-	default int getGuiSortColor(EffectInstance potionEffect) {
-		return getEffect().getLiquidColor();
+	default int getGuiSortColor(StatusEffectInstance potionEffect) {
+		return getEffect().getColor();
 	}
 }

@@ -24,7 +24,7 @@ import javax.annotation.Nullable;
 
 import net.minecraftforge.common.util.LazyOptional;
 
-import net.minecraft.util.Direction;
+import net.minecraft.util.math.Direction;
 
 public interface ICapabilityProvider {
 	/**

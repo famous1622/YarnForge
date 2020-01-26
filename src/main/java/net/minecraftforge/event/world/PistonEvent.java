@@ -23,8 +23,8 @@ import javax.annotation.Nullable;
 
 import net.minecraftforge.eventbus.api.Cancelable;
 
-import net.minecraft.block.state.PistonBlockStructureHelper;
-import net.minecraft.util.Direction;
+import net.minecraft.block.piston.PistonHandler;
+import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 
@@ -73,9 +73,9 @@ public abstract class PistonEvent extends BlockEvent {
 	 * @return A piston structure helper for this movement. Returns null if the world stored is not a {@link World}
 	 */
 	@Nullable
-	public PistonBlockStructureHelper getStructureHelper() {
+	public PistonHandler getStructureHelper() {
 		if (this.getWorld() instanceof World) {
-			return new PistonBlockStructureHelper((World) this.getWorld(), this.getPos(), this.getDirection(), this.getPistonMoveType().isExtend);
+			return new PistonHandler((World) this.getWorld(), this.getPos(), this.getDirection(), this.getPistonMoveType().isExtend);
 		} else {
 			return null;
 		}

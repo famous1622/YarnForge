@@ -1,0 +1,91 @@
+--- a/net/minecraft/client/render/model/json/JsonUnbakedModel.java
++++ b/net/minecraft/client/render/model/json/JsonUnbakedModel.java
+@@ -33,6 +33,8 @@
+ import net.minecraftforge.api.distmarker.OnlyIn;
+ import org.apache.logging.log4j.LogManager;
+ import org.apache.logging.log4j.Logger;
++
++import net.minecraft;
+ import net.minecraft.client.render.model.BakedModel;
+ import net.minecraft.client.render.model.BakedQuad;
+ import net.minecraft.client.render.model.BakedQuadFactory;
+@@ -41,7 +43,6 @@
+ import net.minecraft.client.render.model.ModelLoader;
+ import net.minecraft.client.render.model.UnbakedModel;
+ 
+-
+ @OnlyIn(Dist.CLIENT)
+ public class JsonUnbakedModel implements UnbakedModel {
+    private static final Logger LOGGER = LogManager.getLogger();
+@@ -83,6 +84,9 @@
+       return this.elements.isEmpty() && this.parent != null ? this.parent.getElements() : this.elements;
+    }
+ 
++   @Nullable
++   public Identifier getParentLocation() { return parentId; }
++
+    public boolean useAmbientOcclusion() {
+       return this.parent != null ? this.parent.useAmbientOcclusion() : this.ambientOcclusion;
+    }
+@@ -99,6 +103,10 @@
+       return this.overrides.isEmpty() ? ModelItemPropertyOverrideList.EMPTY : new ModelItemPropertyOverrideList(p_217646_1_, p_217646_2_, p_217646_1_::getOrLoadModel, this.overrides);
+    }
+ 
++   public ModelItemPropertyOverrideList getOverrides(ModelLoader p_217646_1_, JsonUnbakedModel p_217646_2_, Function<Identifier, Sprite> textureGetter, net.minecraft.client.render.VertexFormat format) {
++      return this.overrides.isEmpty() ? ModelItemPropertyOverrideList.EMPTY : new ModelItemPropertyOverrideList(p_217646_1_, p_217646_2_, p_217646_1_::getOrLoadModel, textureGetter, this.overrides, format);
++   }
++
+    public Collection<Identifier> getModelDependencies() {
+       Set<Identifier> set = Sets.newHashSet();
+ 
+@@ -168,25 +176,33 @@
+       return set1;
+    }
+ 
+-   public BakedModel bake(ModelLoader p_217641_1_, Function<Identifier, Sprite> p_217641_2_, ModelBakeSettings p_217641_3_) {
+-      return this.bake(p_217641_1_, this, p_217641_2_, p_217641_3_);
++   // FORGE: Override our interface method, binary compatible
++   public BakedModel bake(ModelLoader bakery, Function<Identifier, Sprite> spriteGetter, ModelBakeSettings sprite, net.minecraft.client.render.VertexFormat format) {
++       if (!net.minecraftforge.client.model.Attributes.moreSpecific(format, net.minecraftforge.client.model.Attributes.DEFAULT_BAKED_FORMAT))
++           throw new IllegalArgumentException("Cannot bake vanilla model to format other than BLOCK");
++      return this.bake(bakery, this, spriteGetter, sprite, format);
+    }
+ 
++   @Deprecated
+    public BakedModel bake(ModelLoader p_217644_1_, JsonUnbakedModel p_217644_2_, Function<Identifier, Sprite> p_217644_3_, ModelBakeSettings p_217644_4_) {
++       return bake(p_217644_1_, p_217644_2_, p_217644_3_, p_217644_4_, net.minecraft.client.render.VertexFormats.POSITION_COLOR_UV_NORMAL);
++   }
++
++   public BakedModel bake(ModelLoader p_217644_1_, JsonUnbakedModel p_217644_2_, Function<Identifier, Sprite> p_217644_3_, ModelBakeSettings p_217644_4_, net.minecraft.client.render.VertexFormat format) {
+       Sprite textureatlassprite = p_217644_3_.apply(new Identifier(this.resolveTexture("particle")));
+       if (this.getRootModel() == ModelLoader.BLOCK_ENTITY_MARKER) {
+-         return new BuiltinBakedModel(this.getTransformations(), this.compileOverrides(p_217644_1_, p_217644_2_), textureatlassprite);
++         return new BuiltinBakedModel(this.getTransformations(), this.getOverrides(p_217644_1_, p_217644_2_, p_217644_3_, format), textureatlassprite);
+       } else {
+-         BasicBakedModel.Builder simplebakedmodel$builder = (new BasicBakedModel.Builder(this, this.compileOverrides(p_217644_1_, p_217644_2_))).setParticle(textureatlassprite);
++         BasicBakedModel.Builder simplebakedmodel$builder = (new BasicBakedModel.Builder(this, this.getOverrides(p_217644_1_, p_217644_2_, p_217644_3_, format))).setParticle(textureatlassprite);
+ 
+          for(ModelElement blockpart : this.getElements()) {
+             for(Direction direction : blockpart.faces.keySet()) {
+                ModelElementFace blockpartface = blockpart.faces.get(direction);
+                Sprite textureatlassprite1 = p_217644_3_.apply(new Identifier(this.resolveTexture(blockpartface.textureId)));
+                if (blockpartface.cullFace == null) {
+-                  simplebakedmodel$builder.addQuad(createQuad(blockpart, blockpartface, textureatlassprite1, direction, p_217644_4_));
++                  simplebakedmodel$builder.addQuad(makeBakedQuad(blockpart, blockpartface, textureatlassprite1, direction, p_217644_4_));
+                } else {
+-                  simplebakedmodel$builder.addQuad(p_217644_4_.getRotation().apply(blockpartface.cullFace), createQuad(blockpart, blockpartface, textureatlassprite1, direction, p_217644_4_));
++                  simplebakedmodel$builder.addQuad(p_217644_4_.getState().apply(java.util.Optional.empty()).map(trsr -> trsr.rotateTransform(blockpartface.cullFace)).orElse(blockpartface.cullFace), makeBakedQuad(blockpart, blockpartface, textureatlassprite1, direction, p_217644_4_));
+                }
+             }
+          }
+@@ -199,6 +215,10 @@
+       return QUAD_FACTORY.bake(p_217645_0_.from, p_217645_0_.to, p_217645_1_, p_217645_2_, p_217645_3_, p_217645_4_, p_217645_0_.rotation, p_217645_0_.shade);
+    }
+ 
++   public static BakedQuad makeBakedQuad(ModelElement p_209567_0, ModelElementFace partFace, Sprite sprite, Direction face, ModelBakeSettings isprite) {
++      return QUAD_FACTORY.makeBakedQuad(p_209567_0.from, p_209567_0.to, partFace, sprite, face, new net.minecraftforge.client.model.BasicState(isprite.getState().apply(java.util.Optional.empty()).orElse(net.minecraftforge.common.model.TRSRTransformation.identity()), isprite.isUvLocked()), p_209567_0.rotation, p_209567_0.shade);
++   }
++
+    public boolean textureExists(String textureName) {
+       return !MissingSprite.getMissingSpriteId().toString().equals(this.resolveTexture(textureName));
+    }

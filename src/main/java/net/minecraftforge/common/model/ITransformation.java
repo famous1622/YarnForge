@@ -21,7 +21,7 @@ package net.minecraftforge.common.model;
 
 import javax.vecmath.Matrix4f;
 
-import net.minecraft.util.Direction;
+import net.minecraft.util.math.Direction;
 
 /*
  * Replacement interface for ModelRotation to allow custom transformations of vanilla models.

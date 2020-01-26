@@ -1,0 +1,20 @@
+--- a/net/minecraft/Bootstrap.java
++++ b/net/minecraft/Bootstrap.java
+@@ -21,8 +21,8 @@
+ import net.minecraft.world.biome.Biome;
+ import org.apache.logging.log4j.LogManager;
+ import org.apache.logging.log4j.Logger;
+-import net.minecraft.util.registry.Registry;
+ 
++import net.minecraft.util.registry.Registry;
+ 
+ public class Bootstrap {
+    public static final PrintStream SYSOUT = System.out;
+@@ -44,6 +44,7 @@
+                EntitySelectorOptions.register();
+                DispenserBehavior.registerDefaults();
+                ArgumentTypes.register();
++               if (false) // skip redirectOutputToLog, Forge already redirects stdout and stderr output to log so that they print with more context
+                setOutputStreams();
+             }
+          }

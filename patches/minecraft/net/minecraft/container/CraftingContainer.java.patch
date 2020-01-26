@@ -1,0 +1,11 @@
+--- a/net/minecraft/container/CraftingContainer.java
++++ b/net/minecraft/container/CraftingContainer.java
+@@ -31,4 +31,8 @@
+ 
+    @OnlyIn(Dist.CLIENT)
+    public abstract int getCraftingSlotCount();
++
++   public java.util.List<minecraft.client.recipe.book.RecipeBookGroup> getRecipeBookCategories() {
++      return minecraft.client.recipe.book.ClientRecipeBook.getGroupsForContainer(this);
++   }
+ }

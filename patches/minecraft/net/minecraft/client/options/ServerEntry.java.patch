@@ -1,0 +1,10 @@
+--- a/net/minecraft/client/options/ServerEntry.java
++++ b/net/minecraft/client/options/ServerEntry.java
+@@ -22,6 +22,7 @@
+    private ServerEntry.ResourcePackState resourcePackState = ServerEntry.ResourcePackState.PROMPT;
+    private String icon;
+    private boolean local;
++   public net.minecraftforge.fml.client.ExtendedServerListData forgeData = null;
+ 
+    public ServerEntry(String name, String ip, boolean isLan) {
+       this.name = name;

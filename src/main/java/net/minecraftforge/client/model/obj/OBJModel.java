@@ -68,44 +68,44 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import net.minecraft.block.BlockState;
-import net.minecraft.client.renderer.model.BakedQuad;
-import net.minecraft.client.renderer.model.IBakedModel;
-import net.minecraft.client.renderer.model.IUnbakedModel;
-import net.minecraft.client.renderer.model.ItemCameraTransforms.TransformType;
-import net.minecraft.client.renderer.model.ItemOverrideList;
-import net.minecraft.client.renderer.model.ModelBakery;
-import net.minecraft.client.renderer.texture.ISprite;
-import net.minecraft.client.renderer.texture.TextureAtlasSprite;
-import net.minecraft.client.renderer.vertex.VertexFormat;
-import net.minecraft.resources.IResource;
-import net.minecraft.resources.IResourceManager;
-import net.minecraft.util.Direction;
-import net.minecraft.util.ResourceLocation;
+import net.minecraft.client.render.model.BakedQuad;
+import net.minecraft.client.render.model.BakedModel;
+import net.minecraft.client.render.model.UnbakedModel;
+import net.minecraft.client.render.model.json.ModelTransformation.Type;
+import net.minecraft.client.render.model.json.ModelItemPropertyOverrideList;
+import net.minecraft.client.render.model.ModelLoader;
+import net.minecraft.client.render.model.ModelBakeSettings;
+import net.minecraft.client.texture.Sprite;
+import net.minecraft.client.render.VertexFormat;
+import net.minecraft.resource.Resource;
+import net.minecraft.resource.ResourceManager;
+import net.minecraft.util.math.Direction;
+import net.minecraft.util.Identifier;
 
-public class OBJModel implements IUnbakedModel {
+public class OBJModel implements UnbakedModel {
 	private static final Logger LOGGER = LogManager.getLogger();
-	private final ResourceLocation modelLocation;
+	private final Identifier modelLocation;
 	//private Gson GSON = new GsonBuilder().create();
 	private MaterialLibrary matLib;
 	private CustomData customData;
 
-	public OBJModel(MaterialLibrary matLib, ResourceLocation modelLocation) {
+	public OBJModel(MaterialLibrary matLib, Identifier modelLocation) {
 		this(matLib, modelLocation, new CustomData());
 	}
 
-	public OBJModel(MaterialLibrary matLib, ResourceLocation modelLocation, CustomData customData) {
+	public OBJModel(MaterialLibrary matLib, Identifier modelLocation, CustomData customData) {
 		this.matLib = matLib;
 		this.modelLocation = modelLocation;
 		this.customData = customData;
 	}
 
 	@Override
-	public Collection<ResourceLocation> getTextures(Function<ResourceLocation, IUnbakedModel> modelGetter, Set<String> missingTextureErrors) {
+	public Collection<Identifier> getTextureDependencies(Function<Identifier, UnbakedModel> modelGetter, Set<String> missingTextureErrors) {
 		Iterator<Material> materialIterator = this.matLib.materials.values().iterator();
-		List<ResourceLocation> textures = Lists.newArrayList();
+		List<Identifier> textures = Lists.newArrayList();
 		while (materialIterator.hasNext()) {
 			Material mat = materialIterator.next();
-			ResourceLocation textureLoc = new ResourceLocation(mat.getTexture().getPath());
+			Identifier textureLoc = new Identifier(mat.getTexture().getPath());
 			if (!textures.contains(textureLoc) && !mat.isWhite()) {
 				textures.add(textureLoc);
 			}
@@ -114,16 +114,16 @@ public class OBJModel implements IUnbakedModel {
 	}
 
 	@Override
-	public Collection<ResourceLocation> getDependencies() {
+	public Collection<Identifier> getModelDependencies() {
 		return Collections.emptyList();
 	}
 
 	@Nullable
 	@Override
-	public IBakedModel bake(ModelBakery bakery, Function<ResourceLocation, TextureAtlasSprite> spriteGetter, ISprite sprite, VertexFormat format) {
-		ImmutableMap.Builder<String, TextureAtlasSprite> builder = ImmutableMap.builder();
+	public BakedModel bake(ModelLoader bakery, Function<Identifier, Sprite> spriteGetter, ModelBakeSettings sprite, VertexFormat format) {
+		ImmutableMap.Builder<String, Sprite> builder = ImmutableMap.builder();
 		builder.put(ModelLoader.White.LOCATION.toString(), ModelLoader.White.INSTANCE);
-		TextureAtlasSprite missing = spriteGetter.apply(new ResourceLocation("missingno"));
+		Sprite missing = spriteGetter.apply(new Identifier("missingno"));
 		for (Map.Entry<String, Material> e : matLib.materials.entrySet()) {
 			if (e.getValue().getTexture().getTextureLocation().getPath().startsWith("#")) {
 				LOGGER.fatal("OBJLoader: Unresolved texture '{}' for obj model '{}'", e.getValue().getTexture().getTextureLocation().getPath(), modelLocation);
@@ -141,13 +141,13 @@ public class OBJModel implements IUnbakedModel {
 	}
 
 	@Override
-	public IUnbakedModel process(ImmutableMap<String, String> customData) {
+	public UnbakedModel process(ImmutableMap<String, String> customData) {
 		OBJModel ret = new OBJModel(this.matLib, this.modelLocation, new CustomData(this.customData, customData));
 		return ret;
 	}
 
 	@Override
-	public IUnbakedModel retexture(ImmutableMap<String, String> textures) {
+	public UnbakedModel retexture(ImmutableMap<String, String> textures) {
 		OBJModel ret = new OBJModel(this.matLib.makeLibWithReplacements(textures), this.modelLocation, this.customData);
 		return ret;
 	}
@@ -189,19 +189,19 @@ public class OBJModel implements IUnbakedModel {
 		private static final Pattern WHITE_SPACE = Pattern.compile("\\s+");
 		private static Set<String> unknownObjectCommands = new HashSet<String>();
 		public MaterialLibrary materialLibrary = new MaterialLibrary();
-		private IResourceManager manager;
+		private ResourceManager manager;
 		private InputStreamReader objStream;
 		private BufferedReader objReader;
-		private ResourceLocation objFrom;
+		private Identifier objFrom;
 
 		private List<String> groupList = Lists.newArrayList();
 		private List<Vertex> vertices = Lists.newArrayList();
 		private List<Normal> normals = Lists.newArrayList();
 		private List<TextureCoordinate> texCoords = Lists.newArrayList();
 
-		public Parser(IResource from, IResourceManager manager) throws IOException {
+		public Parser(Resource from, ResourceManager manager) throws IOException {
 			this.manager = manager;
-			this.objFrom = from.getLocation();
+			this.objFrom = from.getId();
 			this.objStream = new InputStreamReader(from.getInputStream(), StandardCharsets.UTF_8);
 			this.objReader = new BufferedReader(objStream);
 		}
@@ -448,7 +448,7 @@ public class OBJModel implements IUnbakedModel {
 			return ImmutableList.copyOf(this.materials.keySet());
 		}
 
-		public void parseMaterials(IResourceManager manager, String path, ResourceLocation from) throws IOException {
+		public void parseMaterials(ResourceManager manager, String path, Identifier from) throws IOException {
 			this.materials.clear();
 			boolean hasSetTexture = false;
 			boolean hasSetColor = false;
@@ -456,7 +456,7 @@ public class OBJModel implements IUnbakedModel {
 			if (!path.contains("/")) {
 				path = from.getPath().substring(0, from.getPath().lastIndexOf("/") + 1) + path;
 			}
-			mtlStream = new InputStreamReader(manager.getResource(new ResourceLocation(domain, path)).getInputStream(), StandardCharsets.UTF_8);
+			mtlStream = new InputStreamReader(manager.getResource(new Identifier(domain, path)).getInputStream(), StandardCharsets.UTF_8);
 			mtlReader = new BufferedReader(mtlStream);
 
 			String currentLine = "";
@@ -489,7 +489,7 @@ public class OBJModel implements IUnbakedModel {
 						hasSetColor = true;
 						material.setColor(color);
 					} else {
-						LOGGER.info("OBJModel: A color has already been defined for material '{}' in '{}'. The color defined by key '{}' will not be applied!", material.getName(), new ResourceLocation(domain, path).toString(), key);
+						LOGGER.info("OBJModel: A color has already been defined for material '{}' in '{}'. The color defined by key '{}' will not be applied!", material.getName(), new Identifier(domain, path).toString(), key);
 					}
 				} else if (key.equalsIgnoreCase("map_Ka") || key.equalsIgnoreCase("map_Kd") || key.equalsIgnoreCase("map_Ks")) {
 					if (key.equalsIgnoreCase("map_Kd") || !hasSetTexture) {
@@ -505,7 +505,7 @@ public class OBJModel implements IUnbakedModel {
 							material.setTexture(texture);
 						}
 					} else {
-						LOGGER.info("OBJModel: A texture has already been defined for material '{}' in '{}'. The texture defined by key '{}' will not be applied!", material.getName(), new ResourceLocation(domain, path).toString(), key);
+						LOGGER.info("OBJModel: A texture has already been defined for material '{}' in '{}'. The texture defined by key '{}' will not be applied!", material.getName(), new Identifier(domain, path).toString(), key);
 					}
 				} else if (key.equalsIgnoreCase("d") || key.equalsIgnoreCase("Tr")) {
 					//d <-optional key here> float[0.0:1.0, 1.0]
@@ -516,7 +516,7 @@ public class OBJModel implements IUnbakedModel {
 				} else {
 					if (!unknownMaterialCommands.contains(key)) {
 						unknownMaterialCommands.add(key);
-						LOGGER.info("OBJLoader.MaterialLibrary: key '{}' (model: '{}') is not currently supported, skipping", key, new ResourceLocation(domain, path));
+						LOGGER.info("OBJLoader.MaterialLibrary: key '{}' (model: '{}') is not currently supported, skipping", key, new Identifier(domain, path));
 					}
 				}
 			}
@@ -604,8 +604,8 @@ public class OBJModel implements IUnbakedModel {
 			this.rotation = rotation;
 		}
 
-		public ResourceLocation getTextureLocation() {
-			ResourceLocation loc = new ResourceLocation(this.path);
+		public Identifier getTextureLocation() {
+			Identifier loc = new Identifier(this.path);
 			return loc;
 		}
 
@@ -1090,9 +1090,9 @@ public class OBJModel implements IUnbakedModel {
 
 	@SuppressWarnings("serial")
 	public static class UVsOutOfBoundsException extends RuntimeException {
-		public ResourceLocation modelLocation;
+		public Identifier modelLocation;
 
-		public UVsOutOfBoundsException(ResourceLocation modelLocation) {
+		public UVsOutOfBoundsException(Identifier modelLocation) {
 			super(String.format("Model '%s' has UVs ('vt') out of bounds 0-1! The missing model will be used instead. Support for UV processing will be added to the OBJ loader in the future.", modelLocation));
 			this.modelLocation = modelLocation;
 		}
@@ -1103,16 +1103,16 @@ public class OBJModel implements IUnbakedModel {
 		private final VertexFormat format;
 		private IModelState state;
 		private ImmutableList<BakedQuad> quads;
-		private ImmutableMap<String, TextureAtlasSprite> textures;
+		private ImmutableMap<String, Sprite> textures;
 		private final LoadingCache<IModelState, OBJBakedModel> cache = CacheBuilder.newBuilder().maximumSize(20).build(new CacheLoader<IModelState, OBJBakedModel>() {
 			@Override
 			public OBJBakedModel load(IModelState state) throws Exception {
 				return new OBJBakedModel(model, state, format, textures);
 			}
 		});
-		private TextureAtlasSprite sprite = ModelLoader.White.INSTANCE;
+		private Sprite sprite = ModelLoader.White.INSTANCE;
 
-		public OBJBakedModel(OBJModel model, IModelState state, VertexFormat format, ImmutableMap<String, TextureAtlasSprite> textures) {
+		public OBJBakedModel(OBJModel model, IModelState state, VertexFormat format, ImmutableMap<String, Sprite> textures) {
 			this.model = model;
 			this.state = state;
 			if (this.state instanceof OBJState) this.updateStateVisibilityMap((OBJState) this.state);
@@ -1196,7 +1196,7 @@ public class OBJModel implements IUnbakedModel {
 				}
 				UnpackedBakedQuad.Builder builder = new UnpackedBakedQuad.Builder(format);
 				builder.setContractUVs(true);
-				builder.setQuadOrientation(Direction.getFacingFromVector(f.getNormal().x, f.getNormal().y, f.getNormal().z));
+				builder.setQuadOrientation(Direction.getFacing(f.getNormal().x, f.getNormal().y, f.getNormal().z));
 				builder.setTexture(sprite);
 				Normal faceNormal = f.getNormal();
 				putVertexData(builder, f.verts[0], faceNormal, TextureCoordinate.getDefaultUVs()[0], sprite);
@@ -1208,9 +1208,9 @@ public class OBJModel implements IUnbakedModel {
 			return ImmutableList.copyOf(quads);
 		}
 
-		private final void putVertexData(UnpackedBakedQuad.Builder builder, Vertex v, Normal faceNormal, TextureCoordinate defUV, TextureAtlasSprite sprite) {
+		private final void putVertexData(UnpackedBakedQuad.Builder builder, Vertex v, Normal faceNormal, TextureCoordinate defUV, Sprite sprite) {
 			for (int e = 0; e < format.getElementCount(); e++) {
-				switch (format.getElement(e).getUsage()) {
+				switch (format.getElement(e).getType()) {
 				case POSITION:
 					builder.put(e, v.getPos().x, v.getPos().y, v.getPos().z, v.getPos().w);
 					break;
@@ -1228,13 +1228,13 @@ public class OBJModel implements IUnbakedModel {
 				case UV:
 					if (!v.hasTextureCoordinate()) {
 						builder.put(e,
-								sprite.getInterpolatedU(defUV.u * 16),
-								sprite.getInterpolatedV((model.customData.flipV ? 1 - defUV.v : defUV.v) * 16),
+								sprite.getU(defUV.u * 16),
+								sprite.getV((model.customData.flipV ? 1 - defUV.v : defUV.v) * 16),
 								0, 1);
 					} else {
 						builder.put(e,
-								sprite.getInterpolatedU(v.getTextureCoordinate().u * 16),
-								sprite.getInterpolatedV((model.customData.flipV ? 1 - v.getTextureCoordinate().v : v.getTextureCoordinate().v) * 16),
+								sprite.getU(v.getTextureCoordinate().u * 16),
+								sprite.getV((model.customData.flipV ? 1 - v.getTextureCoordinate().v : v.getTextureCoordinate().v) * 16),
 								0, 1);
 					}
 					break;
@@ -1252,17 +1252,17 @@ public class OBJModel implements IUnbakedModel {
 		}
 
 		@Override
-		public boolean isAmbientOcclusion() {
+		public boolean useAmbientOcclusion() {
 			return model == null || model.customData.ambientOcclusion;
 		}
 
 		@Override
-		public boolean isGui3d() {
+		public boolean hasDepthInGui() {
 			return model == null || model.customData.gui3d;
 		}
 
 		@Override
-		public boolean isBuiltInRenderer() {
+		public boolean isBuiltin() {
 			return false;
 		}
 
@@ -1290,7 +1290,7 @@ public class OBJModel implements IUnbakedModel {
         }*/
 
 		@Override
-		public TextureAtlasSprite getParticleTexture() {
+		public Sprite getSprite() {
 			return this.sprite;
 		}
 
@@ -1333,7 +1333,7 @@ public class OBJModel implements IUnbakedModel {
 		}
 
 		@Override
-		public Pair<? extends IBakedModel, Matrix4f> handlePerspective(TransformType cameraTransformType) {
+		public Pair<? extends BakedModel, Matrix4f> handlePerspective(Type cameraTransformType) {
 			return PerspectiveMapWrapper.handlePerspective(this, state, cameraTransformType);
 		}
 
@@ -1343,8 +1343,8 @@ public class OBJModel implements IUnbakedModel {
 		}
 
 		@Override
-		public ItemOverrideList getOverrides() {
-			return ItemOverrideList.EMPTY;
+		public ModelItemPropertyOverrideList getItemPropertyOverrides() {
+			return ModelItemPropertyOverrideList.EMPTY;
 		}
 	}
 }

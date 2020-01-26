@@ -24,22 +24,22 @@ import java.util.stream.Stream;
 import com.google.gson.JsonObject;
 
 import net.minecraft.item.ItemStack;
-import net.minecraft.item.crafting.Ingredient;
-import net.minecraft.network.PacketBuffer;
+import net.minecraft.recipe.Ingredient;
+import net.minecraft.util.PacketByteBuf;
 
 public class VanillaIngredientSerializer implements IIngredientSerializer<Ingredient> {
 	public static final VanillaIngredientSerializer INSTANCE = new VanillaIngredientSerializer();
 
-	public Ingredient parse(PacketBuffer buffer) {
-		return Ingredient.fromItemListStream(Stream.generate(() -> new Ingredient.SingleItemList(buffer.readItemStack())).limit(buffer.readVarInt()));
+	public Ingredient parse(PacketByteBuf buffer) {
+		return Ingredient.ofEntries(Stream.generate(() -> new Ingredient.StackEntry(buffer.readItemStack())).limit(buffer.readVarInt()));
 	}
 
 	public Ingredient parse(JsonObject json) {
-		return Ingredient.fromItemListStream(Stream.of(Ingredient.deserializeItemList(json)));
+		return Ingredient.ofEntries(Stream.of(Ingredient.entryFromJson(json)));
 	}
 
-	public void write(PacketBuffer buffer, Ingredient ingredient) {
-		ItemStack[] items = ingredient.getMatchingStacks();
+	public void write(PacketByteBuf buffer, Ingredient ingredient) {
+		ItemStack[] items = ingredient.getStackArray();
 		buffer.writeVarInt(items.length);
 
 		for (ItemStack stack : items) {

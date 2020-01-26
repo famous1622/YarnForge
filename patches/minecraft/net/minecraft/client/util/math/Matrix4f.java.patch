@@ -1,0 +1,23 @@
+--- a/net/minecraft/client/util/math/Matrix4f.java
++++ b/net/minecraft/client/util/math/Matrix4f.java
+@@ -4,8 +4,8 @@
+ import java.util.Arrays;
+ import net.minecraftforge.api.distmarker.Dist;
+ import net.minecraftforge.api.distmarker.OnlyIn;
+-import net.minecraft.util.math.Quaternion;
+ 
++import net.minecraft.util.math.Quaternion;
+ 
+ @OnlyIn(Dist.CLIENT)
+ public final class Matrix4f {
+@@ -108,6 +108,10 @@
+ 
+    }
+ 
++   public float get(int col, int row) {
++      return this.components[col + 4 * row];
++   }
++
+    public void set(int col, int row, float val) {
+       this.components[col + 4 * row] = val;
+    }

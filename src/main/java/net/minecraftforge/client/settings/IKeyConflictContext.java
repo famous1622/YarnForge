@@ -19,7 +19,6 @@
 
 package net.minecraftforge.client.settings;
 
-import net.minecraft.client.settings.KeyBinding;
 
 /**
  * Defines the context that a {@link KeyBinding} is used.

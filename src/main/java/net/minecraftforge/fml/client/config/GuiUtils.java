@@ -29,15 +29,15 @@ import net.minecraftforge.client.event.RenderTooltipEvent;
 import net.minecraftforge.common.MinecraftForge;
 import org.lwjgl.opengl.GL11;
 
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.AbstractGui;
-import net.minecraft.client.gui.FontRenderer;
-import net.minecraft.client.renderer.BufferBuilder;
-import net.minecraft.client.renderer.RenderHelper;
-import net.minecraft.client.renderer.Tessellator;
-import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
+import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.gui.DrawableHelper;
+import net.minecraft.client.font.TextRenderer;
+import net.minecraft.client.render.BufferBuilder;
+import net.minecraft.client.render.GuiLighting;
+import net.minecraft.client.render.Tessellator;
+import net.minecraft.client.render.VertexFormats;
 import net.minecraft.item.ItemStack;
-import net.minecraft.util.ResourceLocation;
+import net.minecraft.util.Identifier;
 
 /**
  * This class provides several methods and constants used by the Config GUI classes.
@@ -97,7 +97,7 @@ public class GuiUtils {
 	 * @param borderSize    the size of the box's borders
 	 * @param zLevel        the zLevel to draw at
 	 */
-	public static void drawContinuousTexturedBox(ResourceLocation res, int x, int y, int u, int v, int width, int height, int textureWidth, int textureHeight,
+	public static void drawContinuousTexturedBox(Identifier res, int x, int y, int u, int v, int width, int height, int textureWidth, int textureHeight,
 												 int borderSize, float zLevel) {
 		drawContinuousTexturedBox(res, x, y, u, v, width, height, textureWidth, textureHeight, borderSize, borderSize, borderSize, borderSize, zLevel);
 	}
@@ -122,9 +122,9 @@ public class GuiUtils {
 	 * @param rightBorder   the size of the box's right border
 	 * @param zLevel        the zLevel to draw at
 	 */
-	public static void drawContinuousTexturedBox(ResourceLocation res, int x, int y, int u, int v, int width, int height, int textureWidth, int textureHeight,
+	public static void drawContinuousTexturedBox(Identifier res, int x, int y, int u, int v, int width, int height, int textureWidth, int textureHeight,
 												 int topBorder, int bottomBorder, int leftBorder, int rightBorder, float zLevel) {
-		Minecraft.getInstance().getTextureManager().bindTexture(res);
+		MinecraftClient.getInstance().getTextureManager().bindTexture(res);
 		drawContinuousTexturedBox(x, y, u, v, width, height, textureWidth, textureHeight, topBorder, bottomBorder, leftBorder, rightBorder, zLevel);
 	}
 
@@ -198,12 +198,12 @@ public class GuiUtils {
 		final float vScale = 1f / 0x100;
 
 		Tessellator tessellator = Tessellator.getInstance();
-		BufferBuilder wr = tessellator.getBuffer();
-		wr.begin(GL11.GL_QUADS, DefaultVertexFormats.POSITION_TEX);
-		wr.pos(x, y + height, zLevel).tex(u * uScale, ((v + height) * vScale)).endVertex();
-		wr.pos(x + width, y + height, zLevel).tex((u + width) * uScale, ((v + height) * vScale)).endVertex();
-		wr.pos(x + width, y, zLevel).tex((u + width) * uScale, (v * vScale)).endVertex();
-		wr.pos(x, y, zLevel).tex(u * uScale, (v * vScale)).endVertex();
+		BufferBuilder wr = tessellator.getBufferBuilder();
+		wr.begin(GL11.GL_QUADS, VertexFormats.POSITION_UV);
+		wr.vertex(x, y + height, zLevel).texture(u * uScale, ((v + height) * vScale)).next();
+		wr.vertex(x + width, y + height, zLevel).texture((u + width) * uScale, ((v + height) * vScale)).next();
+		wr.vertex(x + width, y, zLevel).texture((u + width) * uScale, (v * vScale)).next();
+		wr.vertex(x, y, zLevel).texture(u * uScale, (v * vScale)).next();
 		tessellator.draw();
 	}
 
@@ -238,7 +238,7 @@ public class GuiUtils {
 	 *                     Set to a negative number to have no max width.
 	 * @param font         the font for drawing the text in the tooltip box
 	 */
-	public static void drawHoveringText(List<String> textLines, int mouseX, int mouseY, int screenWidth, int screenHeight, int maxTextWidth, FontRenderer font) {
+	public static void drawHoveringText(List<String> textLines, int mouseX, int mouseY, int screenWidth, int screenHeight, int maxTextWidth, TextRenderer font) {
 		drawHoveringText(cachedTooltipStack, textLines, mouseX, mouseY, screenWidth, screenHeight, maxTextWidth, font);
 	}
 
@@ -247,7 +247,7 @@ public class GuiUtils {
 	 *
 	 * @see #drawHoveringText(List, int, int, int, int, int, FontRenderer)
 	 */
-	public static void drawHoveringText(@Nonnull final ItemStack stack, List<String> textLines, int mouseX, int mouseY, int screenWidth, int screenHeight, int maxTextWidth, FontRenderer font) {
+	public static void drawHoveringText(@Nonnull final ItemStack stack, List<String> textLines, int mouseX, int mouseY, int screenWidth, int screenHeight, int maxTextWidth, TextRenderer font) {
 		if (!textLines.isEmpty()) {
 			RenderTooltipEvent.Pre event = new RenderTooltipEvent.Pre(stack, textLines, mouseX, mouseY, screenWidth, screenHeight, maxTextWidth, font);
 			if (MinecraftForge.EVENT_BUS.post(event)) {
@@ -261,7 +261,7 @@ public class GuiUtils {
 			font = event.getFontRenderer();
 
 			GlStateManager.disableRescaleNormal();
-			RenderHelper.disableStandardItemLighting();
+			GuiLighting.disable();
 			GlStateManager.disableLighting();
 			GlStateManager.disableDepthTest();
 			int tooltipTextWidth = 0;
@@ -301,7 +301,7 @@ public class GuiUtils {
 				List<String> wrappedTextLines = new ArrayList<String>();
 				for (int i = 0; i < textLines.size(); i++) {
 					String textLine = textLines.get(i);
-					List<String> wrappedLine = font.listFormattedStringToWidth(textLine, tooltipTextWidth);
+					List<String> wrappedLine = font.wrapStringToWidthAsList(textLine, tooltipTextWidth);
 					if (i == 0) {
 						titleLinesCount = wrappedLine.size();
 					}
@@ -364,7 +364,7 @@ public class GuiUtils {
 
 			for (int lineNumber = 0; lineNumber < textLines.size(); ++lineNumber) {
 				String line = textLines.get(lineNumber);
-				font.drawStringWithShadow(line, (float) tooltipX, (float) tooltipY, -1);
+				font.drawWithShadow(line, (float) tooltipX, (float) tooltipY, -1);
 
 				if (lineNumber + 1 == titleLinesCount) {
 					tooltipY += 2;
@@ -377,7 +377,7 @@ public class GuiUtils {
 
 			GlStateManager.enableLighting();
 			GlStateManager.enableDepthTest();
-			RenderHelper.enableStandardItemLighting();
+			GuiLighting.enable();
 			GlStateManager.enableRescaleNormal();
 		}
 	}
@@ -399,12 +399,12 @@ public class GuiUtils {
 		GlStateManager.shadeModel(GL11.GL_SMOOTH);
 
 		Tessellator tessellator = Tessellator.getInstance();
-		BufferBuilder buffer = tessellator.getBuffer();
-		buffer.begin(GL11.GL_QUADS, DefaultVertexFormats.POSITION_COLOR);
-		buffer.pos(right, top, zLevel).color(startRed, startGreen, startBlue, startAlpha).endVertex();
-		buffer.pos(left, top, zLevel).color(startRed, startGreen, startBlue, startAlpha).endVertex();
-		buffer.pos(left, bottom, zLevel).color(endRed, endGreen, endBlue, endAlpha).endVertex();
-		buffer.pos(right, bottom, zLevel).color(endRed, endGreen, endBlue, endAlpha).endVertex();
+		BufferBuilder buffer = tessellator.getBufferBuilder();
+		buffer.begin(GL11.GL_QUADS, VertexFormats.POSITION_COLOR);
+		buffer.vertex(right, top, zLevel).color(startRed, startGreen, startBlue, startAlpha).next();
+		buffer.vertex(left, top, zLevel).color(startRed, startGreen, startBlue, startAlpha).next();
+		buffer.vertex(left, bottom, zLevel).color(endRed, endGreen, endBlue, endAlpha).next();
+		buffer.vertex(right, bottom, zLevel).color(endRed, endGreen, endBlue, endAlpha).next();
 		tessellator.draw();
 
 		GlStateManager.shadeModel(GL11.GL_FLAT);
@@ -428,6 +428,6 @@ public class GuiUtils {
 			if (centerX) x += (w - boundsWidth) / 2;
 		}
 
-		AbstractGui.blit(x, y, boundsWidth, boundsHeight, 0.0f, 0.0f, rectWidth, rectHeight, rectWidth, rectHeight);
+		DrawableHelper.blit(x, y, boundsWidth, boundsHeight, 0.0f, 0.0f, rectWidth, rectHeight, rectWidth, rectHeight);
 	}
 }

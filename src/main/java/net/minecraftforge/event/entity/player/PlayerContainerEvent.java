@@ -20,7 +20,7 @@
 package net.minecraftforge.event.entity.player;
 
 import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.inventory.container.Container;
+import net.minecraft.container.Container;
 
 public class PlayerContainerEvent extends PlayerEvent {
 	private final Container container;

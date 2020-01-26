@@ -24,18 +24,18 @@ import java.util.Objects;
 import javax.vecmath.Vector3f;
 
 import net.minecraft.block.BlockState;
-import net.minecraft.client.renderer.color.BlockColors;
-import net.minecraft.client.renderer.texture.TextureAtlasSprite;
-import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
-import net.minecraft.client.renderer.vertex.VertexFormat;
-import net.minecraft.client.renderer.vertex.VertexFormatElement;
-import net.minecraft.util.Direction;
+import net.minecraft.client.color.block.BlockColors;
+import net.minecraft.client.texture.Sprite;
+import net.minecraft.client.render.VertexFormats;
+import net.minecraft.client.render.VertexFormat;
+import net.minecraft.client.render.VertexFormatElement;
+import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.IEnviromentBlockReader;
+import net.minecraft.world.ExtendedBlockView;
 
 public class VertexLighterFlat extends QuadGatheringTransformer {
-	protected static final VertexFormatElement NORMAL_4F = new VertexFormatElement(0, VertexFormatElement.Type.FLOAT, VertexFormatElement.Usage.NORMAL, 4);
-	private static final VertexFormat BLOCK_WITH_NORMAL = withNormalUncached(DefaultVertexFormats.BLOCK);
+	protected static final VertexFormatElement NORMAL_4F = new VertexFormatElement(0, VertexFormatElement.Format.FLOAT, VertexFormatElement.Type.NORMAL, 4);
+	private static final VertexFormat BLOCK_WITH_NORMAL = withNormalUncached(VertexFormats.POSITION_COLOR_UV_LMAP);
 	protected final BlockInfo blockInfo;
 	protected int posIndex = -1;
 	protected int normalIndex = -1;
@@ -51,15 +51,15 @@ public class VertexLighterFlat extends QuadGatheringTransformer {
 
 	static VertexFormat withNormal(VertexFormat format) {
 		//This is the case in 99.99%. Cache the value, so we don't have to redo it every time, and the speed up the equals check in LightUtil
-		if (format == DefaultVertexFormats.BLOCK) {
+		if (format == VertexFormats.POSITION_COLOR_UV_LMAP) {
 			return BLOCK_WITH_NORMAL;
 		}
 		return withNormalUncached(format);
 	}
 
 	private static VertexFormat withNormalUncached(VertexFormat format) {
-		if (format == null || format.hasNormal()) return format;
-		return new VertexFormat(format).addElement(NORMAL_4F);
+		if (format == null || format.hasNormalElement()) return format;
+		return new VertexFormat(format).add(NORMAL_4F);
 	}
 
 	@Override
@@ -70,7 +70,7 @@ public class VertexLighterFlat extends QuadGatheringTransformer {
 
 	private void updateIndices() {
 		for (int i = 0; i < getVertexFormat().getElementCount(); i++) {
-			switch (getVertexFormat().getElement(i).getUsage()) {
+			switch (getVertexFormat().getElement(i).getType()) {
 			case POSITION:
 				posIndex = i;
 				break;
@@ -179,7 +179,7 @@ public class VertexLighterFlat extends QuadGatheringTransformer {
 			// no need for remapping cause all we could've done is add 1 element to the end
 			for (int e = 0; e < count; e++) {
 				VertexFormatElement element = format.getElement(e);
-				switch (element.getUsage()) {
+				switch (element.getType()) {
 				case POSITION:
 					// position adding moved to VertexBufferConsumer due to x and z not fitting completely into a float
                         /*float[] pos = new float[4];
@@ -256,7 +256,7 @@ public class VertexLighterFlat extends QuadGatheringTransformer {
 	}
 
 	@Override
-	public void setTexture(TextureAtlasSprite texture) {
+	public void setTexture(Sprite texture) {
 	}
 
 	@Override
@@ -264,7 +264,7 @@ public class VertexLighterFlat extends QuadGatheringTransformer {
 		this.diffuse = diffuse;
 	}
 
-	public void setWorld(IEnviromentBlockReader world) {
+	public void setWorld(ExtendedBlockView world) {
 		blockInfo.setWorld(world);
 	}
 

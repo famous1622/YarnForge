@@ -19,7 +19,6 @@
 
 package net.minecraftforge.versions.mcp;
 
-import static net.minecraftforge.fml.Logging.CORE;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;

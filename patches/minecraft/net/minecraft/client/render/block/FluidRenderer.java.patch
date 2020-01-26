@@ -1,0 +1,90 @@
+--- a/net/minecraft/client/render/block/FluidRenderer.java
++++ b/net/minecraft/client/render/block/FluidRenderer.java
+@@ -19,11 +19,10 @@
+ import net.minecraft.util.shape.VoxelShapes;
+ import net.minecraft.world.BlockView;
+ import net.minecraft.world.ExtendedBlockView;
+-import net.minecraft.client.color.world.BiomeColors;
+ import net.minecraftforge.api.distmarker.Dist;
+ import net.minecraftforge.api.distmarker.OnlyIn;
+-import net.minecraft.client.render.BufferBuilder;
+ 
++import net.minecraft.client.render.BufferBuilder;
+ 
+ @OnlyIn(Dist.CLIENT)
+ public class FluidRenderer {
+@@ -60,8 +59,9 @@
+ 
+    public boolean tesselate(ExtendedBlockView reader, BlockPos pos, BufferBuilder bufferBuilderIn, FluidState fluidStateIn) {
+       boolean flag = fluidStateIn.matches(FluidTags.LAVA);
+-      Sprite[] atextureatlassprite = flag ? this.lavaSprites : this.waterSprites;
+-      int i = flag ? 16777215 : BiomeColors.getWaterColor(reader, pos);
++      Sprite[] atextureatlassprite = net.minecraftforge.client.ForgeHooksClient.getFluidSprites(reader, pos, fluidStateIn);
++      int i = fluidStateIn.getFluid().getAttributes().getColor(reader, pos);
++      float alpha = (float)(i >> 24 & 255) / 255.0F;
+       float f = (float)(i >> 16 & 255) / 255.0F;
+       float f1 = (float)(i >> 8 & 255) / 255.0F;
+       float f2 = (float)(i & 255) / 255.0F;
+@@ -147,15 +147,15 @@
+             float f24 = 1.0F * f;
+             float f25 = 1.0F * f1;
+             float f26 = 1.0F * f2;
+-            bufferBuilderIn.vertex(d0 + 0.0D, d1 + (double)f7, d2 + 0.0D).color(f24, f25, f26, 1.0F).texture((double)f12, (double)f16).texture(k, l).next();
+-            bufferBuilderIn.vertex(d0 + 0.0D, d1 + (double)f8, d2 + 1.0D).color(f24, f25, f26, 1.0F).texture((double)f13, (double)f17).texture(k, l).next();
+-            bufferBuilderIn.vertex(d0 + 1.0D, d1 + (double)f9, d2 + 1.0D).color(f24, f25, f26, 1.0F).texture((double)f14, (double)f18).texture(k, l).next();
+-            bufferBuilderIn.vertex(d0 + 1.0D, d1 + (double)f10, d2 + 0.0D).color(f24, f25, f26, 1.0F).texture((double)f15, (double)f19).texture(k, l).next();
++            bufferBuilderIn.vertex(d0 + 0.0D, d1 + (double)f7, d2 + 0.0D).color(f24, f25, f26, alpha).texture((double)f12, (double)f16).texture(k, l).next();
++            bufferBuilderIn.vertex(d0 + 0.0D, d1 + (double)f8, d2 + 1.0D).color(f24, f25, f26, alpha).texture((double)f13, (double)f17).texture(k, l).next();
++            bufferBuilderIn.vertex(d0 + 1.0D, d1 + (double)f9, d2 + 1.0D).color(f24, f25, f26, alpha).texture((double)f14, (double)f18).texture(k, l).next();
++            bufferBuilderIn.vertex(d0 + 1.0D, d1 + (double)f10, d2 + 0.0D).color(f24, f25, f26, alpha).texture((double)f15, (double)f19).texture(k, l).next();
+             if (fluidStateIn.method_15756(reader, pos.up())) {
+-               bufferBuilderIn.vertex(d0 + 0.0D, d1 + (double)f7, d2 + 0.0D).color(f24, f25, f26, 1.0F).texture((double)f12, (double)f16).texture(k, l).next();
+-               bufferBuilderIn.vertex(d0 + 1.0D, d1 + (double)f10, d2 + 0.0D).color(f24, f25, f26, 1.0F).texture((double)f15, (double)f19).texture(k, l).next();
+-               bufferBuilderIn.vertex(d0 + 1.0D, d1 + (double)f9, d2 + 1.0D).color(f24, f25, f26, 1.0F).texture((double)f14, (double)f18).texture(k, l).next();
+-               bufferBuilderIn.vertex(d0 + 0.0D, d1 + (double)f8, d2 + 1.0D).color(f24, f25, f26, 1.0F).texture((double)f13, (double)f17).texture(k, l).next();
++               bufferBuilderIn.vertex(d0 + 0.0D, d1 + (double)f7, d2 + 0.0D).color(f24, f25, f26, alpha).texture((double)f12, (double)f16).texture(k, l).next();
++               bufferBuilderIn.vertex(d0 + 1.0D, d1 + (double)f10, d2 + 0.0D).color(f24, f25, f26, alpha).texture((double)f15, (double)f19).texture(k, l).next();
++               bufferBuilderIn.vertex(d0 + 1.0D, d1 + (double)f9, d2 + 1.0D).color(f24, f25, f26, alpha).texture((double)f14, (double)f18).texture(k, l).next();
++               bufferBuilderIn.vertex(d0 + 0.0D, d1 + (double)f8, d2 + 1.0D).color(f24, f25, f26, alpha).texture((double)f13, (double)f17).texture(k, l).next();
+             }
+          }
+ 
+@@ -170,10 +170,10 @@
+             float f37 = 0.5F * f;
+             float f38 = 0.5F * f1;
+             float f40 = 0.5F * f2;
+-            bufferBuilderIn.vertex(d0, d1, d2 + 1.0D).color(f37, f38, f40, 1.0F).texture((double)f31, (double)f36).texture(j2, k2).next();
+-            bufferBuilderIn.vertex(d0, d1, d2).color(f37, f38, f40, 1.0F).texture((double)f31, (double)f34).texture(j2, k2).next();
+-            bufferBuilderIn.vertex(d0 + 1.0D, d1, d2).color(f37, f38, f40, 1.0F).texture((double)f32, (double)f34).texture(j2, k2).next();
+-            bufferBuilderIn.vertex(d0 + 1.0D, d1, d2 + 1.0D).color(f37, f38, f40, 1.0F).texture((double)f32, (double)f36).texture(j2, k2).next();
++            bufferBuilderIn.vertex(d0, d1, d2 + 1.0D).color(f37, f38, f40, alpha).texture((double)f31, (double)f36).texture(j2, k2).next();
++            bufferBuilderIn.vertex(d0, d1, d2).color(f37, f38, f40, alpha).texture((double)f31, (double)f34).texture(j2, k2).next();
++            bufferBuilderIn.vertex(d0 + 1.0D, d1, d2).color(f37, f38, f40, alpha).texture((double)f32, (double)f34).texture(j2, k2).next();
++            bufferBuilderIn.vertex(d0 + 1.0D, d1, d2 + 1.0D).color(f37, f38, f40, alpha).texture((double)f32, (double)f36).texture(j2, k2).next();
+             flag7 = true;
+          }
+ 
+@@ -247,15 +247,15 @@
+                float f28 = 1.0F * f27 * f;
+                float f29 = 1.0F * f27 * f1;
+                float f30 = 1.0F * f27 * f2;
+-               bufferBuilderIn.vertex(d3, d1 + (double)f33, d4).color(f28, f29, f30, 1.0F).texture((double)f45, (double)f47).texture(j1, k1).next();
+-               bufferBuilderIn.vertex(d5, d1 + (double)f35, d6).color(f28, f29, f30, 1.0F).texture((double)f46, (double)f48).texture(j1, k1).next();
+-               bufferBuilderIn.vertex(d5, d1 + 0.0D, d6).color(f28, f29, f30, 1.0F).texture((double)f46, (double)f49).texture(j1, k1).next();
+-               bufferBuilderIn.vertex(d3, d1 + 0.0D, d4).color(f28, f29, f30, 1.0F).texture((double)f45, (double)f49).texture(j1, k1).next();
++               bufferBuilderIn.vertex(d3, d1 + (double)f33, d4).color(f28, f29, f30, alpha).texture((double)f45, (double)f47).texture(j1, k1).next();
++               bufferBuilderIn.vertex(d5, d1 + (double)f35, d6).color(f28, f29, f30, alpha).texture((double)f46, (double)f48).texture(j1, k1).next();
++               bufferBuilderIn.vertex(d5, d1 + 0.0D, d6).color(f28, f29, f30, alpha).texture((double)f46, (double)f49).texture(j1, k1).next();
++               bufferBuilderIn.vertex(d3, d1 + 0.0D, d4).color(f28, f29, f30, alpha).texture((double)f45, (double)f49).texture(j1, k1).next();
+                if (textureatlassprite2 != this.waterOverlaySprite) {
+-                  bufferBuilderIn.vertex(d3, d1 + 0.0D, d4).color(f28, f29, f30, 1.0F).texture((double)f45, (double)f49).texture(j1, k1).next();
+-                  bufferBuilderIn.vertex(d5, d1 + 0.0D, d6).color(f28, f29, f30, 1.0F).texture((double)f46, (double)f49).texture(j1, k1).next();
+-                  bufferBuilderIn.vertex(d5, d1 + (double)f35, d6).color(f28, f29, f30, 1.0F).texture((double)f46, (double)f48).texture(j1, k1).next();
+-                  bufferBuilderIn.vertex(d3, d1 + (double)f33, d4).color(f28, f29, f30, 1.0F).texture((double)f45, (double)f47).texture(j1, k1).next();
++                  bufferBuilderIn.vertex(d3, d1 + 0.0D, d4).color(f28, f29, f30, alpha).texture((double)f45, (double)f49).texture(j1, k1).next();
++                  bufferBuilderIn.vertex(d5, d1 + 0.0D, d6).color(f28, f29, f30, alpha).texture((double)f46, (double)f49).texture(j1, k1).next();
++                  bufferBuilderIn.vertex(d5, d1 + (double)f35, d6).color(f28, f29, f30, alpha).texture((double)f46, (double)f48).texture(j1, k1).next();
++                  bufferBuilderIn.vertex(d3, d1 + (double)f33, d4).color(f28, f29, f30, alpha).texture((double)f45, (double)f47).texture(j1, k1).next();
+                }
+             }
+          }

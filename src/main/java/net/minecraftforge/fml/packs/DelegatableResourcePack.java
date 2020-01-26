@@ -4,16 +4,16 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 
-import net.minecraft.resources.ResourcePack;
+import net.minecraft.resource.AbstractFileResourcePack;
 
-public abstract class DelegatableResourcePack extends ResourcePack {
+public abstract class DelegatableResourcePack extends AbstractFileResourcePack {
 	protected DelegatableResourcePack(File resourcePackFileIn) {
 		super(resourcePackFileIn);
 	}
 
 	@Override
-	public abstract InputStream getInputStream(String resourcePath) throws IOException;
+	public abstract InputStream openFile(String resourcePath) throws IOException;
 
 	@Override
-	public abstract boolean resourceExists(String resourcePath);
+	public abstract boolean containsFile(String resourcePath);
 }

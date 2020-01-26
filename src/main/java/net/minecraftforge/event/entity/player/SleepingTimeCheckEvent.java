@@ -25,7 +25,6 @@ import net.minecraftforge.eventbus.api.Event.HasResult;
 
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.World;
 
 /**
  * This event is fired when the game checks if players can sleep at this time.<br>

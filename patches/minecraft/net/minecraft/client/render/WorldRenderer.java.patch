@@ -1,0 +1,143 @@
+--- a/net/minecraft/client/render/WorldRenderer.java
++++ b/net/minecraft/client/render/WorldRenderer.java
+@@ -93,6 +93,7 @@
+ import net.minecraftforge.api.distmarker.OnlyIn;
+ import org.apache.logging.log4j.LogManager;
+ import org.apache.logging.log4j.Logger;
++
+ import net.minecraft.client.render.block.BlockRenderManager;
+ import net.minecraft.client.render.chunk.ChunkRendererList;
+ import net.minecraft.client.render.chunk.DisplayListChunkRendererList;
+@@ -100,7 +101,6 @@
+ import net.minecraft.client.util.GlAllocationUtils;
+ import net.minecraft.client.util.math.Vector4f;
+ 
+-
+ @OnlyIn(Dist.CLIENT)
+ public class WorldRenderer implements AutoCloseable, SynchronousResourceReloadListener {
+    private static final Logger LOGGER = LogManager.getLogger();
+@@ -593,10 +593,12 @@
+          this.world.getProfiler().swap("blockentities");
+          GuiLighting.enable();
+ 
++         BlockEntityRenderDispatcher.INSTANCE.preDrawBatch();
+          for(WorldRenderer.ChunkInfo worldrenderer$localrenderinformationcontainer : this.chunkInfos) {
+             List<BlockEntity> list2 = worldrenderer$localrenderinformationcontainer.renderer.getData().getBlockEntities();
+             if (!list2.isEmpty()) {
+                for(BlockEntity tileentity : list2) {
++                  if (!p_215326_2_.intersects(tileentity.getRenderBoundingBox())) continue;
+                   BlockEntityRenderDispatcher.INSTANCE.render(tileentity, p_215326_3_, -1);
+                }
+             }
+@@ -604,16 +606,18 @@
+ 
+          synchronized(this.blockEntities) {
+             for(BlockEntity tileentity1 : this.blockEntities) {
++               if (!p_215326_2_.intersects(tileentity1.getRenderBoundingBox())) continue;
+                BlockEntityRenderDispatcher.INSTANCE.render(tileentity1, p_215326_3_, -1);
+             }
+          }
++         BlockEntityRenderDispatcher.INSTANCE.drawBatch();
+ 
+          this.enableBlockOverlayRendering();
+ 
+          for(PartiallyBrokenBlockEntry destroyblockprogress : this.partiallyBrokenBlocks.values()) {
+             BlockPos blockpos = destroyblockprogress.getPos();
+             BlockState blockstate = this.world.getBlockState(blockpos);
+-            if (blockstate.getBlock().hasBlockEntity()) {
++            if (blockstate.hasTileEntity()) {
+                BlockEntity tileentity2 = this.world.getBlockEntity(blockpos);
+                if (tileentity2 instanceof ChestBlockEntity && blockstate.get(ChestBlock.CHEST_TYPE) == ChestType.LEFT) {
+                   blockpos = blockpos.offset(blockstate.get(ChestBlock.FACING).rotateYClockwise());
+@@ -734,7 +738,7 @@
+             for(int j = -this.renderDistance; j <= this.renderDistance; ++j) {
+                for(int k = -this.renderDistance; k <= this.renderDistance; ++k) {
+                   ChunkRenderer chunkrender1 = this.chunkRenderDispatcher.getChunkRenderer(new BlockPos((j << 4) + 8, i, (k << 4) + 8));
+-                  if (chunkrender1 != null && p_215320_2_.intersects(chunkrender1.boundingBox)) {
++                  if (chunkrender1 != null && p_215320_2_.intersects(chunkrender1.boundingBox.stretch(0.0, blockpos1.getY() > 0 ? Double.POSITIVE_INFINITY : Double.NEGATIVE_INFINITY, 0.0))) { // Forge: fix MC-73139
+                      chunkrender1.method_3671(p_215320_3_);
+                      queue.add(new WorldRenderer.ChunkInfo(chunkrender1, (Direction)null, 0));
+                   }
+@@ -779,7 +783,7 @@
+             this.terrainUpdateNecessary = true;
+             BlockPos blockpos2 = chunkrender4.getOrigin().add(8, 8, 8);
+             boolean flag3 = blockpos2.getSquaredDistance(blockpos1) < 768.0D;
+-            if (!chunkrender4.shouldRebuildOnClientThread() && !flag3) {
++            if (net.minecraftforge.common.ForgeConfig.CLIENT.alwaysSetupTerrainOffThread.get() || !chunkrender4.shouldRebuildOnClientThread() && !flag3) {
+                this.chunkRenderers.add(chunkrender4);
+             } else {
+                this.client.getProfiler().push("build near");
+@@ -973,6 +977,11 @@
+    }
+ 
+    public void renderSky(float partialTicks) {
++      net.minecraftforge.client.IRenderHandler renderer = this.world.getDimension().getSkyRenderer();
++      if (renderer != null) {
++         renderer.render(this.ticks, partialTicks, this.world, this.client);
++         return;
++      }
+       if (this.client.world.dimension.getType() == DimensionType.THE_END) {
+          this.renderEndSky();
+       } else if (this.client.world.dimension.hasVisibleSky()) {
+@@ -1117,6 +1126,7 @@
+    }
+ 
+    public void renderClouds(float partialTicks, double viewEntityX, double viewEntityY, double viewEntityZ) {
++//      if (net.minecraftforge.client.CloudRenderer.renderClouds(this.ticks, partialTicks, this.world, mc)) return;
+       if (this.client.world.dimension.hasVisibleSky()) {
+          float f = 12.0F;
+          float f1 = 4.0F;
+@@ -1492,7 +1502,11 @@
+             PartiallyBrokenBlockEntry destroyblockprogress = iterator.next();
+             BlockPos blockpos = destroyblockprogress.getPos();
+             Block block = this.world.getBlockState(blockpos).getBlock();
+-            if (!(block instanceof ChestBlock) && !(block instanceof EnderChestBlock) && !(block instanceof AbstractSignBlock) && !(block instanceof AbstractSkullBlock)) {
++            BlockEntity te = this.world.getBlockEntity(blockpos);
++            boolean hasBreak = block instanceof ChestBlock || block instanceof EnderChestBlock || block instanceof AbstractSignBlock || block instanceof AbstractSkullBlock;
++            if (!hasBreak) hasBreak = te != null && te.canRenderBreaking();
++
++            if (!hasBreak) {
+                double d3 = (double)blockpos.getX() - d0;
+                double d4 = (double)blockpos.getY() - d1;
+                double d5 = (double)blockpos.getZ() - d2;
+@@ -1500,7 +1514,7 @@
+                   iterator.remove();
+                } else {
+                   BlockState blockstate = this.world.getBlockState(blockpos);
+-                  if (!blockstate.isAir()) {
++                  if (!blockstate.isAir(this.world, blockpos)) {
+                      int i = destroyblockprogress.getStage();
+                      Sprite textureatlassprite = this.destroyStages[i];
+                      BlockRenderManager blockrendererdispatcher = this.client.getBlockRenderManager();
+@@ -1521,7 +1535,7 @@
+       if (p_215325_3_ == 0 && p_215325_2_.getType() == HitResult.Type.BLOCK) {
+          BlockPos blockpos = ((BlockHitResult)p_215325_2_).getBlockPos();
+          BlockState blockstate = this.world.getBlockState(blockpos);
+-         if (!blockstate.isAir() && this.world.getWorldBorder().contains(blockpos)) {
++         if (!blockstate.isAir(this.world, blockpos) && this.world.getWorldBorder().contains(blockpos)) {
+             GlStateManager.enableBlend();
+             GlStateManager.blendFuncSeparate(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA, GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ZERO);
+             GlStateManager.lineWidth(Math.max(2.5F, (float)this.client.window.getFramebufferWidth() / 1920.0F * 2.5F));
+@@ -1995,8 +2009,8 @@
+          break;
+       case 2001:
+          BlockState blockstate = Block.getStateFromRawId(data);
+-         if (!blockstate.isAir()) {
+-            BlockSoundGroup soundtype = blockstate.getSoundGroup();
++         if (!blockstate.isAir(this.world, blockPosIn)) {
++            BlockSoundGroup soundtype = blockstate.getSoundType(world, blockPosIn, null);
+             this.world.playSound(blockPosIn, soundtype.getBreakSound(), SoundCategory.BLOCKS, (soundtype.getVolume() + 1.0F) / 2.0F, soundtype.getPitch() * 0.8F, false);
+          }
+ 
+@@ -2119,6 +2133,11 @@
+       }
+    }
+ 
++   @Override
++   public net.minecraftforge.resource.IResourceType getResourceType() {
++      return net.minecraftforge.resource.VanillaResourceType.MODELS;
++   }
++
+    @OnlyIn(Dist.CLIENT)
+    class ChunkInfo {
+       private final ChunkRenderer renderer;

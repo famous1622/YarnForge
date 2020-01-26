@@ -21,7 +21,7 @@ package net.minecraftforge.event.entity.living;
 
 import net.minecraftforge.eventbus.api.Event.HasResult;
 
-import net.minecraft.entity.MobEntity;
+import net.minecraft.entity.mob.MobEntity;
 
 @HasResult
 public class LivingPackSizeEvent extends LivingEvent {

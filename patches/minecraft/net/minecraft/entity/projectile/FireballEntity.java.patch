@@ -1,11 +1,19 @@
 --- a/net/minecraft/entity/projectile/FireballEntity.java
 +++ b/net/minecraft/entity/projectile/FireballEntity.java
-@@ -37,7 +37,7 @@
-             this.func_174815_a(this.field_70235_a, entity);
+@@ -8,7 +8,6 @@
+ import net.minecraft.util.hit.EntityHitResult;
+ import net.minecraft.util.hit.HitResult;
+ import net.minecraft.world.explosion.Explosion;
+-import net.minecraft.world.GameRules;
+ import net.minecraft.world.World;
+ import net.minecraftforge.api.distmarker.Dist;
+ import net.minecraftforge.api.distmarker.OnlyIn;
+@@ -37,7 +36,7 @@
+             this.dealDamage(this.owner, entity);
           }
  
--         boolean flag = this.field_70170_p.func_82736_K().func_223586_b(GameRules.field_223599_b);
-+         boolean flag = net.minecraftforge.event.ForgeEventFactory.getMobGriefingEvent(this.field_70170_p, this.field_70235_a);
-          this.field_70170_p.func_217398_a((Entity)null, this.field_70165_t, this.field_70163_u, this.field_70161_v, (float)this.field_92057_e, flag, flag ? Explosion.Mode.DESTROY : Explosion.Mode.NONE);
-          this.func_70106_y();
+-         boolean flag = this.world.getGameRules().getBoolean(GameRules.MOB_GRIEFING);
++         boolean flag = net.minecraftforge.event.ForgeEventFactory.getMobGriefingEvent(this.world, this.owner);
+          this.world.createExplosion((Entity)null, this.x, this.y, this.z, (float)this.explosionPower, flag, flag ? Explosion.DestructionType.DESTROY : Explosion.DestructionType.NONE);
+          this.remove();
        }

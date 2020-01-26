@@ -21,9 +21,9 @@ package net.minecraftforge.event.world;
 
 import net.minecraftforge.eventbus.api.Event;
 
-import net.minecraft.entity.player.ServerPlayerEntity;
+import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.util.math.ChunkPos;
-import net.minecraft.world.server.ServerWorld;
+import net.minecraft.server.world.ServerWorld;
 
 /**
  * ChunkWatchEvent is fired when an event involving a chunk being watched occurs.<br>

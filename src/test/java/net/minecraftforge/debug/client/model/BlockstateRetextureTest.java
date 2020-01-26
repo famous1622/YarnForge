@@ -30,27 +30,27 @@ import net.minecraftforge.client.model.ModelLoaderRegistry;
 import net.minecraftforge.common.model.TRSRTransformation;
 import net.minecraftforge.fml.common.Mod;
 
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.model.IBakedModel;
-import net.minecraft.client.renderer.model.ModelResourceLocation;
-import net.minecraft.client.renderer.texture.TextureAtlasSprite;
-import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
-import net.minecraft.util.ResourceLocation;
+import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.render.model.BakedModel;
+import net.minecraft.client.util.ModelIdentifier;
+import net.minecraft.client.texture.Sprite;
+import net.minecraft.client.render.VertexFormats;
+import net.minecraft.util.Identifier;
 
 @Mod(BlockstateRetextureTest.MODID)
 public class BlockstateRetextureTest {
 	public static final String MODID = "forge_blockstate_retexture_test";
 	static final boolean ENABLED = true;
 
-	private static ResourceLocation fenceName = new ResourceLocation("minecraft", "oak_fence");
-	private static ModelResourceLocation fenceLocation = new ModelResourceLocation(fenceName, "east=true,north=false,south=false,waterlogged=false,west=true");
-	private static ResourceLocation stoneName = new ResourceLocation("minecraft", "stone");
-	private static ModelResourceLocation stoneLocation = new ModelResourceLocation(stoneName, "");
+	private static Identifier fenceName = new Identifier("minecraft", "oak_fence");
+	private static ModelIdentifier fenceLocation = new ModelIdentifier(fenceName, "east=true,north=false,south=false,waterlogged=false,west=true");
+	private static Identifier stoneName = new Identifier("minecraft", "stone");
+	private static ModelIdentifier stoneLocation = new ModelIdentifier(stoneName, "");
 
-	private static Function<ResourceLocation, TextureAtlasSprite> textureGetter = location ->
+	private static Function<Identifier, Sprite> textureGetter = location ->
 	{
 		assert location != null;
-		return Minecraft.getInstance().getTextureMap().getAtlasSprite(location.toString());
+		return MinecraftClient.getInstance().getSpriteAtlas().getSprite(location.toString());
 	};
 
 	@Mod.EventBusSubscriber(modid = MODID, value = Dist.CLIENT)
@@ -66,11 +66,11 @@ public class BlockstateRetextureTest {
 			IModel<?> retexturedFence = fence.retexture(ImmutableMap.of("texture", "blocks/log_oak"));
 			IModel<?> retexturedStone = stone.retexture(ImmutableMap.of("all", "blocks/diamond_block"));
 
-			IBakedModel fenceResult = retexturedFence.bake(event.getModelLoader(), textureGetter, new BasicState(fence.getDefaultState(), true), DefaultVertexFormats.ITEM);
-			IBakedModel stoneResult = retexturedStone.bake(event.getModelLoader(), textureGetter, new BasicState(stone.getDefaultState(), true), DefaultVertexFormats.ITEM);
+			BakedModel fenceResult = retexturedFence.bake(event.getModelLoader(), textureGetter, new BasicState(fence.getDefaultState(), true), VertexFormats.POSITION_COLOR_UV_NORMAL);
+			BakedModel stoneResult = retexturedStone.bake(event.getModelLoader(), textureGetter, new BasicState(stone.getDefaultState(), true), VertexFormats.POSITION_COLOR_UV_NORMAL);
 
 			event.getModelRegistry().put(fenceLocation, fenceResult);
-			event.getModelRegistry().put(stoneLocation, ModelLoaderRegistry.getMissingModel().bake(event.getModelLoader(), textureGetter, new BasicState(TRSRTransformation.identity(), false), DefaultVertexFormats.ITEM));
+			event.getModelRegistry().put(stoneLocation, ModelLoaderRegistry.getMissingModel().bake(event.getModelLoader(), textureGetter, new BasicState(TRSRTransformation.identity(), false), VertexFormats.POSITION_COLOR_UV_NORMAL));
 		}
 	}
 }

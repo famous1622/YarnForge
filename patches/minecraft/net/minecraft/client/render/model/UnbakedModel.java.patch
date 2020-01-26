@@ -1,0 +1,25 @@
+--- a/net/minecraft/client/render/model/UnbakedModel.java
++++ b/net/minecraft/client/render/model/UnbakedModel.java
+@@ -9,12 +9,20 @@
+ import net.minecraftforge.api.distmarker.Dist;
+ import net.minecraftforge.api.distmarker.OnlyIn;
+ 
++import net.minecraft;
++
+ @OnlyIn(Dist.CLIENT)
+-public interface UnbakedModel {
++public interface UnbakedModel extends net.minecraftforge.client.model.IModel<UnbakedModel> {
+    Collection<Identifier> getModelDependencies();
+ 
+    Collection<Identifier> getTextureDependencies(Function<Identifier, UnbakedModel> modelGetter, Set<String> missingTextureErrors);
+ 
++   /**
++    * @deprecated Use {@link #bake(Function, Function, net.minecraftforge.common.model.IModelState, boolean, net.minecraft.client.renderer.vertex.VertexFormat)}.
++    */
+    @Nullable
+-   BakedModel bake(ModelLoader p_217641_1_, Function<Identifier, Sprite> p_217641_2_, ModelBakeSettings p_217641_3_);
++   @Deprecated
++   default BakedModel bake(ModelLoader p_217641_1_, Function<Identifier, Sprite> p_217641_2_, ModelBakeSettings p_217641_3_) {
++       return bake(p_217641_1_, p_217641_2_, p_217641_3_, net.minecraft.client.render.VertexFormats.POSITION_COLOR_UV_NORMAL);
++   }
+ }

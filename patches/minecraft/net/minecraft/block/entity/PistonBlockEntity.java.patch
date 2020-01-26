@@ -1,0 +1,21 @@
+--- a/net/minecraft/block/entity/PistonBlockEntity.java
++++ b/net/minecraft/block/entity/PistonBlockEntity.java
+@@ -23,8 +23,8 @@
+ import net.minecraft.world.BlockView;
+ import net.minecraftforge.api.distmarker.Dist;
+ import net.minecraftforge.api.distmarker.OnlyIn;
+-import net.minecraft.util.Tickable;
+ 
++import net.minecraft.util.Tickable;
+ 
+ public class PistonBlockEntity extends BlockEntity implements Tickable {
+    private BlockState pushedBlock;
+@@ -108,7 +108,7 @@
+          Box axisalignedbb = this.method_11500(this.method_11509(list));
+          List<Entity> list1 = this.world.getEntities((Entity)null, this.method_11502(axisalignedbb, direction, d0).union(axisalignedbb));
+          if (!list1.isEmpty()) {
+-            boolean flag = this.pushedBlock.getBlock() == Blocks.SLIME_BLOCK;
++            boolean flag = this.pushedBlock.getBlock().isStickyBlock(this.pushedBlock);
+ 
+             for(int i = 0; i < list1.size(); ++i) {
+                Entity entity = list1.get(i);

@@ -1,0 +1,19 @@
+--- a/net/minecraft/client/render/block/DynamicBlockRenderer.java
++++ b/net/minecraft/client/render/block/DynamicBlockRenderer.java
+@@ -2,7 +2,6 @@
+ 
+ import com.mojang.blaze3d.platform.GlStateManager;
+ import net.minecraft.block.Block;
+-import net.minecraft.client.render.item.ItemDynamicRenderer;
+ import net.minecraft.item.ItemStack;
+ import net.minecraftforge.api.distmarker.Dist;
+ import net.minecraftforge.api.distmarker.OnlyIn;
+@@ -12,6 +11,7 @@
+    public void render(Block blockIn, float color) {
+       GlStateManager.color4f(color, color, color, 1.0F);
+       GlStateManager.rotatef(90.0F, 0.0F, 1.0F, 0.0F);
+-      ItemDynamicRenderer.INSTANCE.render(new ItemStack(blockIn));
++      ItemStack stack = new ItemStack(blockIn);
++      stack.getItem().getTileEntityItemStackRenderer().render(stack);
+    }
+ }

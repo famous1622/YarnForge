@@ -1,0 +1,16 @@
+--- a/net/minecraft/world/gen/feature/JungleGroundBushFeature.java
++++ b/net/minecraft/world/gen/feature/JungleGroundBushFeature.java
+@@ -18,11 +18,12 @@
+       super(p_i49868_1_, false);
+       this.log = trunk;
+       this.leaves = leaf;
++      setSapling((net.minecraftforge.common.IPlantable)net.minecraft.block.Blocks.JUNGLE_SAPLING);
+    }
+ 
+    public boolean generate(Set<BlockPos> changedBlocks, ModifiableTestableWorld worldIn, Random rand, BlockPos position, MutableIntBoundingBox p_208519_5_) {
+       position = worldIn.getTopPosition(Heightmap.Type.MOTION_BLOCKING_NO_LEAVES, position).down();
+-      if (isNaturalDirtOrGrass(worldIn, position)) {
++      if (isSoil(worldIn, position, getSapling())) {
+          position = position.up();
+          this.setBlockState(changedBlocks, worldIn, position, this.log, p_208519_5_);
+ 

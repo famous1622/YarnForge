@@ -1,0 +1,58 @@
+--- a/net/minecraft/client/render/entity/LivingEntityRenderer.java
++++ b/net/minecraft/client/render/entity/LivingEntityRenderer.java
+@@ -23,8 +23,8 @@
+ import net.minecraftforge.api.distmarker.OnlyIn;
+ import org.apache.logging.log4j.LogManager;
+ import org.apache.logging.log4j.Logger;
+-import net.minecraft.client.render.entity.feature.FeatureRendererContext;
+ 
++import net.minecraft.client.render.entity.feature.FeatureRendererContext;
+ 
+ @OnlyIn(Dist.CLIENT)
+ public abstract class LivingEntityRenderer<T extends LivingEntity, M extends EntityModel<T>> extends EntityRenderer<T> implements FeatureRendererContext<T, M> {
+@@ -60,17 +60,19 @@
+    }
+ 
+    public void render(T entity, double x, double y, double z, float entityYaw, float partialTicks) {
++      if (net.minecraftforge.common.MinecraftForge.EVENT_BUS.post(new net.minecraftforge.client.event.RenderLivingEvent.Pre<T, M>(entity, this, partialTicks, x, y, z))) return;
+       GlStateManager.pushMatrix();
+       GlStateManager.disableCull();
+       this.model.handSwingProgress = this.getHandSwingProgress(entity, partialTicks);
+-      this.model.isRiding = entity.hasVehicle();
++      boolean shouldSit = entity.hasVehicle() && (entity.getVehicle() != null && entity.getVehicle().shouldRiderSit());
++      this.model.isRiding = shouldSit;
+       this.model.isChild = entity.isBaby();
+ 
+       try {
+          float f = MathHelper.lerpAngleDegrees(partialTicks, entity.field_6220, entity.field_6283);
+          float f1 = MathHelper.lerpAngleDegrees(partialTicks, entity.prevHeadYaw, entity.headYaw);
+          float f2 = f1 - f;
+-         if (entity.hasVehicle() && entity.getVehicle() instanceof LivingEntity) {
++         if (shouldSit && entity.getVehicle() instanceof LivingEntity) {
+             LivingEntity livingentity = (LivingEntity)entity.getVehicle();
+             f = MathHelper.lerpAngleDegrees(partialTicks, livingentity.field_6220, livingentity.field_6283);
+             f2 = f1 - f;
+@@ -154,6 +156,7 @@
+       GlStateManager.enableCull();
+       GlStateManager.popMatrix();
+       super.render(entity, x, y, z, entityYaw, partialTicks);
++      net.minecraftforge.common.MinecraftForge.EVENT_BUS.post(new net.minecraftforge.client.event.RenderLivingEvent.Post<T, M>(entity, this, partialTicks, x, y, z));
+    }
+ 
+    public float scaleAndTranslate(T entitylivingbaseIn, float partialTicks) {
+@@ -409,6 +412,7 @@
+    }
+ 
+    public void renderLabelIfPresent(T entity, double x, double y, double z) {
++      if (net.minecraftforge.common.MinecraftForge.EVENT_BUS.post(new net.minecraftforge.client.event.RenderLivingEvent.Specials.Pre<T, M>(entity, this, x, y, z))) return;
+       if (this.hasLabel(entity)) {
+          double d0 = entity.squaredDistanceTo(this.renderManager.camera.getPos());
+          float f = entity.isInSneakingPose() ? 32.0F : 64.0F;
+@@ -418,6 +422,7 @@
+             this.renderLabel(entity, x, y, z, s, d0);
+          }
+       }
++      net.minecraftforge.common.MinecraftForge.EVENT_BUS.post(new net.minecraftforge.client.event.RenderLivingEvent.Specials.Post<T, M>(entity, this, x, y, z));
+    }
+ 
+    protected boolean hasLabel(T entity) {

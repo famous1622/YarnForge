@@ -19,7 +19,6 @@
 
 package net.minecraftforge.debug;
 
-import static net.minecraftforge.debug.DataGeneratorTest.MODID;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -63,9 +62,9 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jline.utils.InputStreamReader;
 
-import net.minecraft.advancements.Advancement;
-import net.minecraft.advancements.AdvancementRewards;
-import net.minecraft.advancements.FrameType;
+import net.minecraft.advancement.Advancement;
+import net.minecraft.advancement.AdvancementRewards;
+import net.minecraft.advancement.AdvancementFrame;
 import net.minecraft.block.BarrelBlock;
 import net.minecraft.block.Block;
 import net.minecraft.block.Blocks;
@@ -77,25 +76,25 @@ import net.minecraft.block.LogBlock;
 import net.minecraft.block.PaneBlock;
 import net.minecraft.block.SlabBlock;
 import net.minecraft.block.StairsBlock;
-import net.minecraft.block.TrapDoorBlock;
+import net.minecraft.block.TrapdoorBlock;
 import net.minecraft.block.WallBlock;
-import net.minecraft.client.renderer.model.ItemCameraTransforms;
-import net.minecraft.client.renderer.model.ItemTransformVec3f;
-import net.minecraft.client.renderer.model.Variant;
+import net.minecraft.client.render.model.json.ModelTransformation;
+import net.minecraft.client.render.model.json.Transformation;
+import net.minecraft.client.render.model.json.ModelVariant;
 import net.minecraft.data.DataGenerator;
-import net.minecraft.data.DirectoryCache;
-import net.minecraft.data.IFinishedRecipe;
-import net.minecraft.data.RecipeProvider;
-import net.minecraft.data.ShapedRecipeBuilder;
+import net.minecraft.data.DataCache;
+import net.minecraft.data.server.recipe.RecipeJsonProvider;
+import net.minecraft.data.server.RecipesProvider;
+import net.minecraft.data.server.recipe.ShapedRecipeJsonFactory;
 import net.minecraft.enchantment.Enchantments;
 import net.minecraft.entity.EntityType;
 import net.minecraft.item.Items;
-import net.minecraft.potion.Effects;
-import net.minecraft.resources.IResource;
-import net.minecraft.resources.ResourcePackType;
-import net.minecraft.util.Direction;
-import net.minecraft.util.ResourceLocation;
-import net.minecraft.util.text.StringTextComponent;
+import net.minecraft.entity.effect.StatusEffects;
+import net.minecraft.resource.Resource;
+import net.minecraft.resource.ResourceType;
+import net.minecraft.util.math.Direction;
+import net.minecraft.util.Identifier;
+import net.minecraft.text.LiteralText;
 import net.minecraft.world.biome.Biomes;
 
 @SuppressWarnings("deprecation")
@@ -105,9 +104,9 @@ public class DataGeneratorTest {
 	static final String MODID = "data_gen_test";
 
 	private static final Gson GSON = new GsonBuilder()
-			.registerTypeAdapter(Variant.class, new Variant.Deserializer())
-			.registerTypeAdapter(ItemCameraTransforms.class, new ItemCameraTransforms.Deserializer())
-			.registerTypeAdapter(ItemTransformVec3f.class, new ItemTransformVec3f.Deserializer())
+			.registerTypeAdapter(ModelVariant.class, new ModelVariant.Deserializer())
+			.registerTypeAdapter(ModelTransformation.class, new ModelTransformation.Deserializer())
+			.registerTypeAdapter(Transformation.class, new Transformation.Deserializer())
 			.create();
 
 	@SubscribeEvent
@@ -115,16 +114,16 @@ public class DataGeneratorTest {
 		DataGenerator gen = event.getGenerator();
 
 		if (event.includeClient()) {
-			gen.addProvider(new Lang(gen));
-			gen.addProvider(new ItemModels(gen, event.getExistingFileHelper()));
-			gen.addProvider(new BlockStates(gen, event.getExistingFileHelper()));
+			gen.install(new Lang(gen));
+			gen.install(new ItemModels(gen, event.getExistingFileHelper()));
+			gen.install(new BlockStates(gen, event.getExistingFileHelper()));
 		}
 		if (event.includeServer()) {
-			gen.addProvider(new Recipes(gen));
+			gen.install(new Recipes(gen));
 		}
 	}
 
-	private static <T extends ModelBuilder<T>> List<String> testModelResults(Map<ResourceLocation, T> models, ExistingFileHelper existingFileHelper, Set<ResourceLocation> toIgnore) {
+	private static <T extends ModelBuilder<T>> List<String> testModelResults(Map<Identifier, T> models, ExistingFileHelper existingFileHelper, Set<Identifier> toIgnore) {
 		List<String> ret = new ArrayList<>();
 		models.forEach((loc, model) -> {
 			if (toIgnore.contains(loc)) return;
@@ -133,7 +132,7 @@ public class DataGeneratorTest {
 				generated.addProperty("parent", toVanillaModel(generated.get("parent").getAsString()));
 			}
 			try {
-				IResource vanillaResource = existingFileHelper.getResource(new ResourceLocation(loc.getPath()), ResourcePackType.CLIENT_RESOURCES, ".json", "models");
+				Resource vanillaResource = existingFileHelper.getResource(new Identifier(loc.getPath()), ResourceType.CLIENT_RESOURCES, ".json", "models");
 				JsonObject existing = GSON.fromJson(new InputStreamReader(vanillaResource.getInputStream()), JsonObject.class);
 
 				JsonElement generatedDisplay = generated.remove("display");
@@ -145,10 +144,10 @@ public class DataGeneratorTest {
 					ret.add("Model " + loc + " has transforms when vanilla equivalent does not");
 					return;
 				} else if (generatedDisplay != null) { // Both must be non-null
-					ItemCameraTransforms generatedTransforms = GSON.fromJson(generatedDisplay, ItemCameraTransforms.class);
-					ItemCameraTransforms vanillaTransforms = GSON.fromJson(vanillaDisplay, ItemCameraTransforms.class);
+					ModelTransformation generatedTransforms = GSON.fromJson(generatedDisplay, ModelTransformation.class);
+					ModelTransformation vanillaTransforms = GSON.fromJson(vanillaDisplay, ModelTransformation.class);
 					for (Perspective type : Perspective.values()) {
-						if (!generatedTransforms.getTransform(type.vanillaType).equals(vanillaTransforms.getTransform(type.vanillaType))) {
+						if (!generatedTransforms.getTransformation(type.vanillaType).equals(vanillaTransforms.getTransformation(type.vanillaType))) {
 							ret.add("Model " + loc + " has transforms that differ from vanilla equivalent for perspective " + type.name());
 							return;
 						}
@@ -171,13 +170,13 @@ public class DataGeneratorTest {
 		return model.replaceAll("^\\w+:", "");
 	}
 
-	public static class Recipes extends RecipeProvider implements IConditionBuilder {
+	public static class Recipes extends RecipesProvider implements IConditionBuilder {
 		public Recipes(DataGenerator gen) {
 			super(gen);
 		}
 
-		protected void registerRecipes(Consumer<IFinishedRecipe> consumer) {
-			ResourceLocation ID = new ResourceLocation("data_gen_test", "conditional");
+		protected void generate(Consumer<RecipeJsonProvider> consumer) {
+			Identifier ID = new Identifier("data_gen_test", "conditional");
 
 			ConditionalRecipe.builder()
 					.addCondition(
@@ -188,14 +187,14 @@ public class DataGeneratorTest {
 							)
 					)
 					.addRecipe(
-							ShapedRecipeBuilder.shapedRecipe(Blocks.DIAMOND_BLOCK, 64)
-									.patternLine("XXX")
-									.patternLine("XXX")
-									.patternLine("XXX")
-									.key('X', Blocks.DIRT)
-									.setGroup("")
-									.addCriterion("has_dirt", hasItem(Blocks.DIRT)) //Doesn't actually print... TODO: nested/conditional advancements?
-									::build
+							ShapedRecipeJsonFactory.create(Blocks.DIAMOND_BLOCK, 64)
+									.pattern("XXX")
+									.pattern("XXX")
+									.pattern("XXX")
+									.input('X', Blocks.DIRT)
+									.group("")
+									.criterion("has_dirt", method_10426(Blocks.DIRT)) //Doesn't actually print... TODO: nested/conditional advancements?
+									::offerTo
 					)
 					.setAdvancement(ID,
 							ConditionalAdvancement.builder()
@@ -207,15 +206,15 @@ public class DataGeneratorTest {
 											)
 									)
 									.addAdvancement(
-											Advancement.Builder.builder()
-													.withParentId(new ResourceLocation("minecraft", "root"))
-													.withDisplay(Blocks.DIAMOND_BLOCK,
-															new StringTextComponent("Dirt2Diamonds"),
-															new StringTextComponent("The BEST crafting recipe in the game!"),
-															null, FrameType.TASK, false, false, false
+											Advancement.Task.create()
+													.parent(new Identifier("minecraft", "root"))
+													.display(Blocks.DIAMOND_BLOCK,
+															new LiteralText("Dirt2Diamonds"),
+															new LiteralText("The BEST crafting recipe in the game!"),
+															null, AdvancementFrame.TASK, false, false, false
 													)
-													.withRewards(AdvancementRewards.Builder.recipe(ID))
-													.withCriterion("has_dirt", hasItem(Blocks.DIRT))
+													.rewards(AdvancementRewards.Builder.recipe(ID))
+													.criterion("has_dirt", method_10426(Blocks.DIRT))
 									)
 					)
 					.build(consumer, ID);
@@ -232,7 +231,7 @@ public class DataGeneratorTest {
 			add(Blocks.STONE, "Stone");
 			add(Items.DIAMOND, "Diamond");
 			add(Biomes.BEACH, "Beach");
-			add(Effects.POISON, "Poison");
+			add(StatusEffects.POISON, "Poison");
 			add(Enchantments.SHARPNESS, "Sharpness");
 			add(EntityType.CAT, "Cat");
 			add(MODID + ".test.unicode", "\u0287s\u01DD\u2534 \u01DDpo\u0254\u1D09u\u2229");
@@ -281,9 +280,9 @@ public class DataGeneratorTest {
 		}
 
 		@Override
-		public void act(DirectoryCache cache) throws IOException {
-			super.act(cache);
-			List<String> errors = testModelResults(this.generatedModels, existingFileHelper, IGNORED_MODELS.stream().map(s -> new ResourceLocation(MODID, folder + "/" + s)).collect(Collectors.toSet()));
+		public void run(DataCache cache) throws IOException {
+			super.run(cache);
+			List<String> errors = testModelResults(this.generatedModels, existingFileHelper, IGNORED_MODELS.stream().map(s -> new Identifier(MODID, folder + "/" + s)).collect(Collectors.toSet()));
 			if (!errors.isEmpty()) {
 				LOGGER.error("Found {} discrepancies between generated and vanilla item models: ", errors.size());
 				for (String s : errors) {
@@ -302,7 +301,7 @@ public class DataGeneratorTest {
 	public static class BlockStates extends BlockStateProvider {
 		private static final Logger LOGGER = LogManager.getLogger();
 		private static final Set<Block> IGNORED_BLOCKS = ImmutableSet.of(Blocks.BIRCH_FENCE_GATE, Blocks.STONE);
-		private static final Set<ResourceLocation> IGNORED_MODELS = ImmutableSet.of();
+		private static final Set<Identifier> IGNORED_MODELS = ImmutableSet.of();
 
 		// Testing the outputs
 		private List<String> errors = new ArrayList<>();
@@ -318,13 +317,13 @@ public class DataGeneratorTest {
 			ModelFile birchFenceGateOpen = fenceGateOpen("birch_fence_gate_open", mcLoc("block/birch_planks"));
 			ModelFile birchFenceGateWall = fenceGateWall("birch_fence_gate_wall", mcLoc("block/birch_planks"));
 			ModelFile birchFenceGateWallOpen = fenceGateWallOpen("birch_fence_gate_wall_open", mcLoc("block/birch_planks"));
-			ModelFile invisbleModel = new UncheckedModelFile(new ResourceLocation("builtin/generated"));
+			ModelFile invisbleModel = new UncheckedModelFile(new Identifier("builtin/generated"));
 			VariantBlockStateBuilder builder = getVariantBuilder(Blocks.BIRCH_FENCE_GATE);
-			for (Direction dir : FenceGateBlock.HORIZONTAL_FACING.getAllowedValues()) {
-				int angle = (int) dir.getHorizontalAngle();
+			for (Direction dir : FenceGateBlock.FACING.getValues()) {
+				int angle = (int) dir.asRotation();
 				builder
 						.partialState()
-						.with(FenceGateBlock.HORIZONTAL_FACING, dir)
+						.with(FenceGateBlock.FACING, dir)
 						.with(FenceGateBlock.IN_WALL, false)
 						.with(FenceGateBlock.OPEN, false)
 						.modelForState()
@@ -336,7 +335,7 @@ public class DataGeneratorTest {
 						.weight(100)
 						.addModel()
 						.partialState()
-						.with(FenceGateBlock.HORIZONTAL_FACING, dir)
+						.with(FenceGateBlock.FACING, dir)
 						.with(FenceGateBlock.IN_WALL, false)
 						.with(FenceGateBlock.OPEN, true)
 						.modelForState()
@@ -345,7 +344,7 @@ public class DataGeneratorTest {
 						.uvLock(true)
 						.addModel()
 						.partialState()
-						.with(FenceGateBlock.HORIZONTAL_FACING, dir)
+						.with(FenceGateBlock.FACING, dir)
 						.with(FenceGateBlock.IN_WALL, true)
 						.with(FenceGateBlock.OPEN, false)
 						.modelForState()
@@ -354,7 +353,7 @@ public class DataGeneratorTest {
 						.uvLock(true)
 						.addModel()
 						.partialState()
-						.with(FenceGateBlock.HORIZONTAL_FACING, dir)
+						.with(FenceGateBlock.FACING, dir)
 						.with(FenceGateBlock.IN_WALL, true)
 						.with(FenceGateBlock.OPEN, true)
 						.modelForState()
@@ -401,7 +400,7 @@ public class DataGeneratorTest {
 			getBuilder("cube")
 					.parent(block)
 					.element()
-					.allFaces((dir, face) -> face.texture("#" + dir.getName()).cullface(dir));
+					.allFaces((dir, face) -> face.texture("#" + dir.asString()).cullface(dir));
 
 			ModelFile furnace = orientable("furnace", mcLoc("block/furnace_side"), mcLoc("block/furnace_front"), mcLoc("block/furnace_top"));
 			ModelFile furnaceLit = orientable("furnace_on", mcLoc("block/furnace_side"), mcLoc("block/furnace_front_on"), mcLoc("block/furnace_top"));
@@ -409,13 +408,13 @@ public class DataGeneratorTest {
 			getVariantBuilder(Blocks.FURNACE)
 					.forAllStates(state -> ConfiguredModel.builder()
 							.modelFile(state.get(FurnaceBlock.LIT) ? furnaceLit : furnace)
-							.rotationY((int) state.get(FurnaceBlock.FACING).getOpposite().getHorizontalAngle())
+							.rotationY((int) state.get(FurnaceBlock.FACING).getOpposite().asRotation())
 							.build()
 					);
 
 			ModelFile barrel = cubeBottomTop("barrel", mcLoc("block/barrel_side"), mcLoc("block/barrel_bottom"), mcLoc("block/barrel_top"));
 			ModelFile barrelOpen = cubeBottomTop("barrel_open", mcLoc("block/barrel_side"), mcLoc("block/barrel_bottom"), mcLoc("block/barrel_top_open"));
-			directionalBlock(Blocks.BARREL, state -> state.get(BarrelBlock.PROPERTY_OPEN) ? barrelOpen : barrel); // Testing custom state interpreter
+			directionalBlock(Blocks.BARREL, state -> state.get(BarrelBlock.OPEN) ? barrelOpen : barrel); // Testing custom state interpreter
 
 			logBlock((LogBlock) Blocks.ACACIA_LOG);
 
@@ -430,22 +429,22 @@ public class DataGeneratorTest {
 			paneBlock((PaneBlock) Blocks.GLASS_PANE, "glass", mcLoc("block/glass"), mcLoc("block/glass_pane_top"));
 
 			doorBlock((DoorBlock) Blocks.ACACIA_DOOR, "acacia", mcLoc("block/acacia_door_bottom"), mcLoc("block/acacia_door_top"));
-			trapdoorBlock((TrapDoorBlock) Blocks.ACACIA_TRAPDOOR, "acacia", mcLoc("block/acacia_trapdoor"), true);
-			trapdoorBlock((TrapDoorBlock) Blocks.OAK_TRAPDOOR, "oak", mcLoc("block/oak_trapdoor"), false); // Test a non-orientable trapdoor
+			trapdoorBlock((TrapdoorBlock) Blocks.ACACIA_TRAPDOOR, "acacia", mcLoc("block/acacia_trapdoor"), true);
+			trapdoorBlock((TrapdoorBlock) Blocks.OAK_TRAPDOOR, "oak", mcLoc("block/oak_trapdoor"), false); // Test a non-orientable trapdoor
 
 			simpleBlock(Blocks.TORCH, torch("torch", mcLoc("block/torch")));
 			horizontalBlock(Blocks.WALL_TORCH, torchWall("wall_torch", mcLoc("block/torch")), 90);
 		}
 
 		@Override
-		public void act(DirectoryCache cache) throws IOException {
-			super.act(cache);
+		public void run(DataCache cache) throws IOException {
+			super.run(cache);
 			this.errors.addAll(testModelResults(this.generatedModels, existingFileHelper, IGNORED_MODELS));
 			this.registeredBlocks.forEach((block, state) -> {
 				if (IGNORED_BLOCKS.contains(block)) return;
 				JsonObject generated = state.toJson();
 				try {
-					IResource vanillaResource = existingFileHelper.getResource(block.getRegistryName(), ResourcePackType.CLIENT_RESOURCES, ".json", "blockstates");
+					Resource vanillaResource = existingFileHelper.getResource(block.getRegistryName(), ResourceType.CLIENT_RESOURCES, ".json", "blockstates");
 					JsonObject existing = GSON.fromJson(new InputStreamReader(vanillaResource.getInputStream()), JsonObject.class);
 					if (state instanceof VariantBlockStateBuilder) {
 						compareVariantBlockstates(block, generated, existing);
@@ -510,8 +509,8 @@ public class DataGeneratorTest {
 			}
 			generatedVariant.addProperty("model", generatedModel);
 			// Parse variants to objects to handle default values in vanilla jsons
-			Variant parsedGeneratedVariant = GSON.fromJson(generatedVariant, Variant.class);
-			Variant parsedVanillaVariant = GSON.fromJson(vanillaVariant, Variant.class);
+			ModelVariant parsedGeneratedVariant = GSON.fromJson(generatedVariant, ModelVariant.class);
+			ModelVariant parsedVanillaVariant = GSON.fromJson(vanillaVariant, ModelVariant.class);
 			if (!parsedGeneratedVariant.equals(parsedVanillaVariant)) {
 				blockstateError(block, "has incorrect variant %s. Expecting: %s, Found: %s", key, vanillaVariant, generatedVariant);
 				return;

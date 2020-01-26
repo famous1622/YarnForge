@@ -19,10 +19,7 @@
 
 package net.minecraftforge.event.entity;
 
-import java.util.Collection;
 
-import net.minecraftforge.common.MinecraftForge;
-import net.minecraftforge.eventbus.api.Cancelable;
 
 import net.minecraft.entity.Entity;
 import net.minecraft.world.World;

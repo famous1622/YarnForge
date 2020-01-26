@@ -1,0 +1,43 @@
+--- a/net/minecraft/container/Container.java
++++ b/net/minecraft/container/Container.java
+@@ -113,9 +113,11 @@
+          ItemStack itemstack = this.slotList.get(i).getStack();
+          ItemStack itemstack1 = this.stackList.get(i);
+          if (!ItemStack.areEqualIgnoreDamage(itemstack1, itemstack)) {
++            boolean clientStackChanged = !itemstack1.equals(itemstack, true);
+             itemstack1 = itemstack.isEmpty() ? ItemStack.EMPTY : itemstack.copy();
+             this.stackList.set(i, itemstack1);
+ 
++            if (clientStackChanged)
+             for(ContainerListener icontainerlistener : this.listeners) {
+                icontainerlistener.onContainerSlotUpdate(this, i, itemstack1);
+             }
+@@ -473,14 +475,15 @@
+             ItemStack itemstack = slot.getStack();
+             if (!itemstack.isEmpty() && canStacksCombine(stack, itemstack)) {
+                int j = itemstack.getCount() + stack.getCount();
+-               if (j <= stack.getMaxCount()) {
++               int maxSize = Math.min(slot.getMaxStackAmount(), stack.getMaxCount());
++               if (j <= maxSize) {
+                   stack.setCount(0);
+                   itemstack.setCount(j);
+                   slot.markDirty();
+                   flag = true;
+-               } else if (itemstack.getCount() < stack.getMaxCount()) {
+-                  stack.decrement(stack.getMaxCount() - itemstack.getCount());
+-                  itemstack.setCount(stack.getMaxCount());
++               } else if (itemstack.getCount() < maxSize) {
++                  stack.decrement(maxSize - itemstack.getCount());
++                  itemstack.setCount(maxSize);
+                   slot.markDirty();
+                   flag = true;
+                }
+@@ -581,7 +584,7 @@
+          stack.setCount(1);
+          break;
+       case 2:
+-         stack.setCount(stack.getItem().getMaxCount());
++         stack.setCount(stack.getMaxCount());
+       }
+ 
+       stack.increment(slotStackSize);

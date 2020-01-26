@@ -29,7 +29,7 @@ import net.minecraftforge.registries.IForgeRegistry;
 import net.minecraftforge.registries.IForgeRegistryEntry;
 import org.apache.commons.lang3.Validate;
 
-import net.minecraft.util.ResourceLocation;
+import net.minecraft.util.Identifier;
 
 
 /**
@@ -64,9 +64,9 @@ public class RegistryEvent<T extends IForgeRegistryEntry<T>> extends GenericEven
 	 */
 	public static class Register<T extends IForgeRegistryEntry<T>> extends RegistryEvent<T> {
 		private final IForgeRegistry<T> registry;
-		private final ResourceLocation name;
+		private final Identifier name;
 
-		public Register(ResourceLocation name, IForgeRegistry<T> registry) {
+		public Register(Identifier name, IForgeRegistry<T> registry) {
 			super(registry.getRegistrySuperType());
 			this.name = name;
 			this.registry = registry;
@@ -76,7 +76,7 @@ public class RegistryEvent<T extends IForgeRegistryEntry<T>> extends GenericEven
 			return registry;
 		}
 
-		public ResourceLocation getName() {
+		public Identifier getName() {
 			return name;
 		}
 
@@ -88,11 +88,11 @@ public class RegistryEvent<T extends IForgeRegistryEntry<T>> extends GenericEven
 
 	public static class MissingMappings<T extends IForgeRegistryEntry<T>> extends RegistryEvent<T> {
 		private final IForgeRegistry<T> registry;
-		private final ResourceLocation name;
+		private final Identifier name;
 		private final ImmutableList<Mapping<T>> mappings;
 		private ModContainer activeMod;
 
-		public MissingMappings(ResourceLocation name, IForgeRegistry<T> registry, Collection<Mapping<T>> missed) {
+		public MissingMappings(Identifier name, IForgeRegistry<T> registry, Collection<Mapping<T>> missed) {
 			super(registry.getRegistrySuperType());
 			this.registry = registry;
 			this.name = name;
@@ -103,7 +103,7 @@ public class RegistryEvent<T extends IForgeRegistryEntry<T>> extends GenericEven
 			this.activeMod = mod;
 		}
 
-		public ResourceLocation getName() {
+		public Identifier getName() {
 			return this.name;
 		}
 
@@ -152,13 +152,13 @@ public class RegistryEvent<T extends IForgeRegistryEntry<T>> extends GenericEven
 
 		public static class Mapping<T extends IForgeRegistryEntry<T>> {
 			public final IForgeRegistry<T> registry;
-			public final ResourceLocation key;
+			public final Identifier key;
 			public final int id;
 			private final IForgeRegistry<T> pool;
 			private Action action = Action.DEFAULT;
 			private T target;
 
-			public Mapping(IForgeRegistry<T> registry, IForgeRegistry<T> pool, ResourceLocation key, int id) {
+			public Mapping(IForgeRegistry<T> registry, IForgeRegistry<T> pool, Identifier key, int id) {
 				this.registry = registry;
 				this.pool = pool;
 				this.key = key;

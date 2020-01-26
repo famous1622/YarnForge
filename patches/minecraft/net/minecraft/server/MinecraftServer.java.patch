@@ -1,154 +1,167 @@
 --- a/net/minecraft/server/MinecraftServer.java
 +++ b/net/minecraft/server/MinecraftServer.java
-@@ -191,7 +191,7 @@
-    private final GameProfileRepository field_152365_W;
-    private final PlayerProfileCache field_152366_X;
-    private long field_147142_T;
--   protected final Thread field_175590_aa = Util.func_200696_a(new Thread(this, "Server thread"), (p_213187_0_) -> {
-+   protected final Thread field_175590_aa = Util.func_200696_a(new Thread(net.minecraftforge.fml.common.thread.SidedThreadGroups.SERVER, this, "Server thread"), (p_213187_0_) -> {
+@@ -122,11 +122,11 @@
+ import org.apache.commons.lang3.Validate;
+ import org.apache.logging.log4j.LogManager;
+ import org.apache.logging.log4j.Logger;
++
+ import net.minecraft.entity.boss.BossBarManager;
+ import net.minecraft.server.dedicated.EulaReader;
+ import net.minecraft.server.dedicated.ServerPropertiesLoader;
+ 
+-
+ public abstract class MinecraftServer extends NonBlockingThreadExecutor<ServerTask> implements SnooperListener, CommandOutput, AutoCloseable, Runnable {
+    private static final Logger LOGGER = LogManager.getLogger();
+    public static final File USER_CACHE_FILE = new File("usercache.json");
+@@ -185,7 +185,7 @@
+    private final GameProfileRepository gameProfileRepo;
+    private final UserCache userCache;
+    private long lastPlayerSampleUpdate;
+-   protected final Thread serverThread = SystemUtil.consume(new Thread(this, "Server thread"), (p_213187_0_) -> {
++   protected final Thread serverThread = SystemUtil.consume(new Thread(net.minecraftforge.fml.common.thread.SidedThreadGroups.SERVER, this, "Server thread"), (p_213187_0_) -> {
        p_213187_0_.setUncaughtExceptionHandler((p_213206_0_, p_213206_1_) -> {
-          field_147145_h.error(p_213206_1_);
+          LOGGER.error(p_213206_1_);
        });
-@@ -327,6 +327,8 @@
-       this.func_200245_b(new TranslationTextComponent("menu.loadingLevel"));
-       SaveHandler savehandler = this.func_71254_M().func_197715_a(p_71247_1_, this);
-       this.func_175584_a(this.func_71270_I(), savehandler);
+@@ -321,6 +321,8 @@
+       this.setLoadingStage(new TranslatableText("menu.loadingLevel"));
+       WorldSaveHandler savehandler = this.getLevelStorage().createSaveHandler(saveName, this);
+       this.loadWorldResourcePack(this.getLevelName(), savehandler);
 +      // Move factory creation earlier to prevent startupquery deadlock
-+      IChunkStatusListener ichunkstatuslistener = this.field_213220_d.create(11);
-       WorldInfo worldinfo = savehandler.func_75757_d();
-       WorldSettings worldsettings;
++      WorldGenerationProgressListener ichunkstatuslistener = this.worldGenerationProgressListenerFactory.create(11);
+       LevelProperties worldinfo = savehandler.readProperties();
+       LevelInfo worldsettings;
        if (worldinfo == null) {
-@@ -347,13 +349,13 @@
+@@ -341,13 +343,13 @@
        }
  
-       this.func_195560_a(savehandler.func_75765_b(), worldinfo);
--      IChunkStatusListener ichunkstatuslistener = this.field_213220_d.create(11);
-       this.func_213194_a(savehandler, worldinfo, worldsettings, ichunkstatuslistener);
-       this.func_147139_a(this.func_147135_j(), true);
-       this.func_213186_a(ichunkstatuslistener);
+       this.loadWorldDataPacks(savehandler.getWorldDir(), worldinfo);
+-      WorldGenerationProgressListener ichunkstatuslistener = this.worldGenerationProgressListenerFactory.create(11);
+       this.createWorlds(savehandler, worldinfo, worldsettings, ichunkstatuslistener);
+       this.setDifficulty(this.getDefaultDifficulty(), true);
+       this.prepareStartRegion(ichunkstatuslistener);
     }
  
-    protected void func_213194_a(SaveHandler p_213194_1_, WorldInfo p_213194_2_, WorldSettings p_213194_3_, IChunkStatusListener p_213194_4_) {
+    protected void createWorlds(WorldSaveHandler p_213194_1_, LevelProperties info, LevelInfo p_213194_3_, WorldGenerationProgressListener p_213194_4_) {
 +      net.minecraftforge.common.DimensionManager.fireRegister();
-       if (this.func_71242_L()) {
-          p_213194_2_.func_176127_a(field_213219_c);
+       if (this.isDemo()) {
+          info.loadLevelInfo(DEMO_LEVEL_INFO);
        }
-@@ -395,6 +397,7 @@
-          if (dimensiontype != DimensionType.field_223227_a_) {
-             this.field_71305_c.put(dimensiontype, new ServerMultiWorld(serverworld1, this, this.field_213217_au, p_213194_1_, dimensiontype, this.field_71304_b, p_213194_4_));
+@@ -389,6 +391,7 @@
+          if (dimensiontype != DimensionType.OVERWORLD) {
+             this.worlds.put(dimensiontype, new SecondaryServerWorld(serverworld1, this, this.workerExecutor, p_213194_1_, dimensiontype, this.profiler, p_213194_4_));
           }
-+         net.minecraftforge.common.MinecraftForge.EVENT_BUS.post(new net.minecraftforge.event.world.WorldEvent.Load(field_71305_c.get(dimensiontype)));
++         net.minecraftforge.common.MinecraftForge.EVENT_BUS.post(new net.minecraftforge.event.world.WorldEvent.Load(worlds.get(dimensiontype)));
        }
  
     }
-@@ -552,6 +555,7 @@
-       for(ServerWorld serverworld1 : this.func_212370_w()) {
+@@ -546,6 +549,7 @@
+       for(ServerWorld serverworld1 : this.getWorlds()) {
           if (serverworld1 != null) {
              try {
 +               net.minecraftforge.common.MinecraftForge.EVENT_BUS.post(new net.minecraftforge.event.world.WorldEvent.Unload(serverworld1));
                 serverworld1.close();
              } catch (IOException ioexception) {
-                field_147145_h.error("Exception closing the level", (Throwable)ioexception);
-@@ -592,6 +596,7 @@
+                LOGGER.error("Exception closing the level", (Throwable)ioexception);
+@@ -586,6 +590,7 @@
     public void run() {
        try {
-          if (this.func_71197_b()) {
+          if (this.setupServer()) {
 +            net.minecraftforge.fml.server.ServerLifecycleHooks.handleServerStarted(this);
-             this.field_211151_aa = Util.func_211177_b();
-             this.field_147147_p.func_151315_a(new StringTextComponent(this.field_71286_C));
-             this.field_147147_p.func_151321_a(new ServerStatusResponse.Version(SharedConstants.func_215069_a().getName(), SharedConstants.func_215069_a().getProtocolVersion()));
-@@ -623,9 +628,15 @@
-                this.field_71304_b.func_219897_b();
-                this.field_71296_Q = true;
+             this.timeReference = SystemUtil.getMeasuringTimeMs();
+             this.metadata.setDescription(new LiteralText(this.motd));
+             this.metadata.setVersion(new ServerMetadata.Version(SharedConstants.getGameVersion().getName(), SharedConstants.getGameVersion().getProtocolVersion()));
+@@ -617,9 +622,15 @@
+                this.profiler.endTick();
+                this.loading = true;
              }
 +            net.minecraftforge.fml.server.ServerLifecycleHooks.handleServerStopping(this);
 +            net.minecraftforge.fml.server.ServerLifecycleHooks.expectServerStopped(); // has to come before finalTick to avoid race conditions
           } else {
 +            net.minecraftforge.fml.server.ServerLifecycleHooks.expectServerStopped(); // has to come before finalTick to avoid race conditions
-             this.func_71228_a((CrashReport)null);
+             this.setCrashReport((CrashReport)null);
           }
 +      } catch (net.minecraftforge.fml.StartupQuery.AbortedException e) {
 +         // ignore silently
 +         net.minecraftforge.fml.server.ServerLifecycleHooks.expectServerStopped(); // has to come before finalTick to avoid race conditions
        } catch (Throwable throwable1) {
-          field_147145_h.error("Encountered an unexpected exception", throwable1);
+          LOGGER.error("Encountered an unexpected exception", throwable1);
           CrashReport crashreport;
-@@ -642,6 +653,7 @@
-             field_147145_h.error("We were unable to save this crash report to disk.");
+@@ -636,6 +647,7 @@
+             LOGGER.error("We were unable to save this crash report to disk.");
           }
  
 +         net.minecraftforge.fml.server.ServerLifecycleHooks.expectServerStopped(); // has to come before finalTick to avoid race conditions
-          this.func_71228_a(crashreport);
+          this.setCrashReport(crashreport);
        } finally {
           try {
-@@ -650,6 +662,7 @@
+@@ -644,6 +656,7 @@
           } catch (Throwable throwable) {
-             field_147145_h.error("Exception stopping the server", throwable);
+             LOGGER.error("Exception stopping the server", throwable);
           } finally {
 +            net.minecraftforge.fml.server.ServerLifecycleHooks.handleServerStopped(this);
-             this.func_71240_o();
+             this.exit();
           }
  
-@@ -746,6 +759,7 @@
+@@ -740,6 +753,7 @@
  
-    protected void func_71217_p(BooleanSupplier p_71217_1_) {
-       long i = Util.func_211178_c();
+    protected void tick(BooleanSupplier hasTimeLeft) {
+       long i = SystemUtil.getMeasuringTimeNano();
 +      net.minecraftforge.fml.hooks.BasicEventHooks.onPreServerTick();
-       ++this.field_71315_w;
-       this.func_71190_q(p_71217_1_);
-       if (i - this.field_147142_T >= 5000000000L) {
-@@ -760,6 +774,7 @@
+       ++this.ticks;
+       this.tickWorlds(hasTimeLeft);
+       if (i - this.lastPlayerSampleUpdate >= 5000000000L) {
+@@ -754,6 +768,7 @@
  
           Collections.shuffle(Arrays.asList(agameprofile));
-          this.field_147147_p.func_151318_b().func_151330_a(agameprofile);
-+         this.field_147147_p.invalidateJson();
+          this.metadata.getPlayers().setSample(agameprofile);
++         this.metadata.invalidateJson();
        }
  
-       if (this.field_71315_w % 6000 == 0) {
-@@ -787,6 +802,7 @@
-       long i1 = Util.func_211178_c();
-       this.field_213215_ap.func_181747_a(i1 - i);
-       this.field_71304_b.func_76319_b();
+       if (this.ticks % 6000 == 0) {
+@@ -781,6 +796,7 @@
+       long i1 = SystemUtil.getMeasuringTimeNano();
+       this.metricsData.pushSample(i1 - i);
+       this.profiler.pop();
 +      net.minecraftforge.fml.hooks.BasicEventHooks.onPostServerTick();
     }
  
-    protected void func_71190_q(BooleanSupplier p_71190_1_) {
-@@ -794,7 +810,8 @@
-       this.func_193030_aL().func_73660_a();
-       this.field_71304_b.func_219895_b("levels");
+    protected void tickWorlds(BooleanSupplier hasTimeLeft) {
+@@ -788,7 +804,8 @@
+       this.getCommandFunctionManager().tick();
+       this.profiler.swap("levels");
  
--      for(ServerWorld serverworld : this.func_212370_w()) {
+-      for(ServerWorld serverworld : this.getWorlds()) {
 +      for(ServerWorld serverworld : this.getWorldArray()) {
-+         long tickStart = Util.func_211178_c();
-          if (serverworld.field_73011_w.func_186058_p() == DimensionType.field_223227_a_ || this.func_71255_r()) {
-             this.field_71304_b.func_194340_a(() -> {
-                return serverworld.func_72912_H().func_76065_j() + " " + Registry.field_212622_k.func_177774_c(serverworld.field_73011_w.func_186058_p());
-@@ -806,6 +823,7 @@
++         long tickStart = SystemUtil.getMeasuringTimeNano();
+          if (serverworld.dimension.getType() == DimensionType.OVERWORLD || this.isNetherAllowed()) {
+             this.profiler.push(() -> {
+                return serverworld.getLevelProperties().getLevelName() + " " + Registry.DIMENSION.getId(serverworld.dimension.getType());
+@@ -800,6 +817,7 @@
              }
  
-             this.field_71304_b.func_76320_a("tick");
+             this.profiler.push("tick");
 +            net.minecraftforge.fml.hooks.BasicEventHooks.onPreWorldTick(serverworld);
  
              try {
-                serverworld.func_72835_b(p_71190_1_);
-@@ -814,12 +832,16 @@
-                serverworld.func_72914_a(crashreport);
-                throw new ReportedException(crashreport);
+                serverworld.tick(hasTimeLeft);
+@@ -808,12 +826,16 @@
+                serverworld.addDetailsToCrashReport(crashreport);
+                throw new CrashException(crashreport);
              }
 +            net.minecraftforge.fml.hooks.BasicEventHooks.onPostWorldTick(serverworld);
  
-             this.field_71304_b.func_76319_b();
-             this.field_71304_b.func_76319_b();
+             this.profiler.pop();
+             this.profiler.pop();
           }
-+         perWorldTickTimes.computeIfAbsent(serverworld.func_201675_m().func_186058_p(), k -> new long[100])[this.field_71315_w % 100] = Util.func_211178_c() - tickStart;
++         perWorldTickTimes.computeIfAbsent(serverworld.getDimension().getType(), k -> new long[100])[this.ticks % 100] = SystemUtil.getMeasuringTimeNano() - tickStart;
        }
  
-+      this.field_71304_b.func_219895_b("dim_unloading");
-+      net.minecraftforge.common.DimensionManager.unloadWorlds(this, this.field_71315_w % 200 == 0);
-       this.field_71304_b.func_219895_b("connection");
-       this.func_147137_ag().func_151269_c();
-       this.field_71304_b.func_219895_b("players");
-@@ -856,6 +878,7 @@
++      this.profiler.swap("dim_unloading");
++      net.minecraftforge.common.DimensionManager.unloadWorlds(this, this.ticks % 200 == 0);
+       this.profiler.swap("connection");
+       this.getNetworkIo().tick();
+       this.profiler.swap("players");
+@@ -850,6 +872,7 @@
        OptionSpec<Integer> optionspec10 = optionparser.accepts("port").withRequiredArg().ofType(Integer.class).defaultsTo(-1);
        OptionSpec<String> optionspec11 = optionparser.accepts("serverId").withRequiredArg();
        OptionSpec<String> optionspec12 = optionparser.nonOptions();
@@ -156,35 +169,35 @@
  
        try {
           OptionSet optionset = optionparser.parse(p_main_0_);
-@@ -887,6 +910,10 @@
+@@ -881,6 +904,10 @@
           GameProfileRepository gameprofilerepository = yggdrasilauthenticationservice.createProfileRepository();
-          PlayerProfileCache playerprofilecache = new PlayerProfileCache(gameprofilerepository, new File(s, field_152367_a.getName()));
-          String s1 = Optional.ofNullable(optionset.valueOf(optionspec9)).orElse(serverpropertiesprovider.func_219034_a().field_219021_o);
+          UserCache playerprofilecache = new UserCache(gameprofilerepository, new File(s, USER_CACHE_FILE.getName()));
+          String s1 = Optional.ofNullable(optionset.valueOf(optionspec9)).orElse(serverpropertiesprovider.getPropertiesHandler().levelName);
 +         if (s1 == null || s1.isEmpty() || new File(s, s1).getAbsolutePath().equals(new File(s).getAbsolutePath())) {
-+            field_147145_h.error("Invalid world directory specified, must not be null, empty or the same directory as your universe! " + s1);
++            LOGGER.error("Invalid world directory specified, must not be null, empty or the same directory as your universe! " + s1);
 +            return;
 +         }
-          final DedicatedServer dedicatedserver = new DedicatedServer(new File(s), serverpropertiesprovider, DataFixesManager.func_210901_a(), yggdrasilauthenticationservice, minecraftsessionservice, gameprofilerepository, playerprofilecache, LoggingChunkStatusListener::new, s1);
-          dedicatedserver.func_71224_l(optionset.valueOf(optionspec7));
-          dedicatedserver.func_71208_b(optionset.valueOf(optionspec10));
-@@ -904,6 +931,7 @@
+          final MinecraftDedicatedServer dedicatedserver = new MinecraftDedicatedServer(new File(s), serverpropertiesprovider, Schemas.getFixer(), yggdrasilauthenticationservice, minecraftsessionservice, gameprofilerepository, playerprofilecache, WorldGenerationProgressLogger::new, s1);
+          dedicatedserver.setUserName(optionset.valueOf(optionspec7));
+          dedicatedserver.setServerPort(optionset.valueOf(optionspec10));
+@@ -898,6 +925,7 @@
           Thread thread = new Thread("Server Shutdown Thread") {
              public void run() {
-                dedicatedserver.func_71263_m(true);
+                dedicatedserver.stop(true);
 +               LogManager.shutdown(); // we're manually managing the logging shutdown on the server. Make sure we do it here at the end.
              }
           };
-          thread.setUncaughtExceptionHandler(new DefaultUncaughtExceptionHandler(field_147145_h));
-@@ -948,7 +976,7 @@
+          thread.setUncaughtExceptionHandler(new UncaughtExceptionLogger(LOGGER));
+@@ -942,7 +970,7 @@
     }
  
-    public ServerWorld func_71218_a(DimensionType p_71218_1_) {
--      return this.field_71305_c.get(p_71218_1_);
-+      return net.minecraftforge.common.DimensionManager.getWorld(this, p_71218_1_, true, true);
+    public ServerWorld getWorld(DimensionType dimension) {
+-      return this.worlds.get(dimension);
++      return net.minecraftforge.common.DimensionManager.getWorld(this, dimension, true, true);
     }
  
-    public Iterable<ServerWorld> func_212370_w() {
-@@ -987,7 +1015,7 @@
+    public Iterable<ServerWorld> getWorlds() {
+@@ -981,7 +1009,7 @@
     }
  
     public String getServerModName() {
@@ -192,10 +205,10 @@
 +      return net.minecraftforge.fml.BrandingControl.getServerBranding();
     }
  
-    public CrashReport func_71230_b(CrashReport p_71230_1_) {
-@@ -1529,6 +1557,31 @@
+    public CrashReport populateCrashReport(CrashReport report) {
+@@ -1523,6 +1551,31 @@
  
-    public abstract boolean func_213199_b(GameProfile p_213199_1_);
+    public abstract boolean isOwner(GameProfile p_213199_1_);
  
 +   private Map<DimensionType, long[]> perWorldTickTimes = Maps.newIdentityHashMap();
 +   @Nullable
@@ -205,7 +218,7 @@
 +
 +   @Deprecated //Forge Internal use Only, You can screw up a lot of things if you mess with this map.
 +   public synchronized Map<DimensionType, ServerWorld> forgeGetWorldMap() {
-+      return this.field_71305_c;
++      return this.worlds;
 +   }
 +   private int worldArrayMarker = 0;
 +   private int worldArrayLast = -1;
@@ -217,11 +230,11 @@
 +   private ServerWorld[] getWorldArray() {
 +      if (worldArrayMarker == worldArrayLast && worldArray != null)
 +         return worldArray;
-+      worldArray = this.field_71305_c.values().stream().toArray(x -> new ServerWorld[x]);
++      worldArray = this.worlds.values().stream().toArray(x -> new ServerWorld[x]);
 +      worldArrayLast = worldArrayMarker;
 +      return worldArray;
 +   }
 +
-    public void func_223711_a(Path p_223711_1_) throws IOException {
+    public void dump(Path p_223711_1_) throws IOException {
        Path path = p_223711_1_.resolve("levels");
  

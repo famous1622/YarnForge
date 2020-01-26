@@ -1,54 +1,54 @@
 --- a/net/minecraft/entity/passive/MooshroomEntity.java
 +++ b/net/minecraft/entity/passive/MooshroomEntity.java
-@@ -33,7 +33,7 @@
+@@ -32,7 +32,7 @@
  import net.minecraftforge.api.distmarker.OnlyIn;
  import org.apache.commons.lang3.tuple.Pair;
  
 -public class MooshroomEntity extends CowEntity {
 +public class MooshroomEntity extends CowEntity implements net.minecraftforge.common.IShearable {
-    private static final DataParameter<String> field_213449_bz = EntityDataManager.func_187226_a(MooshroomEntity.class, DataSerializers.field_187194_d);
-    private Effect field_213450_bA;
-    private int field_213447_bB;
-@@ -97,7 +97,7 @@
+    private static final TrackedData<String> TYPE = DataTracker.registerData(MooshroomEntity.class, TrackedDataHandlerRegistry.STRING);
+    private StatusEffect stewEffect;
+    private int stewEffectDuration;
+@@ -96,7 +96,7 @@
  
-          this.func_184185_a(soundevent, 1.0F, 1.0F);
+          this.playSound(soundevent, 1.0F, 1.0F);
           return true;
--      } else if (itemstack.func_77973_b() == Items.field_151097_aZ && this.func_70874_b() >= 0) {
-+      } else if (false && itemstack.func_77973_b() == Items.field_151097_aZ && this.func_70874_b() >= 0) { //Forge: Moved to onSheared
-          this.field_70170_p.func_195594_a(ParticleTypes.field_197627_t, this.field_70165_t, this.field_70163_u + (double)(this.func_213302_cg() / 2.0F), this.field_70161_v, 0.0D, 0.0D, 0.0D);
-          if (!this.field_70170_p.field_72995_K) {
-             this.func_70106_y();
-@@ -203,6 +203,33 @@
+-      } else if (itemstack.getItem() == Items.SHEARS && this.getBreedingAge() >= 0) {
++      } else if (false && itemstack.getItem() == Items.SHEARS && this.getBreedingAge() >= 0) { //Forge: Moved to onSheared
+          this.world.addParticle(ParticleTypes.EXPLOSION, this.x, this.y + (double)(this.getHeight() / 2.0F), this.z, 0.0D, 0.0D, 0.0D);
+          if (!this.world.isClient) {
+             this.remove();
+@@ -202,6 +202,33 @@
        return mooshroomentity$type2;
     }
  
 +   @Override
-+   public boolean isShearable(ItemStack item, net.minecraft.world.IWorldReader world, net.minecraft.util.math.BlockPos pos) {
-+      return this.func_70874_b() >= 0;
++   public boolean isShearable(ItemStack item, net.minecraft.world.ViewableWorld world, net.minecraft.util.math.BlockPos pos) {
++      return this.getBreedingAge() >= 0;
 +   }
 +
 +   @Override
 +   public java.util.List<ItemStack> onSheared(ItemStack item, net.minecraft.world.IWorld world, net.minecraft.util.math.BlockPos pos, int fortune) {
 +      java.util.List<ItemStack> ret = new java.util.ArrayList<>();
-+      this.field_70170_p.func_195594_a(ParticleTypes.field_197627_t, this.field_70165_t, this.field_70163_u + (double)(this.func_213302_cg() / 2.0F), this.field_70161_v, 0.0D, 0.0D, 0.0D);
-+      if (!this.field_70170_p.field_72995_K) {
-+         this.func_70106_y();
-+         CowEntity entitycow = EntityType.field_200796_j.func_200721_a(this.field_70170_p);
-+         entitycow.func_70012_b(this.field_70165_t, this.field_70163_u, this.field_70161_v, this.field_70177_z, this.field_70125_A);
-+         entitycow.func_70606_j(this.func_110143_aJ());
-+         entitycow.field_70761_aq = this.field_70761_aq;
-+         if (this.func_145818_k_()) {
-+            entitycow.func_200203_b(this.func_200201_e());
++      this.world.addParticle(ParticleTypes.EXPLOSION, this.x, this.y + (double)(this.getHeight() / 2.0F), this.z, 0.0D, 0.0D, 0.0D);
++      if (!this.world.isClient) {
++         this.remove();
++         CowEntity entitycow = EntityType.COW.create(this.world);
++         entitycow.setPositionAndAngles(this.x, this.y, this.z, this.yaw, this.pitch);
++         entitycow.setHealth(this.getHealth());
++         entitycow.field_6283 = this.field_6283;
++         if (this.hasCustomName()) {
++            entitycow.setCustomName(this.getCustomName());
 +         }
-+         this.field_70170_p.func_217376_c(entitycow);
++         this.world.spawnEntity(entitycow);
 +         for(int i = 0; i < 5; ++i) {
-+            ret.add(new ItemStack(Blocks.field_150337_Q));
++            ret.add(new ItemStack(Blocks.RED_MUSHROOM));
 +         }
-+         this.func_184185_a(SoundEvents.field_187784_dt, 1.0F, 1.0F);
++         this.playSound(SoundEvents.ENTITY_MOOSHROOM_SHEAR, 1.0F, 1.0F);
 +      }
 +      return ret;
 +   }
 +
     public static enum Type {
-       RED("red", Blocks.field_150337_Q.func_176223_P()),
-       BROWN("brown", Blocks.field_150338_P.func_176223_P());
+       RED("red", Blocks.RED_MUSHROOM.getDefaultState()),
+       BROWN("brown", Blocks.BROWN_MUSHROOM.getDefaultState());

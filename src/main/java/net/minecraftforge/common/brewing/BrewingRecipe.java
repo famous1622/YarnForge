@@ -22,7 +22,7 @@ package net.minecraftforge.common.brewing;
 import javax.annotation.Nonnull;
 
 import net.minecraft.item.ItemStack;
-import net.minecraft.item.crafting.Ingredient;
+import net.minecraft.recipe.Ingredient;
 
 public class BrewingRecipe implements IBrewingRecipe {
 	@Nonnull

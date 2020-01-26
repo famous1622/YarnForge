@@ -34,14 +34,14 @@ import net.minecraftforge.registries.IForgeRegistry.DummyFactory;
 import net.minecraftforge.registries.IForgeRegistry.MissingFactory;
 import net.minecraftforge.registries.IForgeRegistry.ValidateCallback;
 
-import net.minecraft.util.ResourceLocation;
+import net.minecraft.util.Identifier;
 
 public class RegistryBuilder<T extends IForgeRegistryEntry<T>> {
 	private static final int MAX_ID = Integer.MAX_VALUE - 1;
 
-	private ResourceLocation registryName;
+	private Identifier registryName;
 	private Class<T> registryType;
-	private ResourceLocation optionalDefaultKey;
+	private Identifier optionalDefaultKey;
 	private int minId = 0;
 	private int maxId = MAX_ID;
 	private List<AddCallback<T>> addCallback = Lists.newArrayList();
@@ -55,9 +55,9 @@ public class RegistryBuilder<T extends IForgeRegistryEntry<T>> {
 	private boolean allowModifications = false;
 	private DummyFactory<T> dummyFactory;
 	private MissingFactory<T> missingFactory;
-	private Set<ResourceLocation> legacyNames = new HashSet<>();
+	private Set<Identifier> legacyNames = new HashSet<>();
 
-	public RegistryBuilder<T> setName(ResourceLocation name) {
+	public RegistryBuilder<T> setName(Identifier name) {
 		this.registryName = name;
 		return this;
 	}
@@ -72,7 +72,7 @@ public class RegistryBuilder<T extends IForgeRegistryEntry<T>> {
 		return this.setIDRange(0, max);
 	}
 
-	public RegistryBuilder<T> setDefaultKey(ResourceLocation key) {
+	public RegistryBuilder<T> setDefaultKey(Identifier key) {
 		this.optionalDefaultKey = key;
 		return this;
 	}
@@ -159,10 +159,10 @@ public class RegistryBuilder<T extends IForgeRegistryEntry<T>> {
 	}
 
 	public RegistryBuilder<T> legacyName(String name) {
-		return legacyName(new ResourceLocation(name));
+		return legacyName(new Identifier(name));
 	}
 
-	public RegistryBuilder<T> legacyName(ResourceLocation name) {
+	public RegistryBuilder<T> legacyName(Identifier name) {
 		this.legacyNames.add(name);
 		return this;
 	}
@@ -266,7 +266,7 @@ public class RegistryBuilder<T extends IForgeRegistryEntry<T>> {
 	}
 
 	@Nullable
-	public ResourceLocation getDefault() {
+	public Identifier getDefault() {
 		return this.optionalDefaultKey;
 	}
 
@@ -304,7 +304,7 @@ public class RegistryBuilder<T extends IForgeRegistryEntry<T>> {
 		return sync;
 	}
 
-	public Set<ResourceLocation> getLegacyNames() {
+	public Set<Identifier> getLegacyNames() {
 		return legacyNames;
 	}
 }

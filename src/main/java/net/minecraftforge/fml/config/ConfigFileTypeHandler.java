@@ -19,7 +19,6 @@
 
 package net.minecraftforge.fml.config;
 
-import static net.minecraftforge.fml.config.ConfigTracker.CONFIG;
 
 import java.io.IOException;
 import java.nio.file.Files;

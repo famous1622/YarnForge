@@ -19,11 +19,11 @@
 
 package net.minecraftforge.client.model;
 
-import net.minecraft.client.renderer.model.IUnbakedModel;
+import net.minecraft.client.render.model.UnbakedModel;
 
 @Deprecated
 public interface ISmartVariant {
-	default IUnbakedModel process(IUnbakedModel base) {
+	default UnbakedModel process(UnbakedModel base) {
 		return base;
 	}
 }

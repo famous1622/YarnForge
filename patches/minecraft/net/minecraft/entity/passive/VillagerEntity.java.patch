@@ -1,0 +1,28 @@
+--- a/net/minecraft/entity/passive/VillagerEntity.java
++++ b/net/minecraft/entity/passive/VillagerEntity.java
+@@ -67,7 +67,6 @@
+ import net.minecraft.util.math.BlockPos;
+ import net.minecraft.util.GlobalPos;
+ import net.minecraft.util.math.MathHelper;
+-import net.minecraft.util.registry.Registry;
+ import net.minecraft.text.Text;
+ import net.minecraft.text.TranslatableText;
+ import net.minecraft.village.VillagerGossips;
+@@ -232,7 +231,7 @@
+       if (flag) {
+          itemstack.useOnEntity(player, this, hand);
+          return true;
+-      } else if (itemstack.getItem() != Items.VILLAGER_SPAWN_EGG && this.isAlive() && !this.hasCustomer() && !this.isSleeping()) {
++      } else if (itemstack.getItem() != Items.VILLAGER_SPAWN_EGG && this.isAlive() && !this.hasCustomer() && !this.isSleeping() && !player.isSneaking()) {
+          if (this.isBaby()) {
+             this.sayNo();
+             return super.interactMob(player, hand);
+@@ -613,7 +612,7 @@
+          });
+       } else {
+          VillagerProfession villagerprofession = this.getVillagerData().getProfession();
+-         Text itextcomponent1 = (new TranslatableText(this.getType().getTranslationKey() + '.' + Registry.VILLAGER_PROFESSION.getId(villagerprofession).getPath())).styled((p_213773_1_) -> {
++         Text itextcomponent1 = (new TranslatableText(this.getType().getTranslationKey() + '.' + (!"minecraft".equals(villagerprofession.getRegistryName().getNamespace()) ? villagerprofession.getRegistryName().getNamespace() + '.' : "") + villagerprofession.getRegistryName().getPath())).styled((p_213773_1_) -> {
+             p_213773_1_.setHoverEvent(this.getHoverEvent()).setInsertion(this.getUuidAsString());
+          });
+          if (team != null) {

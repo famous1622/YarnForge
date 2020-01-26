@@ -1,0 +1,72 @@
+--- a/net/minecraft/client/render/BackgroundRenderer.java
++++ b/net/minecraft/client/render/BackgroundRenderer.java
+@@ -19,8 +19,8 @@
+ import net.minecraft.world.biome.Biomes;
+ import net.minecraftforge.api.distmarker.Dist;
+ import net.minecraftforge.api.distmarker.OnlyIn;
+-import net.minecraft.client.util.GlAllocationUtils;
+ 
++import net.minecraft.client.util.GlAllocationUtils;
+ 
+ @OnlyIn(Dist.CLIENT)
+ public class BackgroundRenderer {
+@@ -103,6 +103,9 @@
+             f3 = 1.0F / this.blue;
+          }
+ 
++         // Forge: fix MC-4647 and MC-10480
++         if (Float.isInfinite(f3)) f3 = Math.nextAfter(f3, 0.0);
++
+          this.red = this.red * (1.0F - f1) + this.red * f3 * f1;
+          this.green = this.green * (1.0F - f1) + this.green * f3 * f1;
+          this.blue = this.blue * (1.0F - f1) + this.blue * f3 * f1;
+@@ -117,11 +120,21 @@
+             f4 = 1.0F / this.blue;
+          }
+ 
++         // Forge: fix MC-4647 and MC-10480
++         if (Float.isInfinite(f4)) f4 = Math.nextAfter(f4, 0.0);
++
+          this.red = this.red * (1.0F - f2) + this.red * f4 * f2;
+          this.green = this.green * (1.0F - f2) + this.green * f4 * f2;
+          this.blue = this.blue * (1.0F - f2) + this.blue * f4 * f2;
+       }
+ 
++      net.minecraftforge.client.event.EntityViewRenderEvent.FogColors event = new net.minecraftforge.client.event.EntityViewRenderEvent.FogColors(this, this.gameRenderer, p_217619_1_, p_217619_2_, this.red, this.green, this.blue);
++      net.minecraftforge.common.MinecraftForge.EVENT_BUS.post(event);
++
++      this.red = event.getRed();
++      this.green = event.getGreen();
++      this.blue = event.getBlue();
++
+       GlStateManager.clearColor(this.red, this.green, this.blue, 0.0F);
+    }
+ 
+@@ -207,11 +220,19 @@
+ 
+    }
+ 
++   @Deprecated //Forge: pass in partial ticks to setupFog
+    public void applyFog(Camera p_217618_1_, int p_217618_2_) {
++      setupFog(p_217618_1_, p_217618_2_, 0F);
++   }
++
++   public void setupFog(Camera p_217618_1_, int p_217618_2_, float partialTicks) {
+       this.setFogBlack(false);
+       GlStateManager.normal3f(0.0F, -1.0F, 0.0F);
+       GlStateManager.color4f(1.0F, 1.0F, 1.0F, 1.0F);
+       FluidState ifluidstate = p_217618_1_.getSubmergedFluidState();
++      float hook = net.minecraftforge.client.ForgeHooksClient.getFogDensity(this, this.gameRenderer, p_217618_1_, partialTicks, 0.1F);
++      if (hook >= 0) GlStateManager.fogDensity(hook);
++      else
+       if (p_217618_1_.getFocusedEntity() instanceof LivingEntity && ((LivingEntity)p_217618_1_.getFocusedEntity()).hasStatusEffect(StatusEffects.BLINDNESS)) {
+          float f2 = 5.0F;
+          int i = ((LivingEntity)p_217618_1_.getFocusedEntity()).getStatusEffect(StatusEffects.BLINDNESS).getDuration();
+@@ -266,6 +287,7 @@
+             GlStateManager.fogStart(f1 * 0.05F);
+             GlStateManager.fogEnd(Math.min(f1, 192.0F) * 0.5F);
+          }
++         net.minecraftforge.client.ForgeHooksClient.onFogRender(this, this.gameRenderer, p_217618_1_, partialTicks, p_217618_2_, f1);
+       }
+ 
+       GlStateManager.enableColorMaterial();

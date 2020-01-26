@@ -1,0 +1,11 @@
+--- a/net/minecraft/nbt/StringTag.java
++++ b/net/minecraft/nbt/StringTag.java
+@@ -26,7 +26,7 @@
+    public void read(DataInput input, int depth, PositionTracker sizeTracker) throws IOException {
+       sizeTracker.add(288L);
+       this.value = input.readUTF();
+-      sizeTracker.add((long)(16 * this.value.length()));
++      PositionTracker.readUTF(sizeTracker, this.value);  // Forge: Correctly read String length including header.
+    }
+ 
+    public byte getType() {

@@ -1,0 +1,12 @@
+--- a/net/minecraft/util/TypedActionResult.java
++++ b/net/minecraft/util/TypedActionResult.java
+@@ -16,4 +16,9 @@
+    public T getValue() {
+       return this.value;
+    }
++
++   //Just a generic helper function to make typecasing easier...
++   public static <T> TypedActionResult<T> newResult(ActionResult result, T value) {
++      return new TypedActionResult<T>(result, value);
++   }
+ }

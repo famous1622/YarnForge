@@ -1,0 +1,131 @@
+--- a/net/minecraft/client/render/block/BlockModelRenderer.java
++++ b/net/minecraft/client/render/block/BlockModelRenderer.java
+@@ -25,10 +25,10 @@
+ import net.minecraft.world.ExtendedBlockView;
+ import net.minecraftforge.api.distmarker.Dist;
+ import net.minecraftforge.api.distmarker.OnlyIn;
++
+ import net.minecraft.client.render.BufferBuilder;
+ import net.minecraft.client.render.Tessellator;
+ 
+-
+ @OnlyIn(Dist.CLIENT)
+ public class BlockModelRenderer {
+    private final BlockColors colorMap;
+@@ -40,11 +40,17 @@
+       this.colorMap = blockColorsIn;
+    }
+ 
++   @Deprecated //Forge: Model data argument
+    public boolean tesselate(ExtendedBlockView p_217631_1_, BakedModel p_217631_2_, BlockState p_217631_3_, BlockPos p_217631_4_, BufferBuilder p_217631_5_, boolean p_217631_6_, Random p_217631_7_, long p_217631_8_) {
+-      boolean flag = MinecraftClient.isAmbientOcclusionEnabled() && p_217631_3_.getLuminance() == 0 && p_217631_2_.useAmbientOcclusion();
++      return renderModel(p_217631_1_, p_217631_2_, p_217631_3_, p_217631_4_, p_217631_5_, p_217631_6_, p_217631_7_, p_217631_8_, net.minecraftforge.client.model.data.EmptyModelData.INSTANCE);
++   }
++
++   public boolean renderModel(ExtendedBlockView p_217631_1_, BakedModel p_217631_2_, BlockState p_217631_3_, BlockPos p_217631_4_, BufferBuilder p_217631_5_, boolean p_217631_6_, Random p_217631_7_, long p_217631_8_, net.minecraftforge.client.model.data.IModelData modelData) {
++      boolean flag = MinecraftClient.isAmbientOcclusionEnabled() && p_217631_3_.getLightValue(p_217631_1_, p_217631_4_) == 0 && p_217631_2_.useAmbientOcclusion();
++      modelData = p_217631_2_.getModelData(p_217631_1_, p_217631_4_, p_217631_3_, modelData);
+ 
+       try {
+-         return flag ? this.tesselateSmooth(p_217631_1_, p_217631_2_, p_217631_3_, p_217631_4_, p_217631_5_, p_217631_6_, p_217631_7_, p_217631_8_) : this.tesselateFlat(p_217631_1_, p_217631_2_, p_217631_3_, p_217631_4_, p_217631_5_, p_217631_6_, p_217631_7_, p_217631_8_);
++         return flag ? this.renderModelSmooth(p_217631_1_, p_217631_2_, p_217631_3_, p_217631_4_, p_217631_5_, p_217631_6_, p_217631_7_, p_217631_8_, modelData) : this.renderModelFlat(p_217631_1_, p_217631_2_, p_217631_3_, p_217631_4_, p_217631_5_, p_217631_6_, p_217631_7_, p_217631_8_, modelData);
+       } catch (Throwable throwable) {
+          CrashReport crashreport = CrashReport.create(throwable, "Tesselating block model");
+          CrashReportSection crashreportcategory = crashreport.addElement("Block model being tesselated");
+@@ -54,7 +60,12 @@
+       }
+    }
+ 
++   @Deprecated //Forge: Model data argument
+    public boolean tesselateSmooth(ExtendedBlockView p_217634_1_, BakedModel p_217634_2_, BlockState p_217634_3_, BlockPos p_217634_4_, BufferBuilder p_217634_5_, boolean p_217634_6_, Random p_217634_7_, long p_217634_8_) {
++      return renderModelSmooth(p_217634_1_, p_217634_2_, p_217634_3_, p_217634_4_, p_217634_5_, p_217634_6_, p_217634_7_, p_217634_8_, net.minecraftforge.client.model.data.EmptyModelData.INSTANCE);
++   }
++
++   public boolean renderModelSmooth(ExtendedBlockView p_217634_1_, BakedModel p_217634_2_, BlockState p_217634_3_, BlockPos p_217634_4_, BufferBuilder p_217634_5_, boolean p_217634_6_, Random p_217634_7_, long p_217634_8_, net.minecraftforge.client.model.data.IModelData modelData) {
+       boolean flag = false;
+       float[] afloat = new float[Direction.values().length * 2];
+       BitSet bitset = new BitSet(3);
+@@ -62,7 +73,7 @@
+ 
+       for(Direction direction : Direction.values()) {
+          p_217634_7_.setSeed(p_217634_8_);
+-         List<BakedQuad> list = p_217634_2_.getQuads(p_217634_3_, direction, p_217634_7_);
++         List<BakedQuad> list = p_217634_2_.getQuads(p_217634_3_, direction, p_217634_7_, modelData);
+          if (!list.isEmpty() && (!p_217634_6_ || Block.shouldDrawSide(p_217634_3_, p_217634_1_, p_217634_4_, direction))) {
+             this.tesselateQuadsSmooth(p_217634_1_, p_217634_3_, p_217634_4_, p_217634_5_, list, afloat, bitset, blockmodelrenderer$ambientocclusionface);
+             flag = true;
+@@ -70,7 +81,7 @@
+       }
+ 
+       p_217634_7_.setSeed(p_217634_8_);
+-      List<BakedQuad> list1 = p_217634_2_.getQuads(p_217634_3_, (Direction)null, p_217634_7_);
++      List<BakedQuad> list1 = p_217634_2_.getQuads(p_217634_3_, (Direction)null, p_217634_7_, modelData);
+       if (!list1.isEmpty()) {
+          this.tesselateQuadsSmooth(p_217634_1_, p_217634_3_, p_217634_4_, p_217634_5_, list1, afloat, bitset, blockmodelrenderer$ambientocclusionface);
+          flag = true;
+@@ -79,13 +90,18 @@
+       return flag;
+    }
+ 
++   @Deprecated //Forge: Model data Argument
+    public boolean tesselateFlat(ExtendedBlockView p_217635_1_, BakedModel p_217635_2_, BlockState p_217635_3_, BlockPos p_217635_4_, BufferBuilder p_217635_5_, boolean p_217635_6_, Random p_217635_7_, long p_217635_8_) {
++      return renderModelFlat(p_217635_1_, p_217635_2_, p_217635_3_, p_217635_4_, p_217635_5_, p_217635_6_, p_217635_7_, p_217635_8_, net.minecraftforge.client.model.data.EmptyModelData.INSTANCE);
++   }
++
++   public boolean renderModelFlat(ExtendedBlockView p_217635_1_, BakedModel p_217635_2_, BlockState p_217635_3_, BlockPos p_217635_4_, BufferBuilder p_217635_5_, boolean p_217635_6_, Random p_217635_7_, long p_217635_8_, net.minecraftforge.client.model.data.IModelData modelData) {
+       boolean flag = false;
+       BitSet bitset = new BitSet(3);
+ 
+       for(Direction direction : Direction.values()) {
+          p_217635_7_.setSeed(p_217635_8_);
+-         List<BakedQuad> list = p_217635_2_.getQuads(p_217635_3_, direction, p_217635_7_);
++         List<BakedQuad> list = p_217635_2_.getQuads(p_217635_3_, direction, p_217635_7_, modelData);
+          if (!list.isEmpty() && (!p_217635_6_ || Block.shouldDrawSide(p_217635_3_, p_217635_1_, p_217635_4_, direction))) {
+             int i = p_217635_3_.getBlockBrightness(p_217635_1_, p_217635_4_.offset(direction));
+             this.tesselateQuadsFlat(p_217635_1_, p_217635_3_, p_217635_4_, i, false, p_217635_5_, list, bitset);
+@@ -94,7 +110,7 @@
+       }
+ 
+       p_217635_7_.setSeed(p_217635_8_);
+-      List<BakedQuad> list1 = p_217635_2_.getQuads(p_217635_3_, (Direction)null, p_217635_7_);
++      List<BakedQuad> list1 = p_217635_2_.getQuads(p_217635_3_, (Direction)null, p_217635_7_, modelData);
+       if (!list1.isEmpty()) {
+          this.tesselateQuadsFlat(p_217635_1_, p_217635_3_, p_217635_4_, -1, true, p_217635_5_, list1, bitset);
+          flag = true;
+@@ -116,6 +132,13 @@
+          p_217630_8_.apply(p_217630_1_, p_217630_2_, p_217630_3_, bakedquad.getFace(), p_217630_6_, p_217630_7_);
+          p_217630_4_.putVertexData(bakedquad.getVertexData());
+          p_217630_4_.brightness(p_217630_8_.brightness[0], p_217630_8_.brightness[1], p_217630_8_.brightness[2], p_217630_8_.brightness[3]);
++         if(bakedquad.shouldApplyDiffuseLighting()) {
++            float diffuse = net.minecraftforge.client.model.pipeline.LightUtil.diffuseLight(bakedquad.getFace());
++            p_217630_8_.colorMultiplier[0] *= diffuse;
++            p_217630_8_.colorMultiplier[1] *= diffuse;
++            p_217630_8_.colorMultiplier[2] *= diffuse;
++            p_217630_8_.colorMultiplier[3] *= diffuse;
++         }
+          if (bakedquad.hasColor()) {
+             int k = this.colorMap.getColorMultiplier(p_217630_2_, p_217630_1_, p_217630_3_, bakedquad.getColorIndex());
+             float f = (float)(k >> 16 & 255) / 255.0F;
+@@ -225,10 +248,22 @@
+             float f = (float)(k >> 16 & 255) / 255.0F;
+             float f1 = (float)(k >> 8 & 255) / 255.0F;
+             float f2 = (float)(k & 255) / 255.0F;
++            if(bakedquad.shouldApplyDiffuseLighting()) {
++               float diffuse = net.minecraftforge.client.model.pipeline.LightUtil.diffuseLight(bakedquad.getFace());
++               f *= diffuse;
++               f1 *= diffuse;
++               f2 *= diffuse;
++            }
+             p_217636_6_.multiplyColor(f, f1, f2, 4);
+             p_217636_6_.multiplyColor(f, f1, f2, 3);
+             p_217636_6_.multiplyColor(f, f1, f2, 2);
+             p_217636_6_.multiplyColor(f, f1, f2, 1);
++         } else if(bakedquad.shouldApplyDiffuseLighting()) {
++            float diffuse = net.minecraftforge.client.model.pipeline.LightUtil.diffuseLight(bakedquad.getFace());
++            p_217636_6_.multiplyColor(diffuse, diffuse, diffuse, 4);
++            p_217636_6_.multiplyColor(diffuse, diffuse, diffuse, 3);
++            p_217636_6_.multiplyColor(diffuse, diffuse, diffuse, 2);
++            p_217636_6_.multiplyColor(diffuse, diffuse, diffuse, 1);
+          }
+ 
+          p_217636_6_.postPosition(d0, d1, d2);

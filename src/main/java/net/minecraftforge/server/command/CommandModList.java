@@ -24,16 +24,16 @@ import java.util.stream.Collectors;
 import com.mojang.brigadier.builder.ArgumentBuilder;
 import net.minecraftforge.fml.ModList;
 
-import net.minecraft.command.CommandSource;
-import net.minecraft.command.Commands;
-import net.minecraft.util.text.TranslationTextComponent;
+import net.minecraft.server.command.ServerCommandSource;
+import net.minecraft.server.command.CommandManager;
+import net.minecraft.text.TranslatableText;
 
 public class CommandModList {
-	static ArgumentBuilder<CommandSource, ?> register() {
-		return Commands.literal("mods")
+	static ArgumentBuilder<ServerCommandSource, ?> register() {
+		return CommandManager.literal("mods")
 				.requires(cs -> cs.hasPermissionLevel(0)) //permission
 				.executes(ctx -> {
-							ctx.getSource().sendFeedback(new TranslationTextComponent("commands.forge.mods.list",
+							ctx.getSource().sendFeedback(new TranslatableText("commands.forge.mods.list",
 											ModList.get().applyForEachModFile(modFile ->
 													// locator - filename : firstmod (version) - numberofmods\n
 													String.format("%s %s : %s (%s) - %d",

@@ -32,20 +32,20 @@ import net.minecraftforge.resource.ISelectiveResourceReloadListener;
 import net.minecraftforge.resource.VanillaResourceType;
 import org.lwjgl.opengl.GL11;
 
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.BufferBuilder;
-import net.minecraft.client.renderer.GLAllocation;
-import net.minecraft.client.renderer.Tessellator;
-import net.minecraft.client.renderer.texture.DynamicTexture;
-import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
-import net.minecraft.client.renderer.vertex.VertexBuffer;
-import net.minecraft.client.renderer.vertex.VertexFormat;
-import net.minecraft.client.settings.CloudOption;
+import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.render.BufferBuilder;
+import net.minecraft.client.util.GlAllocationUtils;
+import net.minecraft.client.render.Tessellator;
+import net.minecraft.client.texture.NativeImageBackedTexture;
+import net.minecraft.client.render.VertexFormats;
+import net.minecraft.client.gl.GlBuffer;
+import net.minecraft.client.render.VertexFormat;
+import net.minecraft.client.options.CloudRenderMode;
 import net.minecraft.client.world.ClientWorld;
 import net.minecraft.entity.Entity;
-import net.minecraft.resources.IReloadableResourceManager;
-import net.minecraft.resources.IResourceManager;
-import net.minecraft.util.ResourceLocation;
+import net.minecraft.resource.ReloadableResourceManager;
+import net.minecraft.resource.ResourceManager;
+import net.minecraft.util.Identifier;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Vec3d;
 
@@ -54,7 +54,7 @@ public class CloudRenderer implements ISelectiveResourceReloadListener {
 	private static final float PX_SIZE = 1 / 256F;
 
 	// Building constants.
-	private static final VertexFormat FORMAT = DefaultVertexFormats.POSITION_TEX_COLOR;
+	private static final VertexFormat FORMAT = VertexFormats.POSITION_UV_COLOR;
 	private static final int TOP_SECTIONS = 12;    // Number of slices a top face will span.
 	private static final int HEIGHT = 4;
 	private static final float INSET = 0.001F;
@@ -64,19 +64,19 @@ public class CloudRenderer implements ISelectiveResourceReloadListener {
 	private static final boolean WIREFRAME = false;
 	private static CloudRenderer cloudRenderer;
 	// Instance fields
-	private final Minecraft mc = Minecraft.getInstance();
-	private final ResourceLocation texture = new ResourceLocation("textures/environment/clouds.png");
+	private final MinecraftClient mc = MinecraftClient.getInstance();
+	private final Identifier texture = new Identifier("textures/environment/clouds.png");
 	private int displayList = -1;
-	private VertexBuffer vbo;
-	private CloudOption cloudMode = CloudOption.OFF;
+	private GlBuffer vbo;
+	private CloudRenderMode cloudMode = CloudRenderMode.OFF;
 	private int renderDistance = -1;
-	private DynamicTexture COLOR_TEX = null;
+	private NativeImageBackedTexture COLOR_TEX = null;
 	private int texW;
 	private int texH;
 
 	public CloudRenderer() {
 		// Resource manager should always be reloadable.
-		((IReloadableResourceManager) mc.getResourceManager()).addReloadListener(this);
+		((ReloadableResourceManager) mc.getResourceManager()).registerListener(this);
 	}
 
 	private static CloudRenderer getCloudRenderer() {
@@ -90,7 +90,7 @@ public class CloudRenderer implements ISelectiveResourceReloadListener {
 		getCloudRenderer().checkSettings();
 	}
 
-	public static boolean renderClouds(int cloudTicks, float partialTicks, ClientWorld world, Minecraft client) {
+	public static boolean renderClouds(int cloudTicks, float partialTicks, ClientWorld world, MinecraftClient client) {
 		IRenderHandler renderer = world.dimension.getCloudRenderer();
 		if (renderer != null) {
 			renderer.render(cloudTicks, partialTicks, world, client);
@@ -100,7 +100,7 @@ public class CloudRenderer implements ISelectiveResourceReloadListener {
 	}
 
 	private int getScale() {
-		return cloudMode == CloudOption.FANCY ? 12 : 8;
+		return cloudMode == CloudRenderMode.FANCY ? 12 : 8;
 	}
 
 	private float ceilToScale(float value) {
@@ -109,7 +109,7 @@ public class CloudRenderer implements ISelectiveResourceReloadListener {
 	}
 
 	private void vertices(BufferBuilder buffer) {
-		boolean fancy = cloudMode == CloudOption.FANCY;    // Defines whether to hide all but the bottom.
+		boolean fancy = cloudMode == CloudRenderMode.FANCY;    // Defines whether to hide all but the bottom.
 
 		float scale = getScale();
 		float CULL_DIST = 2 * scale;
@@ -150,17 +150,17 @@ public class CloudRenderer implements ISelectiveResourceReloadListener {
 				float v1 = sectZ1 * sectPx;
 
 				// Bottom
-				buffer.pos(sectX0, 0, sectZ0).tex(u0, v0).color(bCol, bCol, bCol, ALPHA).endVertex();
-				buffer.pos(sectX1, 0, sectZ0).tex(u1, v0).color(bCol, bCol, bCol, ALPHA).endVertex();
-				buffer.pos(sectX1, 0, sectZ1).tex(u1, v1).color(bCol, bCol, bCol, ALPHA).endVertex();
-				buffer.pos(sectX0, 0, sectZ1).tex(u0, v1).color(bCol, bCol, bCol, ALPHA).endVertex();
+				buffer.vertex(sectX0, 0, sectZ0).texture(u0, v0).color(bCol, bCol, bCol, ALPHA).next();
+				buffer.vertex(sectX1, 0, sectZ0).texture(u1, v0).color(bCol, bCol, bCol, ALPHA).next();
+				buffer.vertex(sectX1, 0, sectZ1).texture(u1, v1).color(bCol, bCol, bCol, ALPHA).next();
+				buffer.vertex(sectX0, 0, sectZ1).texture(u0, v1).color(bCol, bCol, bCol, ALPHA).next();
 
 				if (fancy) {
 					// Top
-					buffer.pos(sectX0, HEIGHT, sectZ0).tex(u0, v0).color(1, 1, 1, ALPHA).endVertex();
-					buffer.pos(sectX0, HEIGHT, sectZ1).tex(u0, v1).color(1, 1, 1, ALPHA).endVertex();
-					buffer.pos(sectX1, HEIGHT, sectZ1).tex(u1, v1).color(1, 1, 1, ALPHA).endVertex();
-					buffer.pos(sectX1, HEIGHT, sectZ0).tex(u1, v0).color(1, 1, 1, ALPHA).endVertex();
+					buffer.vertex(sectX0, HEIGHT, sectZ0).texture(u0, v0).color(1, 1, 1, ALPHA).next();
+					buffer.vertex(sectX0, HEIGHT, sectZ1).texture(u0, v1).color(1, 1, 1, ALPHA).next();
+					buffer.vertex(sectX1, HEIGHT, sectZ1).texture(u1, v1).color(1, 1, 1, ALPHA).next();
+					buffer.vertex(sectX1, HEIGHT, sectZ0).texture(u1, v0).color(1, 1, 1, ALPHA).next();
 
 					float slice;
 					float sliceCoord0;
@@ -173,10 +173,10 @@ public class CloudRenderer implements ISelectiveResourceReloadListener {
 						// X sides
 						if (slice > -CULL_DIST) {
 							slice += INSET;
-							buffer.pos(slice, 0, sectZ1).tex(sliceCoord0, v1).color(0.9F, 0.9F, 0.9F, ALPHA).endVertex();
-							buffer.pos(slice, HEIGHT, sectZ1).tex(sliceCoord1, v1).color(0.9F, 0.9F, 0.9F, ALPHA).endVertex();
-							buffer.pos(slice, HEIGHT, sectZ0).tex(sliceCoord1, v0).color(0.9F, 0.9F, 0.9F, ALPHA).endVertex();
-							buffer.pos(slice, 0, sectZ0).tex(sliceCoord0, v0).color(0.9F, 0.9F, 0.9F, ALPHA).endVertex();
+							buffer.vertex(slice, 0, sectZ1).texture(sliceCoord0, v1).color(0.9F, 0.9F, 0.9F, ALPHA).next();
+							buffer.vertex(slice, HEIGHT, sectZ1).texture(sliceCoord1, v1).color(0.9F, 0.9F, 0.9F, ALPHA).next();
+							buffer.vertex(slice, HEIGHT, sectZ0).texture(sliceCoord1, v0).color(0.9F, 0.9F, 0.9F, ALPHA).next();
+							buffer.vertex(slice, 0, sectZ0).texture(sliceCoord0, v0).color(0.9F, 0.9F, 0.9F, ALPHA).next();
 							slice -= INSET;
 						}
 
@@ -184,10 +184,10 @@ public class CloudRenderer implements ISelectiveResourceReloadListener {
 
 						if (slice <= CULL_DIST) {
 							slice -= INSET;
-							buffer.pos(slice, 0, sectZ0).tex(sliceCoord0, v0).color(0.9F, 0.9F, 0.9F, ALPHA).endVertex();
-							buffer.pos(slice, HEIGHT, sectZ0).tex(sliceCoord1, v0).color(0.9F, 0.9F, 0.9F, ALPHA).endVertex();
-							buffer.pos(slice, HEIGHT, sectZ1).tex(sliceCoord1, v1).color(0.9F, 0.9F, 0.9F, ALPHA).endVertex();
-							buffer.pos(slice, 0, sectZ1).tex(sliceCoord0, v1).color(0.9F, 0.9F, 0.9F, ALPHA).endVertex();
+							buffer.vertex(slice, 0, sectZ0).texture(sliceCoord0, v0).color(0.9F, 0.9F, 0.9F, ALPHA).next();
+							buffer.vertex(slice, HEIGHT, sectZ0).texture(sliceCoord1, v0).color(0.9F, 0.9F, 0.9F, ALPHA).next();
+							buffer.vertex(slice, HEIGHT, sectZ1).texture(sliceCoord1, v1).color(0.9F, 0.9F, 0.9F, ALPHA).next();
+							buffer.vertex(slice, 0, sectZ1).texture(sliceCoord0, v1).color(0.9F, 0.9F, 0.9F, ALPHA).next();
 							slice += INSET;
 						}
 					}
@@ -199,10 +199,10 @@ public class CloudRenderer implements ISelectiveResourceReloadListener {
 						// Z sides
 						if (slice > -CULL_DIST) {
 							slice += INSET;
-							buffer.pos(sectX0, 0, slice).tex(u0, sliceCoord0).color(0.8F, 0.8F, 0.8F, ALPHA).endVertex();
-							buffer.pos(sectX0, HEIGHT, slice).tex(u0, sliceCoord1).color(0.8F, 0.8F, 0.8F, ALPHA).endVertex();
-							buffer.pos(sectX1, HEIGHT, slice).tex(u1, sliceCoord1).color(0.8F, 0.8F, 0.8F, ALPHA).endVertex();
-							buffer.pos(sectX1, 0, slice).tex(u1, sliceCoord0).color(0.8F, 0.8F, 0.8F, ALPHA).endVertex();
+							buffer.vertex(sectX0, 0, slice).texture(u0, sliceCoord0).color(0.8F, 0.8F, 0.8F, ALPHA).next();
+							buffer.vertex(sectX0, HEIGHT, slice).texture(u0, sliceCoord1).color(0.8F, 0.8F, 0.8F, ALPHA).next();
+							buffer.vertex(sectX1, HEIGHT, slice).texture(u1, sliceCoord1).color(0.8F, 0.8F, 0.8F, ALPHA).next();
+							buffer.vertex(sectX1, 0, slice).texture(u1, sliceCoord0).color(0.8F, 0.8F, 0.8F, ALPHA).next();
 							slice -= INSET;
 						}
 
@@ -210,10 +210,10 @@ public class CloudRenderer implements ISelectiveResourceReloadListener {
 
 						if (slice <= CULL_DIST) {
 							slice -= INSET;
-							buffer.pos(sectX1, 0, slice).tex(u1, sliceCoord0).color(0.8F, 0.8F, 0.8F, ALPHA).endVertex();
-							buffer.pos(sectX1, HEIGHT, slice).tex(u1, sliceCoord1).color(0.8F, 0.8F, 0.8F, ALPHA).endVertex();
-							buffer.pos(sectX0, HEIGHT, slice).tex(u0, sliceCoord1).color(0.8F, 0.8F, 0.8F, ALPHA).endVertex();
-							buffer.pos(sectX0, 0, slice).tex(u0, sliceCoord0).color(0.8F, 0.8F, 0.8F, ALPHA).endVertex();
+							buffer.vertex(sectX1, 0, slice).texture(u1, sliceCoord0).color(0.8F, 0.8F, 0.8F, ALPHA).next();
+							buffer.vertex(sectX1, HEIGHT, slice).texture(u1, sliceCoord1).color(0.8F, 0.8F, 0.8F, ALPHA).next();
+							buffer.vertex(sectX0, HEIGHT, slice).texture(u0, sliceCoord1).color(0.8F, 0.8F, 0.8F, ALPHA).next();
+							buffer.vertex(sectX0, 0, slice).texture(u0, sliceCoord0).color(0.8F, 0.8F, 0.8F, ALPHA).next();
 							slice += INSET;
 						}
 					}
@@ -228,31 +228,31 @@ public class CloudRenderer implements ISelectiveResourceReloadListener {
 
 	private void dispose() {
 		if (vbo != null) {
-			vbo.deleteGlBuffers();
+			vbo.delete();
 			vbo = null;
 		}
 		if (displayList >= 0) {
-			GLAllocation.deleteDisplayLists(displayList);
+			GlAllocationUtils.deleteSingletonList(displayList);
 			displayList = -1;
 		}
 	}
 
 	private void build() {
 		Tessellator tess = Tessellator.getInstance();
-		BufferBuilder buffer = tess.getBuffer();
+		BufferBuilder buffer = tess.getBufferBuilder();
 
 		if (GLX.useVbo()) {
-			vbo = new VertexBuffer(FORMAT);
+			vbo = new GlBuffer(FORMAT);
 		} else {
-			GlStateManager.newList(displayList = GLAllocation.generateDisplayLists(1), GL11.GL_COMPILE);
+			GlStateManager.newList(displayList = GlAllocationUtils.genLists(1), GL11.GL_COMPILE);
 		}
 
 		vertices(buffer);
 
 		if (GLX.useVbo()) {
-			buffer.finishDrawing();
-			buffer.reset();
-			vbo.bufferData(buffer.getByteBuffer());
+			buffer.end();
+			buffer.clear();
+			vbo.set(buffer.getByteBuffer());
 		} else {
 			tess.draw();
 			GlStateManager.endList();
@@ -269,19 +269,19 @@ public class CloudRenderer implements ISelectiveResourceReloadListener {
 
 	public void checkSettings() {
 		boolean newEnabled = ForgeConfig.CLIENT.forgeCloudsEnabled.get()
-				&& mc.gameSettings.getCloudOption() != CloudOption.OFF
+				&& mc.options.getCloudRenderMode() != CloudRenderMode.OFF
 				&& mc.world != null
-				&& mc.world.dimension.isSurfaceWorld();
+				&& mc.world.dimension.hasVisibleSky();
 
 		if (isBuilt()
 				&& (!newEnabled
-				|| mc.gameSettings.getCloudOption() != cloudMode
-				|| mc.gameSettings.renderDistanceChunks != renderDistance)) {
+				|| mc.options.getCloudRenderMode() != cloudMode
+				|| mc.options.viewDistance != renderDistance)) {
 			dispose();
 		}
 
-		cloudMode = mc.gameSettings.getCloudOption();
-		renderDistance = mc.gameSettings.renderDistanceChunks;
+		cloudMode = mc.options.getCloudRenderMode();
+		renderDistance = mc.options.viewDistance;
 
 		if (newEnabled && !isBuilt()) {
 			build();
@@ -293,20 +293,20 @@ public class CloudRenderer implements ISelectiveResourceReloadListener {
 			return false;
 		}
 
-		Entity entity = mc.getRenderViewEntity();
+		Entity entity = mc.getCameraEntity();
 
 		double totalOffset = cloudTicks + partialTicks;
 
-		double x = entity.prevPosX + (entity.posX - entity.prevPosX) * partialTicks
+		double x = entity.prevX + (entity.x - entity.prevX) * partialTicks
 				+ totalOffset * 0.03;
 		double y = mc.world.dimension.getCloudHeight()
-				- (entity.lastTickPosY + (entity.posY - entity.lastTickPosY) * partialTicks)
+				- (entity.prevRenderY + (entity.y - entity.prevRenderY) * partialTicks)
 				+ 0.33;
-		double z = entity.prevPosZ + (entity.posZ - entity.prevPosZ) * partialTicks;
+		double z = entity.prevZ + (entity.z - entity.prevZ) * partialTicks;
 
 		int scale = getScale();
 
-		if (cloudMode == CloudOption.FANCY) {
+		if (cloudMode == CloudRenderMode.FANCY) {
 			z += 0.33 * scale;
 		}
 
@@ -336,37 +336,37 @@ public class CloudRenderer implements ISelectiveResourceReloadListener {
 				GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ZERO);
 
 		// Color multiplier.
-		Vec3d color = mc.world.getCloudColour(partialTicks);
+		Vec3d color = mc.world.getCloudColor(partialTicks);
 		float r = (float) color.x;
 		float g = (float) color.y;
 		float b = (float) color.z;
 
 		if (COLOR_TEX == null) {
-			COLOR_TEX = new DynamicTexture(1, 1, false);
+			COLOR_TEX = new NativeImageBackedTexture(1, 1, false);
 		}
 
 		// Apply a color multiplier through a texture upload if shaders aren't supported.
-		COLOR_TEX.getTextureData().setPixelRGBA(0, 0, 255 << 24
+		COLOR_TEX.getImage().setPixelRGBA(0, 0, 255 << 24
 				| ((int) (r * 255)) << 16
 				| ((int) (g * 255)) << 8
 				| (int) (b * 255));
-		COLOR_TEX.updateDynamicTexture();
+		COLOR_TEX.upload();
 
 		GlStateManager.activeTexture(GLX.GL_TEXTURE1);
-		GlStateManager.bindTexture(COLOR_TEX.getGlTextureId());
+		GlStateManager.bindTexture(COLOR_TEX.getGlId());
 		GlStateManager.enableTexture();
 
 		// Bind the clouds texture last so the shader's sampler2D is correct.
 		GlStateManager.activeTexture(GLX.GL_TEXTURE0);
 		mc.textureManager.bindTexture(texture);
 
-		ByteBuffer buffer = Tessellator.getInstance().getBuffer().getByteBuffer();
+		ByteBuffer buffer = Tessellator.getInstance().getBufferBuilder().getByteBuffer();
 
 		// Set up pointers for the display list/VBO.
 		if (GLX.useVbo()) {
-			vbo.bindBuffer();
+			vbo.bind();
 
-			int stride = FORMAT.getSize();
+			int stride = FORMAT.getVertexSize();
 			GlStateManager.vertexPointer(3, GL11.GL_FLOAT, stride, 0);
 			GlStateManager.enableClientState(GL11.GL_VERTEX_ARRAY);
 			GlStateManager.texCoordPointer(2, GL11.GL_FLOAT, stride, 12);
@@ -374,9 +374,9 @@ public class CloudRenderer implements ISelectiveResourceReloadListener {
 			GlStateManager.colorPointer(4, GL11.GL_UNSIGNED_BYTE, stride, 20);
 			GlStateManager.enableClientState(GL11.GL_COLOR_ARRAY);
 		} else {
-			buffer.limit(FORMAT.getSize());
+			buffer.limit(FORMAT.getVertexSize());
 			for (int i = 0; i < FORMAT.getElementCount(); i++) {
-				FORMAT.getElements().get(i).getUsage().preDraw(FORMAT, i, FORMAT.getSize(), buffer);
+				FORMAT.getElements().get(i).getType().preDraw(FORMAT, i, FORMAT.getVertexSize(), buffer);
 			}
 			buffer.position(0);
 		}
@@ -384,7 +384,7 @@ public class CloudRenderer implements ISelectiveResourceReloadListener {
 		// Depth pass to prevent insides rendering from the outside.
 		GlStateManager.colorMask(false, false, false, false);
 		if (GLX.useVbo()) {
-			vbo.drawArrays(GL11.GL_QUADS);
+			vbo.draw(GL11.GL_QUADS);
 		} else {
 			GlStateManager.callList(displayList);
 		}
@@ -400,7 +400,7 @@ public class CloudRenderer implements ISelectiveResourceReloadListener {
 			GlStateManager.depthMask(false);
 			GlStateManager.disableFog();
 			if (GLX.useVbo()) {
-				vbo.drawArrays(GL11.GL_QUADS);
+				vbo.draw(GL11.GL_QUADS);
 			} else {
 				GlStateManager.callList(displayList);
 			}
@@ -411,15 +411,15 @@ public class CloudRenderer implements ISelectiveResourceReloadListener {
 		}
 
 		if (GLX.useVbo()) {
-			vbo.drawArrays(GL11.GL_QUADS);
-			VertexBuffer.unbindBuffer(); // Unbind buffer and disable pointers.
+			vbo.draw(GL11.GL_QUADS);
+			GlBuffer.unbind(); // Unbind buffer and disable pointers.
 		} else {
 			GlStateManager.callList(displayList);
 		}
 
 		buffer.limit(0);
 		for (int i = 0; i < FORMAT.getElementCount(); i++) {
-			FORMAT.getElements().get(i).getUsage().postDraw(FORMAT, i, FORMAT.getSize(), buffer);
+			FORMAT.getElements().get(i).getType().postDraw(FORMAT, i, FORMAT.getVertexSize(), buffer);
 		}
 		buffer.position(0);
 
@@ -450,7 +450,7 @@ public class CloudRenderer implements ISelectiveResourceReloadListener {
 	}
 
 	@Override
-	public void onResourceManagerReload(@Nonnull IResourceManager resourceManager, @Nonnull Predicate<IResourceType> resourcePredicate) {
+	public void onResourceManagerReload(@Nonnull ResourceManager resourceManager, @Nonnull Predicate<IResourceType> resourcePredicate) {
 		if (resourcePredicate.test(VanillaResourceType.TEXTURES)) {
 			reloadTextures();
 		}

@@ -1,0 +1,13 @@
+--- a/net/minecraft/block/KelpBlock.java
++++ b/net/minecraft/block/KelpBlock.java
+@@ -56,8 +56,9 @@
+       } else {
+          BlockPos blockpos = pos.up();
+          BlockState blockstate = worldIn.getBlockState(blockpos);
+-         if (blockstate.getBlock() == Blocks.WATER && state.get(AGE) < 25 && random.nextDouble() < 0.14D) {
++         if (blockstate.getBlock() == Blocks.WATER && state.get(AGE) < 25 && net.minecraftforge.common.ForgeHooks.onCropsGrowPre(worldIn, blockpos, state, random.nextDouble() < 0.14D)) {
+             worldIn.setBlockState(blockpos, state.cycle(AGE));
++            net.minecraftforge.common.ForgeHooks.onCropsGrowPost(worldIn, pos, state);
+          }
+ 
+       }

@@ -22,15 +22,14 @@ package net.minecraftforge.common.extensions;
 import java.util.List;
 
 import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.CompoundNBT;
-import net.minecraft.nbt.ListNBT;
-import net.minecraft.potion.EffectInstance;
-import net.minecraft.potion.Potion;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.ListTag;
+import net.minecraft.entity.effect.StatusEffectInstance;
 
 public interface IForgeEffectInstance {
 
-	default EffectInstance getEffectInstance() {
-		return (EffectInstance) this;
+	default StatusEffectInstance getEffectInstance() {
+		return (StatusEffectInstance) this;
 	}
 
 	/***
@@ -53,7 +52,7 @@ public interface IForgeEffectInstance {
 	 * @return true if the given ItemStack is in the list of curative items for this PotionEffect, false otherwise
 	 */
 	default boolean isCurativeItem(ItemStack stack) {
-		return this.getCurativeItems().stream().anyMatch(e -> e.isItemEqual(stack));
+		return this.getCurativeItems().stream().anyMatch(e -> e.isItemEqualIgnoreDamage(stack));
 	}
 
 	/***
@@ -66,9 +65,9 @@ public interface IForgeEffectInstance {
 		}
 	}
 
-	default void writeCurativeItems(CompoundNBT nbt) {
-		ListNBT list = new ListNBT();
-		getCurativeItems().forEach(s -> list.add(s.write(new CompoundNBT())));
+	default void writeCurativeItems(CompoundTag nbt) {
+		ListTag list = new ListTag();
+		getCurativeItems().forEach(s -> list.add(s.toTag(new CompoundTag())));
 		nbt.put("CurativeItems", list);
 	}
 }

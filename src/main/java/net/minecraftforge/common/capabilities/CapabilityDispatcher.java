@@ -30,10 +30,10 @@ import mcp.MethodsReturnNonnullByDefault;
 import net.minecraftforge.common.util.INBTSerializable;
 import net.minecraftforge.common.util.LazyOptional;
 
-import net.minecraft.nbt.CompoundNBT;
-import net.minecraft.nbt.INBT;
-import net.minecraft.util.Direction;
-import net.minecraft.util.ResourceLocation;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.Tag;
+import net.minecraft.util.math.Direction;
+import net.minecraft.util.Identifier;
 
 /**
  * A high-speed implementation of a capability delegator.
@@ -47,20 +47,20 @@ import net.minecraft.util.ResourceLocation;
  */
 @ParametersAreNonnullByDefault
 @MethodsReturnNonnullByDefault
-public final class CapabilityDispatcher implements INBTSerializable<CompoundNBT>, ICapabilityProvider {
+public final class CapabilityDispatcher implements INBTSerializable<CompoundTag>, ICapabilityProvider {
 	private final List<Runnable> listeners;
 	private ICapabilityProvider[] caps;
-	private INBTSerializable<INBT>[] writers;
+	private INBTSerializable<Tag>[] writers;
 	private String[] names;
 
-	public CapabilityDispatcher(Map<ResourceLocation, ICapabilityProvider> list, List<Runnable> listeners) {
+	public CapabilityDispatcher(Map<Identifier, ICapabilityProvider> list, List<Runnable> listeners) {
 		this(list, listeners, null);
 	}
 
 	@SuppressWarnings("unchecked")
-	public CapabilityDispatcher(Map<ResourceLocation, ICapabilityProvider> list, List<Runnable> listeners, @Nullable ICapabilityProvider parent) {
+	public CapabilityDispatcher(Map<Identifier, ICapabilityProvider> list, List<Runnable> listeners, @Nullable ICapabilityProvider parent) {
 		List<ICapabilityProvider> lstCaps = Lists.newArrayList();
-		List<INBTSerializable<INBT>> lstWriters = Lists.newArrayList();
+		List<INBTSerializable<Tag>> lstWriters = Lists.newArrayList();
 		List<String> lstNames = Lists.newArrayList();
 		this.listeners = listeners;
 
@@ -68,16 +68,16 @@ public final class CapabilityDispatcher implements INBTSerializable<CompoundNBT>
 		{
 			lstCaps.add(parent);
 			if (parent instanceof INBTSerializable) {
-				lstWriters.add((INBTSerializable<INBT>) parent);
+				lstWriters.add((INBTSerializable<Tag>) parent);
 				lstNames.add("Parent");
 			}
 		}
 
-		for (Map.Entry<ResourceLocation, ICapabilityProvider> entry : list.entrySet()) {
+		for (Map.Entry<Identifier, ICapabilityProvider> entry : list.entrySet()) {
 			ICapabilityProvider prov = entry.getValue();
 			lstCaps.add(prov);
 			if (prov instanceof INBTSerializable) {
-				lstWriters.add((INBTSerializable<INBT>) prov);
+				lstWriters.add((INBTSerializable<Tag>) prov);
 				lstNames.add(entry.getKey().toString());
 			}
 		}
@@ -109,8 +109,8 @@ public final class CapabilityDispatcher implements INBTSerializable<CompoundNBT>
 	}
 
 	@Override
-	public CompoundNBT serializeNBT() {
-		CompoundNBT nbt = new CompoundNBT();
+	public CompoundTag serializeNBT() {
+		CompoundTag nbt = new CompoundTag();
 		for (int x = 0; x < writers.length; x++) {
 			nbt.put(names[x], writers[x].serializeNBT());
 		}
@@ -118,10 +118,10 @@ public final class CapabilityDispatcher implements INBTSerializable<CompoundNBT>
 	}
 
 	@Override
-	public void deserializeNBT(CompoundNBT nbt) {
+	public void deserializeNBT(CompoundTag nbt) {
 		for (int x = 0; x < writers.length; x++) {
-			if (nbt.contains(names[x])) {
-				writers[x].deserializeNBT(nbt.get(names[x]));
+			if (nbt.containsKey(names[x])) {
+				writers[x].deserializeNBT(nbt.getTag(names[x]));
 			}
 		}
 	}

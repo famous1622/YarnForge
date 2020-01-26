@@ -21,7 +21,6 @@ package net.minecraftforge.event.entity.player;
 
 import javax.annotation.Nonnull;
 
-import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.eventbus.api.Cancelable;
 
 import net.minecraft.entity.player.PlayerEntity;

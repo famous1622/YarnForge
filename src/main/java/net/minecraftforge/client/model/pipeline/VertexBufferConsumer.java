@@ -19,11 +19,11 @@
 
 package net.minecraftforge.client.model.pipeline;
 
-import net.minecraft.client.renderer.BufferBuilder;
-import net.minecraft.client.renderer.texture.TextureAtlasSprite;
-import net.minecraft.client.renderer.vertex.VertexFormat;
-import net.minecraft.client.renderer.vertex.VertexFormatElement.Usage;
-import net.minecraft.util.Direction;
+import net.minecraft.client.render.BufferBuilder;
+import net.minecraft.client.texture.Sprite;
+import net.minecraft.client.render.VertexFormat;
+import net.minecraft.client.render.VertexFormatElement.Type;
+import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.BlockPos;
 
 /**
@@ -35,7 +35,7 @@ public class VertexBufferConsumer implements IVertexConsumer {
 	private BufferBuilder renderer;
 	private int[] quadData;
 	private int v = 0;
-	private BlockPos offset = BlockPos.ZERO;
+	private BlockPos offset = BlockPos.ORIGIN;
 
 	public VertexBufferConsumer() {
 	}
@@ -52,15 +52,15 @@ public class VertexBufferConsumer implements IVertexConsumer {
 	@Override
 	public void put(int e, float... data) {
 		VertexFormat format = getVertexFormat();
-		if (renderer.isColorDisabled() && format.getElement(e).getUsage() == Usage.COLOR) {
+		if (renderer.isColorDisabled() && format.getElement(e).getType() == Type.COLOR) {
 			data = dummyColor;
 		}
 		LightUtil.pack(data, quadData, format, v, e);
 		if (e == format.getElementCount() - 1) {
 			v++;
 			if (v == 4) {
-				renderer.addVertexData(quadData);
-				renderer.putPosition(offset.getX(), offset.getY(), offset.getZ());
+				renderer.putVertexData(quadData);
+				renderer.postPosition(offset.getX(), offset.getY(), offset.getZ());
 				//Arrays.fill(quadData, 0);
 				v = 0;
 			}
@@ -68,8 +68,8 @@ public class VertexBufferConsumer implements IVertexConsumer {
 	}
 
 	private void checkVertexFormat() {
-		if (quadData == null || renderer.getVertexFormat().getSize() != quadData.length) {
-			quadData = new int[renderer.getVertexFormat().getSize()];
+		if (quadData == null || renderer.getVertexFormat().getVertexSize() != quadData.length) {
+			quadData = new int[renderer.getVertexFormat().getVertexSize()];
 		}
 	}
 
@@ -95,6 +95,6 @@ public class VertexBufferConsumer implements IVertexConsumer {
 	}
 
 	@Override
-	public void setTexture(TextureAtlasSprite texture) {
+	public void setTexture(Sprite texture) {
 	}
 }

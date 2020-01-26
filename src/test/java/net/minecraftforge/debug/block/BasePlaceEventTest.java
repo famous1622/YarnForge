@@ -23,7 +23,7 @@ import net.minecraftforge.event.world.BlockEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 
-import net.minecraft.entity.item.FallingBlockEntity;
+import net.minecraft.entity.FallingBlockEntity;
 
 @Mod("base_block_place_event_test")
 @Mod.EventBusSubscriber

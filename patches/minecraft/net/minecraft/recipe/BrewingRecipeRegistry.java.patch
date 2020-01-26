@@ -1,0 +1,85 @@
+--- a/net/minecraft/recipe/BrewingRecipeRegistry.java
++++ b/net/minecraft/recipe/BrewingRecipeRegistry.java
+@@ -9,11 +9,11 @@
+ import net.minecraft.item.PotionItem;
+ import net.minecraft.item.ItemConvertible;
+ import net.minecraft.util.registry.Registry;
++
+ import net.minecraft.potion.Potion;
+ import net.minecraft.potion.PotionUtil;
+ import net.minecraft.potion.Potions;
+ 
+-
+ public class BrewingRecipeRegistry {
+    private static final List<BrewingRecipeRegistry.Recipe<Potion>> POTION_RECIPES = Lists.newArrayList();
+    private static final List<BrewingRecipeRegistry.Recipe<Item>> ITEM_RECIPES = Lists.newArrayList();
+@@ -60,7 +60,7 @@
+       int i = 0;
+ 
+       for(int j = POTION_RECIPES.size(); i < j; ++i) {
+-         if ((POTION_RECIPES.get(i)).output == p_222124_0_) {
++         if ((POTION_RECIPES.get(i)).output.get() == p_222124_0_) {
+             return true;
+          }
+       }
+@@ -82,7 +82,7 @@
+ 
+       for(int j = ITEM_RECIPES.size(); i < j; ++i) {
+          BrewingRecipeRegistry.Recipe<Item> mixpredicate = ITEM_RECIPES.get(i);
+-         if (mixpredicate.input == item && mixpredicate.ingredient.test(reagent)) {
++         if (mixpredicate.input.get() == item && mixpredicate.ingredient.test(reagent)) {
+             return true;
+          }
+       }
+@@ -96,7 +96,7 @@
+ 
+       for(int j = POTION_RECIPES.size(); i < j; ++i) {
+          BrewingRecipeRegistry.Recipe<Potion> mixpredicate = POTION_RECIPES.get(i);
+-         if (mixpredicate.input == potion && mixpredicate.ingredient.test(reagent)) {
++         if (mixpredicate.input.get() == potion && mixpredicate.ingredient.test(reagent)) {
+             return true;
+          }
+       }
+@@ -112,8 +112,8 @@
+ 
+          for(int j = ITEM_RECIPES.size(); i < j; ++i) {
+             BrewingRecipeRegistry.Recipe<Item> mixpredicate = ITEM_RECIPES.get(i);
+-            if (mixpredicate.input == item && mixpredicate.ingredient.test(reagent)) {
+-               return PotionUtil.setPotion(new ItemStack((ItemConvertible)mixpredicate.output), potion);
++            if (mixpredicate.input.get() == item && mixpredicate.ingredient.test(reagent)) {
++               return PotionUtil.setPotion(new ItemStack((ItemConvertible)mixpredicate.output.get()), potion);
+             }
+          }
+ 
+@@ -121,8 +121,8 @@
+ 
+          for(int k = POTION_RECIPES.size(); i < k; ++i) {
+             BrewingRecipeRegistry.Recipe<Potion> mixpredicate1 = POTION_RECIPES.get(i);
+-            if (mixpredicate1.input == potion && mixpredicate1.ingredient.test(reagent)) {
+-               return PotionUtil.setPotion(new ItemStack(item), (Potion)mixpredicate1.output);
++            if (mixpredicate1.input.get() == potion && mixpredicate1.ingredient.test(reagent)) {
++               return PotionUtil.setPotion(new ItemStack(item), (Potion)mixpredicate1.output.get());
+             }
+          }
+       }
+@@ -215,15 +215,15 @@
+       POTION_RECIPES.add(new BrewingRecipeRegistry.Recipe<>(p_193357_0_, Ingredient.ofItems(p_193357_1_), p_193357_2_));
+    }
+ 
+-   static class Recipe<T> {
+-      private final T input;
++   static class Recipe<T extends net.minecraftforge.registries.ForgeRegistryEntry<T>> {
++      private final net.minecraftforge.registries.IRegistryDelegate<T> input;
+       private final Ingredient ingredient;
+-      private final T output;
++      private final net.minecraftforge.registries.IRegistryDelegate<T> output;
+ 
+       public Recipe(T inputIn, Ingredient reagentIn, T outputIn) {
+-         this.input = inputIn;
++         this.input = inputIn.delegate;
+          this.ingredient = reagentIn;
+-         this.output = outputIn;
++         this.output = outputIn.delegate;
+       }
+    }
+ }

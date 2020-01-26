@@ -1,0 +1,10 @@
+--- a/net/minecraft/client/render/block/entity/PistonBlockEntityRenderer.java
++++ b/net/minecraft/client/render/block/entity/PistonBlockEntityRenderer.java
+@@ -70,6 +70,7 @@
+    }
+ 
+    private boolean method_3575(BlockPos pos, BlockState state, BufferBuilder buffer, World p_188186_4_, boolean checkSides) {
++      if (manager == null) manager = MinecraftClient.getInstance().getBlockRenderManager();
+       return this.manager.getModelRenderer().tesselate(p_188186_4_, this.manager.getModel(state), state, pos, buffer, checkSides, new Random(), state.getRenderingSeed(pos));
+    }
+ }

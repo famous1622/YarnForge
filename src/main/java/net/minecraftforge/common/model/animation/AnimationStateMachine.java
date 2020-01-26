@@ -60,9 +60,9 @@ import org.apache.commons.lang3.tuple.Triple;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import net.minecraft.resources.IResource;
-import net.minecraft.resources.IResourceManager;
-import net.minecraft.util.ResourceLocation;
+import net.minecraft.resource.Resource;
+import net.minecraft.resource.ResourceManager;
+import net.minecraft.util.Identifier;
 
 public final class AnimationStateMachine implements IAnimationStateMachine {
 	private static final Logger LOGGER = LogManager.getLogger();
@@ -120,8 +120,8 @@ public final class AnimationStateMachine implements IAnimationStateMachine {
 	 * Load a new instance if AnimationStateMachine at specified location, with specified custom parameters.
 	 */
 	@OnlyIn(Dist.CLIENT)
-	public static IAnimationStateMachine load(IResourceManager manager, ResourceLocation location, ImmutableMap<String, ITimeValue> customParameters) {
-		try (IResource resource = manager.getResource(location)) {
+	public static IAnimationStateMachine load(ResourceManager manager, Identifier location, ImmutableMap<String, ITimeValue> customParameters) {
+		try (Resource resource = manager.getResource(location)) {
 			ClipResolver clipResolver = new ClipResolver();
 			ParameterResolver parameterResolver = new ParameterResolver(customParameters);
 			Clips.CommonClipTypeAdapterFactory.INSTANCE.setClipResolver(clipResolver);

@@ -19,7 +19,6 @@
 
 package net.minecraftforge.versions.forge;
 
-import static net.minecraftforge.fml.Logging.CORE;
 
 import javax.annotation.Nullable;
 

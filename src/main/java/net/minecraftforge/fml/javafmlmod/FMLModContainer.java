@@ -19,7 +19,6 @@
 
 package net.minecraftforge.fml.javafmlmod;
 
-import static net.minecraftforge.fml.Logging.LOADING;
 
 import java.util.Optional;
 import java.util.function.Consumer;

@@ -30,8 +30,10 @@ import net.minecraftforge.fluids.capability.CapabilityFluidHandler;
 import net.minecraftforge.fluids.capability.IFluidHandlerItem;
 
 import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.CompoundNBT;
-import net.minecraft.util.Direction;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.util.math.Direction;
+
+import net.minecraftforge.fluids.capability.IFluidHandler.FluidAction;
 
 /**
  * FluidHandlerItemStack is a template capability provider for ItemStacks.
@@ -68,8 +70,8 @@ public class FluidHandlerItemStack implements IFluidHandlerItem, ICapabilityProv
 
 	@Nonnull
 	public FluidStack getFluid() {
-		CompoundNBT tagCompound = container.getTag();
-		if (tagCompound == null || !tagCompound.contains(FLUID_NBT_KEY)) {
+		CompoundTag tagCompound = container.getTag();
+		if (tagCompound == null || !tagCompound.containsKey(FLUID_NBT_KEY)) {
 			return FluidStack.EMPTY;
 		}
 		return FluidStack.loadFluidStackFromNBT(tagCompound.getCompound(FLUID_NBT_KEY));
@@ -77,10 +79,10 @@ public class FluidHandlerItemStack implements IFluidHandlerItem, ICapabilityProv
 
 	protected void setFluid(FluidStack fluid) {
 		if (!container.hasTag()) {
-			container.setTag(new CompoundNBT());
+			container.setTag(new CompoundTag());
 		}
 
-		CompoundNBT fluidTag = new CompoundNBT();
+		CompoundTag fluidTag = new CompoundTag();
 		fluid.writeToNBT(fluidTag);
 		container.getTag().put(FLUID_NBT_KEY, fluidTag);
 	}
@@ -194,7 +196,7 @@ public class FluidHandlerItemStack implements IFluidHandlerItem, ICapabilityProv
 	 * Can be used to swap out or destroy the container.
 	 */
 	protected void setContainerToEmpty() {
-		container.removeChildTag(FLUID_NBT_KEY);
+		container.removeSubTag(FLUID_NBT_KEY);
 	}
 
 	@Override
@@ -214,7 +216,7 @@ public class FluidHandlerItemStack implements IFluidHandlerItem, ICapabilityProv
 		@Override
 		protected void setContainerToEmpty() {
 			super.setContainerToEmpty();
-			container.shrink(1);
+			container.decrement(1);
 		}
 	}
 

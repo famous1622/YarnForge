@@ -34,20 +34,22 @@ import net.minecraftforge.registries.ForgeRegistries;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
-import net.minecraft.block.TNTBlock;
-import net.minecraft.entity.EntityClassification;
+import net.minecraft.block.TntBlock;
+import net.minecraft.entity.EntityCategory;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.item.TNTEntity;
+import net.minecraft.entity.TntEntity;
 import net.minecraft.item.BlockItem;
 import net.minecraft.item.Item;
-import net.minecraft.network.IPacket;
-import net.minecraft.util.Direction;
-import net.minecraft.util.SoundCategory;
-import net.minecraft.util.SoundEvents;
+import net.minecraft.network.Packet;
+import net.minecraft.util.math.Direction;
+import net.minecraft.sound.SoundCategory;
+import net.minecraft.sound.SoundEvents;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.Explosion;
+import net.minecraft.world.explosion.Explosion;
 import net.minecraft.world.World;
+
+import net.minecraft.block.Block.Settings;
 
 @Mod(CustomTNTTest.MODID)
 @Mod.EventBusSubscriber(modid = CustomTNTTest.MODID, bus = Bus.MOD)
@@ -57,15 +59,15 @@ public class CustomTNTTest {
 	static final String BLOCK_ID = "test_tnt";
 
 	private static final DeferredRegister<Block> BLOCKS = new DeferredRegister<>(ForgeRegistries.BLOCKS, MODID);
-	public static final RegistryObject<TNTBlock> CUSTOM_TNT = BLOCKS.register(BLOCK_ID, () -> new CustomTNTBlock(Block.Properties.from(Blocks.TNT)));
+	public static final RegistryObject<TntBlock> CUSTOM_TNT = BLOCKS.register(BLOCK_ID, () -> new CustomTNTBlock(Block.Settings.copy(Blocks.TNT)));
 	private static final DeferredRegister<Item> ITEMS = new DeferredRegister<>(ForgeRegistries.ITEMS, MODID);
 	private static final DeferredRegister<EntityType<?>> ENTITIES = new DeferredRegister<>(ForgeRegistries.ENTITIES, MODID);
 	public static final RegistryObject<EntityType<CustomTNTEntity>> CUSTOM_TNT_ENTITY = ENTITIES.register(BLOCK_ID, () -> EntityType.Builder
-			.create((EntityType.IFactory<CustomTNTEntity>) CustomTNTEntity::new, EntityClassification.MISC)
+			.create((EntityType.EntityFactory<CustomTNTEntity>) CustomTNTEntity::new, EntityCategory.MISC)
 			.build(BLOCK_ID));
 
 	static {
-		ITEMS.register(BLOCK_ID, () -> new BlockItem(CUSTOM_TNT.get(), new Item.Properties()));
+		ITEMS.register(BLOCK_ID, () -> new BlockItem(CUSTOM_TNT.get(), new Item.Settings()));
 	}
 
 	public CustomTNTTest() {
@@ -75,27 +77,27 @@ public class CustomTNTTest {
 		ENTITIES.register(modBus);
 	}
 
-	public static class CustomTNTBlock extends TNTBlock {
+	public static class CustomTNTBlock extends TntBlock {
 
-		public CustomTNTBlock(Properties properties) {
+		public CustomTNTBlock(Settings properties) {
 			super(properties);
 		}
 
 		@Override
-		public void onExplosionDestroy(World world, BlockPos pos, Explosion explosion) {
-			if (!world.isRemote) {
-				TNTEntity tnt = new CustomTNTEntity(world, (float) pos.getX() + 0.5F, pos.getY(), (float) pos.getZ() + 0.5F, explosion.getExplosivePlacedBy());
-				tnt.setFuse((short) (world.rand.nextInt(tnt.getFuse() / 4) + tnt.getFuse() / 8));
-				world.addEntity(tnt);
+		public void onDestroyedByExplosion(World world, BlockPos pos, Explosion explosion) {
+			if (!world.isClient) {
+				TntEntity tnt = new CustomTNTEntity(world, (float) pos.getX() + 0.5F, pos.getY(), (float) pos.getZ() + 0.5F, explosion.getCausingEntity());
+				tnt.setFuse((short) (world.random.nextInt(tnt.getFuseTimer() / 4) + tnt.getFuseTimer() / 8));
+				world.spawnEntity(tnt);
 			}
 		}
 
 		@Override
 		public void catchFire(BlockState state, World world, BlockPos pos, @Nullable Direction face, @Nullable LivingEntity igniter) {
-			if (!world.isRemote) {
-				TNTEntity tnt = new CustomTNTEntity(world, pos.getX() + 0.5F, pos.getY(), pos.getZ() + 0.5F, igniter);
-				world.addEntity(tnt);
-				world.playSound(null, tnt.posX, tnt.posY, tnt.posZ, SoundEvents.ENTITY_TNT_PRIMED, SoundCategory.BLOCKS, 1.0F, 1.0F);
+			if (!world.isClient) {
+				TntEntity tnt = new CustomTNTEntity(world, pos.getX() + 0.5F, pos.getY(), pos.getZ() + 0.5F, igniter);
+				world.spawnEntity(tnt);
+				world.playSound(null, tnt.x, tnt.y, tnt.z, SoundEvents.ENTITY_TNT_PRIMED, SoundCategory.BLOCKS, 1.0F, 1.0F);
 			}
 		}
 	}
@@ -103,16 +105,16 @@ public class CustomTNTTest {
 	/**
 	 * Custom TNT Entity that has a fuse of a quarter length, and four times the explosion strength
 	 */
-	public static class CustomTNTEntity extends TNTEntity {
+	public static class CustomTNTEntity extends TntEntity {
 
 		public CustomTNTEntity(EntityType<CustomTNTEntity> type, World world) {
 			super(type, world);
-			setFuse(getFuse() / 4);
+			setFuse(getFuseTimer() / 4);
 		}
 
 		public CustomTNTEntity(World world, double x, double y, double z, @Nullable LivingEntity placer) {
 			super(world, x, y, z, placer);
-			setFuse(getFuse() / 4);
+			setFuse(getFuseTimer() / 4);
 		}
 
 		@Nonnull
@@ -123,12 +125,12 @@ public class CustomTNTTest {
 
 		@Override
 		protected void explode() {
-			this.world.createExplosion(this, this.posX, this.posY, this.posZ, 16.0F, Explosion.Mode.BREAK);
+			this.world.createExplosion(this, this.x, this.y, this.z, 16.0F, Explosion.DestructionType.BREAK);
 		}
 
 		@Nonnull
 		@Override
-		public IPacket<?> createSpawnPacket() {
+		public Packet<?> createSpawnPacket() {
 			return NetworkHooks.getEntitySpawningPacket(this);
 		}
 	}

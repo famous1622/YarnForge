@@ -1,0 +1,63 @@
+--- a/net/minecraft/structure/processor/StructureProcessor.java
++++ b/net/minecraft/structure/processor/StructureProcessor.java
+@@ -6,13 +6,58 @@
+ import net.minecraft.util.math.BlockPos;
+ import net.minecraft.util.registry.Registry;
+ import net.minecraft.world.ViewableWorld;
++
+ import net.minecraft.structure.Structure;
+ import net.minecraft.structure.StructurePlacementData;
+ 
+-
+ public abstract class StructureProcessor {
+    @Nullable
+-   public abstract Structure.StructureBlockInfo process(ViewableWorld p_215194_1_, BlockPos p_215194_2_, Structure.StructureBlockInfo p_215194_3_, Structure.StructureBlockInfo p_215194_4_, StructurePlacementData p_215194_5_);
++   @Deprecated
++   public Structure.StructureBlockInfo process(ViewableWorld p_215194_1_, BlockPos p_215194_2_, Structure.StructureBlockInfo p_215194_3_, Structure.StructureBlockInfo p_215194_4_, StructurePlacementData p_215194_5_) {
++      return p_215194_4_;
++   }
++
++   /**
++    * FORGE: Add template parameter
++    * 
++    * @param p_215194_1_
++    * @param p_215194_2_
++    * @param p_215194_3_
++    * @param p_215194_4_
++    * @param p_215194_5_
++    * @param template The template being placed, can be null due to deprecated
++    *                 method calls.
++    * @see #process(IWorldReader, BlockPos,
++    *      net.minecraft.world.gen.feature.template.Template.BlockInfo,
++    *      net.minecraft.world.gen.feature.template.Template.BlockInfo,
++    *      PlacementSettings)
++    */
++   @Nullable
++   public Structure.StructureBlockInfo process(ViewableWorld p_215194_1_, BlockPos p_215194_2_, Structure.StructureBlockInfo p_215194_3_, Structure.StructureBlockInfo p_215194_4_, StructurePlacementData p_215194_5_, @Nullable Structure template) {
++      return process(p_215194_1_, p_215194_2_, p_215194_3_, p_215194_4_, p_215194_5_);
++   }
++
++   /**
++    * FORGE: Add entity processing.
++    * <p>
++    * Use this method to process entities from a structure in much the same way as
++    * blocks, parameters are analogous.
++    * 
++    * @param world
++    * @param seedPos
++    * @param rawEntityInfo
++    * @param entityInfo
++    * @param placementSettings
++    * @param template
++    * 
++    * @see #process(IWorldReader, BlockPos,
++    *      net.minecraft.world.gen.feature.template.Template.BlockInfo,
++    *      net.minecraft.world.gen.feature.template.Template.BlockInfo,
++    *      PlacementSettings)
++    */
++   public Structure.StructureEntityInfo processEntity(ViewableWorld world, BlockPos seedPos, Structure.StructureEntityInfo rawEntityInfo, Structure.StructureEntityInfo entityInfo, StructurePlacementData placementSettings, Structure template) {
++      return entityInfo;
++   }
+ 
+    protected abstract StructureProcessorType getType();
+ 

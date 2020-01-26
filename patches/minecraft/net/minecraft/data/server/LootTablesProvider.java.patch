@@ -1,0 +1,60 @@
+--- a/net/minecraft/data/server/LootTablesProvider.java
++++ b/net/minecraft/data/server/LootTablesProvider.java
+@@ -23,11 +23,11 @@
+ import net.minecraft.world.loot.LootTableReporter;
+ import org.apache.logging.log4j.LogManager;
+ import org.apache.logging.log4j.Logger;
++
+ import net.minecraft.data.DataCache;
+ import net.minecraft.data.DataGenerator;
+ import net.minecraft.data.DataProvider;
+ 
+-
+ public class LootTablesProvider implements DataProvider {
+    private static final Logger LOGGER = LogManager.getLogger();
+    private static final Gson GSON = (new GsonBuilder()).setPrettyPrinting().disableHtmlEscaping().create();
+@@ -41,7 +41,7 @@
+    public void run(DataCache cache) {
+       Path path = this.root.getOutput();
+       Map<Identifier, LootSupplier> map = Maps.newHashMap();
+-      this.field_11354.forEach((p_218438_1_) -> {
++      this.getTables().forEach((p_218438_1_) -> {
+          p_218438_1_.getFirst().get().accept((p_218437_2_, p_218437_3_) -> {
+             if (map.put(p_218437_2_, p_218437_3_.withType(p_218438_1_.getSecond()).create()) != null) {
+                throw new IllegalStateException("Duplicate loot table " + p_218437_2_);
+@@ -50,13 +50,8 @@
+       });
+       LootTableReporter validationresults = new LootTableReporter();
+ 
+-      for(Identifier resourcelocation : Sets.difference(LootTables.getAll(), map.keySet())) {
+-         validationresults.report("Missing built-in table: " + resourcelocation);
+-      }
++      validate(map, validationresults);
+ 
+-      map.forEach((p_218436_2_, p_218436_3_) -> {
+-         LootManager.check(validationresults, p_218436_2_, p_218436_3_, map::get);
+-      });
+       Multimap<String, String> multimap = validationresults.getMessages();
+       if (!multimap.isEmpty()) {
+          multimap.forEach((p_218435_0_, p_218435_1_) -> {
+@@ -77,6 +72,20 @@
+       }
+    }
+ 
++   protected List<Pair<Supplier<Consumer<BiConsumer<Identifier, LootSupplier.Builder>>>, LootContextType>> getTables() {
++       return field_11354;
++   }
++
++   protected void validate(Map<Identifier, LootSupplier> map, LootTableReporter validationresults) {
++      for(Identifier resourcelocation : Sets.difference(LootTables.getAll(), map.keySet())) {
++          validationresults.report("Missing built-in table: " + resourcelocation);
++      }
++
++      map.forEach((p_218436_2_, p_218436_3_) -> {
++         LootManager.check(validationresults, p_218436_2_, p_218436_3_, map::get);
++      });
++   }
++
+    private static Path getOutput(Path pathIn, Identifier id) {
+       return pathIn.resolve("data/" + id.getNamespace() + "/loot_tables/" + id.getPath() + ".json");
+    }

@@ -1,0 +1,50 @@
+--- a/net/minecraft/entity/boss/dragon/EnderDragonFight.java
++++ b/net/minecraft/entity/boss/dragon/EnderDragonFight.java
+@@ -75,7 +75,7 @@
+    private int spawnStateTimer;
+    private List<EnderCrystalEntity> crystals;
+ 
+-   public EnderDragonFight(ServerWorld worldIn, CompoundTag compound) {
++   public EnderDragonFight(ServerWorld worldIn, CompoundTag compound, net.minecraft.world.dimension.TheEndDimension dim) {
+       this.world = worldIn;
+       if (compound.containsKey("DragonKilled", 99)) {
+          if (compound.hasUuid("DragonUUID")) {
+@@ -84,6 +84,7 @@
+ 
+          this.dragonKilled = compound.getBoolean("DragonKilled");
+          this.previouslyKilled = compound.getBoolean("PreviouslyKilled");
++         this.doLegacyCheck = !compound.getBoolean("LegacyScanPerformed"); // Forge: fix MC-105080
+          if (compound.getBoolean("IsRespawning")) {
+             this.dragonSpawnState = EnderDragonSpawnState.START;
+          }
+@@ -104,7 +105,7 @@
+          }
+       } else {
+          this.gateways.addAll(ContiguousSet.create(Range.closedOpen(0, 20), DiscreteDomain.integers()));
+-         Collections.shuffle(this.gateways, new Random(worldIn.getSeed()));
++         Collections.shuffle(this.gateways, new Random(dim.getSeed()));
+       }
+ 
+       this.endPortalPattern = BlockPatternBuilder.start().aisle("       ", "       ", "       ", "   #   ", "       ", "       ", "       ").aisle("       ", "       ", "       ", "   #   ", "       ", "       ", "       ").aisle("       ", "       ", "       ", "   #   ", "       ", "       ", "       ").aisle("  ###  ", " #   # ", "#     #", "#  #  #", "#     #", " #   # ", "  ###  ").aisle("       ", "  ###  ", " ##### ", " ##### ", " ##### ", "  ###  ", "       ").where('#', CachedBlockPosition.matchesBlockState(BlockPredicate.make(Blocks.BEDROCK))).build();
+@@ -118,6 +119,7 @@
+ 
+       compoundnbt.putBoolean("DragonKilled", this.dragonKilled);
+       compoundnbt.putBoolean("PreviouslyKilled", this.previouslyKilled);
++      compoundnbt.putBoolean("LegacyScanPerformed", !this.doLegacyCheck); // Forge: fix MC-105080
+       if (this.exitPortalLocation != null) {
+          compoundnbt.put("ExitPortalLocation", TagHelper.serializeBlockPos(this.exitPortalLocation));
+       }
+@@ -489,6 +491,13 @@
+             endercrystalentity.setBeamTarget((BlockPos)null);
+          }
+       }
++   }
++
++   public void addPlayer(ServerPlayerEntity player) {
++      this.bossBar.addPlayer(player);
++   }
+ 
++   public void removePlayer(ServerPlayerEntity player) {
++      this.bossBar.removePlayer(player);
+    }
+ }

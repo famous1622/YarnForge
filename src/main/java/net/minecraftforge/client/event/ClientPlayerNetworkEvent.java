@@ -23,19 +23,19 @@ import javax.annotation.Nullable;
 
 import net.minecraftforge.eventbus.api.Event;
 
-import net.minecraft.client.entity.player.ClientPlayerEntity;
-import net.minecraft.client.multiplayer.PlayerController;
-import net.minecraft.network.NetworkManager;
+import net.minecraft.client.network.ClientPlayerEntity;
+import net.minecraft.client.network.ClientPlayerInteractionManager;
+import net.minecraft.network.ClientConnection;
 
 /**
  * Client side player connectivity events.
  */
 public class ClientPlayerNetworkEvent extends Event {
-	private final PlayerController controller;
+	private final ClientPlayerInteractionManager controller;
 	private final ClientPlayerEntity player;
-	private final NetworkManager networkManager;
+	private final ClientConnection networkManager;
 
-	ClientPlayerNetworkEvent(final PlayerController controller, final ClientPlayerEntity player, final NetworkManager networkManager) {
+	ClientPlayerNetworkEvent(final ClientPlayerInteractionManager controller, final ClientPlayerEntity player, final ClientConnection networkManager) {
 		this.controller = controller;
 		this.player = player;
 		this.networkManager = networkManager;
@@ -45,7 +45,7 @@ public class ClientPlayerNetworkEvent extends Event {
 	 * @return the player controller for the client side
 	 */
 	@Nullable
-	public PlayerController getController() {
+	public ClientPlayerInteractionManager getController() {
 		return controller;
 	}
 
@@ -61,7 +61,7 @@ public class ClientPlayerNetworkEvent extends Event {
 	 * @return the network connection (if present - may be null)
 	 */
 	@Nullable
-	public NetworkManager getNetworkManager() {
+	public ClientConnection getNetworkManager() {
 		return networkManager;
 	}
 
@@ -70,7 +70,7 @@ public class ClientPlayerNetworkEvent extends Event {
 	 */
 	public static class LoggedInEvent extends ClientPlayerNetworkEvent {
 
-		public LoggedInEvent(final PlayerController controller, final ClientPlayerEntity player, final NetworkManager networkManager) {
+		public LoggedInEvent(final ClientPlayerInteractionManager controller, final ClientPlayerEntity player, final ClientConnection networkManager) {
 			super(controller, player, networkManager);
 		}
 	}
@@ -80,7 +80,7 @@ public class ClientPlayerNetworkEvent extends Event {
 	 */
 	public static class LoggedOutEvent extends ClientPlayerNetworkEvent {
 
-		public LoggedOutEvent(final PlayerController controller, final ClientPlayerEntity player, final NetworkManager networkManager) {
+		public LoggedOutEvent(final ClientPlayerInteractionManager controller, final ClientPlayerEntity player, final ClientConnection networkManager) {
 			super(controller, player, networkManager);
 		}
 	}
@@ -91,7 +91,7 @@ public class ClientPlayerNetworkEvent extends Event {
 	public static class RespawnEvent extends ClientPlayerNetworkEvent {
 		private final ClientPlayerEntity oldPlayer;
 
-		public RespawnEvent(final PlayerController pc, final ClientPlayerEntity oldPlayer, final ClientPlayerEntity newPlayer, final NetworkManager networkManager) {
+		public RespawnEvent(final ClientPlayerInteractionManager pc, final ClientPlayerEntity oldPlayer, final ClientPlayerEntity newPlayer, final ClientConnection networkManager) {
 			super(pc, newPlayer, networkManager);
 			this.oldPlayer = oldPlayer;
 		}

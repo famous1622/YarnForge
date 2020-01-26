@@ -1,0 +1,11 @@
+--- a/net/minecraft/container/StonecutterContainer.java
++++ b/net/minecraft/container/StonecutterContainer.java
+@@ -181,7 +181,7 @@
+             if (!this.insertItem(itemstack1, 2, 38, false)) {
+                return ItemStack.EMPTY;
+             }
+-         } else if (INGREDIENTS.contains(item)) {
++         } else if (!this.world.getRecipeManager().getAllMatches(RecipeType.STONECUTTING, new BasicInventory(itemstack1), this.world).isEmpty()) {
+             if (!this.insertItem(itemstack1, 0, 1, false)) {
+                return ItemStack.EMPTY;
+             }

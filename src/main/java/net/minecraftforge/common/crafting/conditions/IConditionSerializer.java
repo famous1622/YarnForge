@@ -21,14 +21,14 @@ package net.minecraftforge.common.crafting.conditions;
 
 import com.google.gson.JsonObject;
 
-import net.minecraft.util.ResourceLocation;
+import net.minecraft.util.Identifier;
 
 public interface IConditionSerializer<T extends ICondition> {
 	void write(JsonObject json, T value);
 
 	T read(JsonObject json);
 
-	ResourceLocation getID();
+	Identifier getID();
 
 	default JsonObject getJson(T value) {
 		JsonObject json = new JsonObject();

@@ -29,31 +29,31 @@ import net.minecraftforge.client.model.ModelStateComposition;
 import net.minecraftforge.common.model.IModelState;
 import net.minecraftforge.common.model.animation.CapabilityAnimation;
 
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.model.IBakedModel;
-import net.minecraft.client.renderer.model.IUnbakedModel;
-import net.minecraft.client.renderer.model.ItemOverride;
-import net.minecraft.client.renderer.model.ItemOverrideList;
-import net.minecraft.client.renderer.model.ModelBakery;
-import net.minecraft.client.renderer.texture.TextureAtlasSprite;
-import net.minecraft.client.renderer.vertex.VertexFormat;
+import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.render.model.BakedModel;
+import net.minecraft.client.render.model.UnbakedModel;
+import net.minecraft.client.render.model.json.ModelItemOverride;
+import net.minecraft.client.render.model.json.ModelItemPropertyOverrideList;
+import net.minecraft.client.render.model.ModelLoader;
+import net.minecraft.client.texture.Sprite;
+import net.minecraft.client.render.VertexFormat;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.item.ItemStack;
-import net.minecraft.util.ResourceLocation;
+import net.minecraft.util.Identifier;
 import net.minecraft.world.World;
 
-public final class AnimationItemOverrideList extends ItemOverrideList {
-	private final ModelBakery bakery;
-	private final IUnbakedModel model;
+public final class AnimationItemOverrideList extends ModelItemPropertyOverrideList {
+	private final ModelLoader bakery;
+	private final UnbakedModel model;
 	private final IModelState state;
 	private final VertexFormat format;
-	private final Function<ResourceLocation, TextureAtlasSprite> bakedTextureGetter;
+	private final Function<Identifier, Sprite> bakedTextureGetter;
 
-	public AnimationItemOverrideList(ModelBakery bakery, IUnbakedModel model, IModelState state, VertexFormat format, Function<ResourceLocation, TextureAtlasSprite> bakedTextureGetter, ItemOverrideList overrides) {
+	public AnimationItemOverrideList(ModelLoader bakery, UnbakedModel model, IModelState state, VertexFormat format, Function<Identifier, Sprite> bakedTextureGetter, ModelItemPropertyOverrideList overrides) {
 		this(bakery, model, state, format, bakedTextureGetter, overrides.getOverrides().reverse());
 	}
 
-	public AnimationItemOverrideList(ModelBakery bakery, IUnbakedModel model, IModelState state, VertexFormat format, Function<ResourceLocation, TextureAtlasSprite> bakedTextureGetter, List<ItemOverride> overrides) {
+	public AnimationItemOverrideList(ModelLoader bakery, UnbakedModel model, IModelState state, VertexFormat format, Function<Identifier, Sprite> bakedTextureGetter, List<ModelItemOverride> overrides) {
 		super(bakery, model, ModelLoader.defaultModelGetter(), bakedTextureGetter, overrides, format);
 		this.bakery = bakery;
 		this.model = model;
@@ -63,7 +63,7 @@ public final class AnimationItemOverrideList extends ItemOverrideList {
 	}
 
 	@Override
-	public IBakedModel getModelWithOverrides(IBakedModel originalModel, ItemStack stack, @Nullable World world, @Nullable LivingEntity entity) {
+	public BakedModel apply(BakedModel originalModel, ItemStack stack, @Nullable World world, @Nullable LivingEntity entity) {
 		return stack.getCapability(CapabilityAnimation.ANIMATION_CAPABILITY, null)
 				.map(asm ->
 				{
@@ -73,12 +73,12 @@ public final class AnimationItemOverrideList extends ItemOverrideList {
 						w = entity.world;
 					}
 					if (world == null) {
-						w = Minecraft.getInstance().world;
+						w = MinecraftClient.getInstance().world;
 					}
 					return asm.apply(Animation.getWorldTime(world, Animation.getPartialTickTime())).getLeft();
 				})
 				// TODO where should uvlock data come from?
 				.map(state -> model.bake(bakery, bakedTextureGetter, new ModelStateComposition(state, this.state), format))
-				.orElseGet(() -> super.getModelWithOverrides(originalModel, stack, world, entity));
+				.orElseGet(() -> super.apply(originalModel, stack, world, entity));
 	}
 }

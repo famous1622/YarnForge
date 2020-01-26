@@ -1,0 +1,28 @@
+--- a/net/minecraft/client/network/ClientLoginNetworkHandler.java
++++ b/net/minecraft/client/network/ClientLoginNetworkHandler.java
+@@ -33,8 +33,8 @@
+ import net.minecraftforge.api.distmarker.OnlyIn;
+ import org.apache.logging.log4j.LogManager;
+ import org.apache.logging.log4j.Logger;
+-import net.minecraft.network.listener.ClientLoginPacketListener;
+ 
++import net.minecraft.network.listener.ClientLoginPacketListener;
+ 
+ @OnlyIn(Dist.CLIENT)
+ public class ClientLoginNetworkHandler implements ClientLoginPacketListener {
+@@ -99,6 +99,7 @@
+       this.statusConsumer.accept(new TranslatableText("connect.joining"));
+       this.profile = packetIn.getProfile();
+       this.connection.setState(NetworkState.PLAY);
++      net.minecraftforge.fml.network.NetworkHooks.handleClientLoginSuccess(this.connection);
+       this.connection.setPacketListener(new ClientPlayNetworkHandler(this.client, this.parentGui, this.connection, this.profile));
+    }
+ 
+@@ -127,6 +128,7 @@
+    }
+ 
+    public void onQueryRequest(LoginQueryRequestS2CPacket p_209521_1_) {
++      if (net.minecraftforge.fml.network.NetworkHooks.onCustomPayload(p_209521_1_, this.connection)) return;
+       this.statusConsumer.accept(new TranslatableText("connect.negotiating"));
+       this.connection.send(new LoginQueryResponseC2SPacket(p_209521_1_.getQueryId(), (PacketByteBuf)null));
+    }

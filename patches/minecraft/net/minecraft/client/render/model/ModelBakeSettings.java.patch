@@ -1,0 +1,20 @@
+--- a/net/minecraft/client/render/model/ModelBakeSettings.java
++++ b/net/minecraft/client/render/model/ModelBakeSettings.java
+@@ -5,6 +5,10 @@
+ 
+ @OnlyIn(Dist.CLIENT)
+ public interface ModelBakeSettings {
++   /**
++    * @deprecated Use {@link #getState()} instead.
++    */
++   @Deprecated
+    default ModelRotation getRotation() {
+       return ModelRotation.X0_Y0;
+    }
+@@ -12,4 +16,6 @@
+    default boolean isUvLocked() {
+       return false;
+    }
++
++   default net.minecraftforge.common.model.IModelState getState() { return getRotation(); }
+ }

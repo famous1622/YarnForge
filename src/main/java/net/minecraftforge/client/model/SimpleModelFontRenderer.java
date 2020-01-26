@@ -27,16 +27,16 @@ import com.google.common.collect.ImmutableList;
 import net.minecraftforge.client.model.pipeline.UnpackedBakedQuad;
 import net.minecraftforge.common.model.TRSRTransformation;
 
-import net.minecraft.client.GameSettings;
-import net.minecraft.client.gui.FontRenderer;
-import net.minecraft.client.renderer.model.BakedQuad;
-import net.minecraft.client.renderer.texture.TextureAtlasSprite;
-import net.minecraft.client.renderer.texture.TextureManager;
-import net.minecraft.client.renderer.vertex.VertexFormat;
-import net.minecraft.util.Direction;
-import net.minecraft.util.ResourceLocation;
+import net.minecraft.client.options.GameOptions;
+import net.minecraft.client.font.TextRenderer;
+import net.minecraft.client.render.model.BakedQuad;
+import net.minecraft.client.texture.Sprite;
+import net.minecraft.client.texture.TextureManager;
+import net.minecraft.client.render.VertexFormat;
+import net.minecraft.util.math.Direction;
+import net.minecraft.util.Identifier;
 
-public abstract class SimpleModelFontRenderer extends FontRenderer {
+public abstract class SimpleModelFontRenderer extends TextRenderer {
 
 	private final TRSRTransformation transform;
 	private final VertexFormat format;
@@ -46,17 +46,17 @@ public abstract class SimpleModelFontRenderer extends FontRenderer {
 	private float r, g, b, a;
 	private ImmutableList.Builder<BakedQuad> builder = ImmutableList.builder();
 	private boolean fillBlanks = false;
-	private TextureAtlasSprite sprite;
+	private Sprite sprite;
 
-	public SimpleModelFontRenderer(GameSettings settings, ResourceLocation font, TextureManager manager, boolean isUnicode, Matrix4f matrix, VertexFormat format) {
+	public SimpleModelFontRenderer(GameOptions settings, Identifier font, TextureManager manager, boolean isUnicode, Matrix4f matrix, VertexFormat format) {
 		super(manager, null);
 		this.transform = new TRSRTransformation(matrix);
 		this.format = format;
 		transform.transformNormal(normal);
-		orientation = Direction.getFacingFromVector(normal.x, normal.y, normal.z);
+		orientation = Direction.getFacing(normal.x, normal.y, normal.z);
 	}
 
-	public void setSprite(TextureAtlasSprite sprite) {
+	public void setSprite(Sprite sprite) {
 		this.sprite = sprite;
 	}
 
@@ -66,7 +66,7 @@ public abstract class SimpleModelFontRenderer extends FontRenderer {
 
 	private void addVertex(UnpackedBakedQuad.Builder quadBuilder, float x, float y, float u, float v) {
 		for (int e = 0; e < format.getElementCount(); e++) {
-			switch (format.getElement(e).getUsage()) {
+			switch (format.getElement(e).getType()) {
 			case POSITION:
 				vec.set(x, y, 0f, 1f);
 				transform.transformPosition(vec);
@@ -81,7 +81,7 @@ public abstract class SimpleModelFontRenderer extends FontRenderer {
 				break;
 			case UV:
 				if (format.getElement(e).getIndex() == 0) {
-					quadBuilder.put(e, sprite.getInterpolatedU(u * 16), sprite.getInterpolatedV(v * 16), 0, 1);
+					quadBuilder.put(e, sprite.getU(u * 16), sprite.getV(v * 16), 0, 1);
 					break;
 				}
 				// else fallthrough to default

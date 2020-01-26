@@ -19,9 +19,8 @@
 
 package net.minecraftforge.event.entity.player;
 
-import net.minecraftforge.common.MinecraftForge;
 
-import net.minecraft.advancements.Advancement;
+import net.minecraft.advancement.Advancement;
 import net.minecraft.entity.player.PlayerEntity;
 
 /**

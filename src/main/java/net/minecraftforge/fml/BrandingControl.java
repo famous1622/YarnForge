@@ -29,8 +29,8 @@ import net.minecraftforge.client.ForgeHooksClient;
 import net.minecraftforge.versions.forge.ForgeVersion;
 import net.minecraftforge.versions.mcp.MCPVersion;
 
-import net.minecraft.resources.IResourceManager;
-import net.minecraft.resources.IResourceManagerReloadListener;
+import net.minecraft.resource.ResourceManager;
+import net.minecraft.resource.SynchronousResourceReloadListener;
 
 
 public class BrandingControl {
@@ -86,11 +86,11 @@ public class BrandingControl {
 		return "forge";
 	}
 
-	public static IResourceManagerReloadListener resourceManagerReloadListener() {
+	public static SynchronousResourceReloadListener resourceManagerReloadListener() {
 		return BrandingControl::onResourceManagerReload;
 	}
 
-	private static void onResourceManagerReload(IResourceManager resourceManager) {
+	private static void onResourceManagerReload(ResourceManager resourceManager) {
 		brandings = null;
 		brandingsNoMC = null;
 	}

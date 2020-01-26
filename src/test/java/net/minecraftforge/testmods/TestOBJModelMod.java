@@ -32,11 +32,11 @@ import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import net.minecraft.client.renderer.model.IBakedModel;
-import net.minecraft.client.renderer.model.IUnbakedModel;
-import net.minecraft.client.renderer.model.ModelResourceLocation;
-import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
-import net.minecraft.util.ResourceLocation;
+import net.minecraft.client.render.model.BakedModel;
+import net.minecraft.client.render.model.UnbakedModel;
+import net.minecraft.client.util.ModelIdentifier;
+import net.minecraft.client.render.VertexFormats;
+import net.minecraft.util.Identifier;
 
 @Mod("testobjmodelmod")
 public class TestOBJModelMod {
@@ -56,12 +56,12 @@ public class TestOBJModelMod {
 		public static void onModelBakeEvent(ModelBakeEvent event) {
 			try {
 				// Try to load an OBJ model (placed in src/main/resources/assets/examplemod/models/)
-				IUnbakedModel model = ModelLoaderRegistry.getModelOrMissing(new ResourceLocation("testobjmodelmod:sample_model.obj"));
+				UnbakedModel model = ModelLoaderRegistry.getModelOrMissing(new Identifier("testobjmodelmod:sample_model.obj"));
 
 				if (model instanceof OBJModel) {
 					// If loading OBJ model succeeds, bake the model and replace stick's model with the baked model
-					IBakedModel bakedModel = model.bake(event.getModelLoader(), ModelLoader.defaultTextureGetter(), new BasicState(model.getDefaultState(), false), DefaultVertexFormats.ITEM);
-					event.getModelRegistry().put(new ModelResourceLocation("stick", "inventory"), bakedModel);
+					BakedModel bakedModel = model.bake(event.getModelLoader(), ModelLoader.defaultTextureGetter(), new BasicState(model.getDefaultState(), false), VertexFormats.POSITION_COLOR_UV_NORMAL);
+					event.getModelRegistry().put(new ModelIdentifier("stick", "inventory"), bakedModel);
 				}
 			} catch (Exception e) {
 				e.printStackTrace();

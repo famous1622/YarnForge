@@ -43,32 +43,32 @@ import net.minecraftforge.versions.forge.ForgeVersion;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.model.BakedQuad;
-import net.minecraft.client.renderer.model.IBakedModel;
-import net.minecraft.client.renderer.model.IUnbakedModel;
-import net.minecraft.client.renderer.model.ItemCameraTransforms.TransformType;
-import net.minecraft.client.renderer.model.ItemOverrideList;
-import net.minecraft.client.renderer.model.ModelBakery;
-import net.minecraft.client.renderer.model.ModelResourceLocation;
-import net.minecraft.client.renderer.texture.AtlasTexture;
-import net.minecraft.client.renderer.texture.ISprite;
-import net.minecraft.client.renderer.texture.PngSizeInfo;
-import net.minecraft.client.renderer.texture.TextureAtlasSprite;
-import net.minecraft.client.renderer.vertex.VertexFormat;
-import net.minecraft.client.resources.data.AnimationMetadataSection;
+import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.render.model.BakedQuad;
+import net.minecraft.client.render.model.BakedModel;
+import net.minecraft.client.render.model.UnbakedModel;
+import net.minecraft.client.render.model.json.ModelTransformation.Type;
+import net.minecraft.client.render.model.json.ModelItemPropertyOverrideList;
+import net.minecraft.client.render.model.ModelLoader;
+import net.minecraft.client.util.ModelIdentifier;
+import net.minecraft.client.texture.SpriteAtlasTexture;
+import net.minecraft.client.render.model.ModelBakeSettings;
+import net.minecraft.client.util.PngFile;
+import net.minecraft.client.texture.Sprite;
+import net.minecraft.client.render.VertexFormat;
+import net.minecraft.client.resource.metadata.AnimationResourceMetadata;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.fluid.Fluid;
 import net.minecraft.item.ItemStack;
-import net.minecraft.resources.IResource;
-import net.minecraft.resources.IResourceManager;
-import net.minecraft.util.Direction;
-import net.minecraft.util.ResourceLocation;
+import net.minecraft.resource.Resource;
+import net.minecraft.resource.ResourceManager;
+import net.minecraft.util.math.Direction;
+import net.minecraft.util.Identifier;
 import net.minecraft.world.World;
 
-public final class ModelDynBucket implements IUnbakedModel {
-	public static final ModelResourceLocation LOCATION = new ModelResourceLocation(new ResourceLocation(ForgeVersion.MOD_ID, "dynbucket"), "inventory");
-	public static final IUnbakedModel MODEL = new ModelDynBucket();
+public final class ModelDynBucket implements UnbakedModel {
+	public static final ModelIdentifier LOCATION = new ModelIdentifier(new Identifier(ForgeVersion.MOD_ID, "dynbucket"), "inventory");
+	public static final UnbakedModel MODEL = new ModelDynBucket();
 	private static final Logger LOGGER = LogManager.getLogger();
 	// minimal Z offset to prevent depth-fighting
 	private static final float NORTH_Z_COVER = 7.496f / 16f;
@@ -76,11 +76,11 @@ public final class ModelDynBucket implements IUnbakedModel {
 	private static final float NORTH_Z_FLUID = 7.498f / 16f;
 	private static final float SOUTH_Z_FLUID = 8.502f / 16f;
 	@Nullable
-	private final ResourceLocation baseLocation;
+	private final Identifier baseLocation;
 	@Nullable
-	private final ResourceLocation liquidLocation;
+	private final Identifier liquidLocation;
 	@Nullable
-	private final ResourceLocation coverLocation;
+	private final Identifier coverLocation;
 	@Nullable
 	private final Fluid fluid;
 
@@ -91,7 +91,7 @@ public final class ModelDynBucket implements IUnbakedModel {
 		this(null, null, null, null, false, true);
 	}
 
-	public ModelDynBucket(@Nullable ResourceLocation baseLocation, @Nullable ResourceLocation liquidLocation, @Nullable ResourceLocation coverLocation, @Nullable Fluid fluid, boolean flipGas, boolean tint) {
+	public ModelDynBucket(@Nullable Identifier baseLocation, @Nullable Identifier liquidLocation, @Nullable Identifier coverLocation, @Nullable Fluid fluid, boolean flipGas, boolean tint) {
 		this.baseLocation = baseLocation;
 		this.liquidLocation = liquidLocation;
 		this.coverLocation = coverLocation;
@@ -101,26 +101,26 @@ public final class ModelDynBucket implements IUnbakedModel {
 	}
 
 	@Nullable
-	protected static IResource getResource(ResourceLocation resourceLocation) {
+	protected static Resource getResource(Identifier resourceLocation) {
 		try {
-			return Minecraft.getInstance().getResourceManager().getResource(resourceLocation);
+			return MinecraftClient.getInstance().getResourceManager().getResource(resourceLocation);
 		} catch (IOException ignored) {
 			return null;
 		}
 	}
 
 	@Nullable
-	protected static PngSizeInfo getSizeInfo(IResource resource) {
+	protected static PngFile getSizeInfo(Resource resource) {
 		try {
-			return new PngSizeInfo(resource.toString(), resource.getInputStream());
+			return new PngFile(resource.toString(), resource.getInputStream());
 		} catch (IOException e) {
 			throw new RuntimeException(e);
 		}
 	}
 
 	@Override
-	public Collection<ResourceLocation> getTextures(Function<ResourceLocation, IUnbakedModel> modelGetter, Set<String> missingTextureErrors) {
-		ImmutableSet.Builder<ResourceLocation> builder = ImmutableSet.builder();
+	public Collection<Identifier> getTextureDependencies(Function<Identifier, UnbakedModel> modelGetter, Set<String> missingTextureErrors) {
+		ImmutableSet.Builder<Identifier> builder = ImmutableSet.builder();
 
 		if (baseLocation != null) {
 			builder.add(baseLocation);
@@ -139,15 +139,15 @@ public final class ModelDynBucket implements IUnbakedModel {
 	}
 
 	@Override
-	public Collection<ResourceLocation> getDependencies() {
+	public Collection<Identifier> getModelDependencies() {
 		return Collections.emptyList();
 	}
 
 	@Nullable
 	@Override
-	public IBakedModel bake(ModelBakery bakery, Function<ResourceLocation, TextureAtlasSprite> spriteGetter, ISprite sprite, VertexFormat format) {
+	public BakedModel bake(ModelLoader bakery, Function<Identifier, Sprite> spriteGetter, ModelBakeSettings sprite, VertexFormat format) {
 		IModelState state = sprite.getState();
-		ImmutableMap<TransformType, TRSRTransformation> transformMap = PerspectiveMapWrapper.getTransforms(state);
+		ImmutableMap<Type, TRSRTransformation> transformMap = PerspectiveMapWrapper.getTransforms(state);
 
 		// if the fluid is lighter than air, will manipulate the initial state to be rotated 180° to turn it upside down
 		if (flipGas && fluid != null && fluid.getAttributes().isLighterThanAir()) {
@@ -156,8 +156,8 @@ public final class ModelDynBucket implements IUnbakedModel {
 		}
 
 		TRSRTransformation transform = state.apply(Optional.empty()).orElse(TRSRTransformation.identity());
-		TextureAtlasSprite fluidSprite = null;
-		TextureAtlasSprite particleSprite = null;
+		Sprite fluidSprite = null;
+		Sprite particleSprite = null;
 		ImmutableList.Builder<BakedQuad> builder = ImmutableList.builder();
 
 		if (fluid != null) {
@@ -167,13 +167,13 @@ public final class ModelDynBucket implements IUnbakedModel {
 		Random random = new Random();
 		if (baseLocation != null) {
 			// build base (insidest)
-			IBakedModel model = (new ItemLayerModel(ImmutableList.of(baseLocation))).bake(bakery, spriteGetter, sprite, format);
+			BakedModel model = (new ItemLayerModel(ImmutableList.of(baseLocation))).bake(bakery, spriteGetter, sprite, format);
 			random.setSeed(42);
 			builder.addAll(model.getQuads(null, null, random));
-			particleSprite = model.getParticleTexture();
+			particleSprite = model.getSprite();
 		}
 		if (liquidLocation != null && fluidSprite != null) {
-			TextureAtlasSprite liquid = spriteGetter.apply(liquidLocation);
+			Sprite liquid = spriteGetter.apply(liquidLocation);
 			// build liquid layer (inside)
 			builder.addAll(ItemTextureQuadConverter.convertTexture(format, transform, liquid, fluidSprite, NORTH_Z_FLUID, Direction.NORTH, tint ? fluid.getAttributes().getColor() : 0xFFFFFFFF, 1));
 			builder.addAll(ItemTextureQuadConverter.convertTexture(format, transform, liquid, fluidSprite, SOUTH_Z_FLUID, Direction.SOUTH, tint ? fluid.getAttributes().getColor() : 0xFFFFFFFF, 1));
@@ -181,7 +181,7 @@ public final class ModelDynBucket implements IUnbakedModel {
 		}
 		if (coverLocation != null) {
 			// cover (the actual item around the other two)
-			TextureAtlasSprite cover = spriteGetter.apply(coverLocation);
+			Sprite cover = spriteGetter.apply(coverLocation);
 			builder.add(ItemTextureQuadConverter.genQuad(format, transform, 0, 0, 16, 16, NORTH_Z_COVER, cover, Direction.NORTH, 0xFFFFFFFF, 2));
 			builder.add(ItemTextureQuadConverter.genQuad(format, transform, 0, 0, 16, 16, SOUTH_Z_COVER, cover, Direction.SOUTH, 0xFFFFFFFF, 2));
 			if (particleSprite == null) {
@@ -202,7 +202,7 @@ public final class ModelDynBucket implements IUnbakedModel {
 	 */
 	@Override
 	public ModelDynBucket process(ImmutableMap<String, String> customData) {
-		ResourceLocation fluidName = new ResourceLocation(customData.get("fluid"));
+		Identifier fluidName = new Identifier(customData.get("fluid"));
 		Fluid fluid = ForgeRegistries.FLUIDS.getValue(fluidName);
 
 		if (fluid == null) fluid = this.fluid;
@@ -250,18 +250,18 @@ public final class ModelDynBucket implements IUnbakedModel {
 	@Override
 	public ModelDynBucket retexture(ImmutableMap<String, String> textures) {
 
-		ResourceLocation base = baseLocation;
-		ResourceLocation liquid = liquidLocation;
-		ResourceLocation cover = coverLocation;
+		Identifier base = baseLocation;
+		Identifier liquid = liquidLocation;
+		Identifier cover = coverLocation;
 
 		if (textures.containsKey("base")) {
-			base = new ResourceLocation(textures.get("base"));
+			base = new Identifier(textures.get("base"));
 		}
 		if (textures.containsKey("fluid")) {
-			liquid = new ResourceLocation(textures.get("fluid"));
+			liquid = new Identifier(textures.get("fluid"));
 		}
 		if (textures.containsKey("cover")) {
-			cover = new ResourceLocation(textures.get("cover"));
+			cover = new Identifier(textures.get("cover"));
 		}
 
 		return new ModelDynBucket(base, liquid, cover, fluid, flipGas, tint);
@@ -271,44 +271,44 @@ public final class ModelDynBucket implements IUnbakedModel {
 		INSTANCE;
 
 		@Override
-		public boolean accepts(ResourceLocation modelLocation) {
+		public boolean accepts(Identifier modelLocation) {
 			return modelLocation.getNamespace().equals(ForgeVersion.MOD_ID) && modelLocation.getPath().contains("forgebucket");
 		}
 
 		@Override
-		public IUnbakedModel loadModel(ResourceLocation modelLocation) {
+		public UnbakedModel loadModel(Identifier modelLocation) {
 			return MODEL;
 		}
 
 		@Override
-		public void onResourceManagerReload(IResourceManager resourceManager) {
+		public void apply(ResourceManager resourceManager) {
 			// no need to clear cache since we create a new model instance
 		}
 
-		public void register(AtlasTexture map) {
+		public void register(SpriteAtlasTexture map) {
 			// only create these textures if they are not added by a resource pack
 
-			IResource res;
-			if (getResource(new ResourceLocation(ForgeVersion.MOD_ID, "textures/items/bucket_cover.png")) == null) {
-				ResourceLocation bucketCover = new ResourceLocation(ForgeVersion.MOD_ID, "items/bucket_cover");
+			Resource res;
+			if (getResource(new Identifier(ForgeVersion.MOD_ID, "textures/items/bucket_cover.png")) == null) {
+				Identifier bucketCover = new Identifier(ForgeVersion.MOD_ID, "items/bucket_cover");
 				BucketCoverSprite bucketCoverSprite = new BucketCoverSprite(bucketCover);
 //                map.setTextureEntry(bucketCoverSprite);
 			}
 
-			if (getResource(new ResourceLocation(ForgeVersion.MOD_ID, "textures/items/bucket_base.png")) == null) {
-				ResourceLocation bucketBase = new ResourceLocation(ForgeVersion.MOD_ID, "items/bucket_base");
+			if (getResource(new Identifier(ForgeVersion.MOD_ID, "textures/items/bucket_base.png")) == null) {
+				Identifier bucketBase = new Identifier(ForgeVersion.MOD_ID, "items/bucket_base");
 				BucketBaseSprite bucketBaseSprite = new BucketBaseSprite(bucketBase);
 //                map.setTextureEntry(bucketBaseSprite);
 			}
 		}
 	}
 
-	private static final class BucketBaseSprite extends TextureAtlasSprite {
-		private final ResourceLocation bucket = new ResourceLocation("item/bucket");
-		private final ImmutableList<ResourceLocation> dependencies = ImmutableList.of(bucket);
+	private static final class BucketBaseSprite extends Sprite {
+		private final Identifier bucket = new Identifier("item/bucket");
+		private final ImmutableList<Identifier> dependencies = ImmutableList.of(bucket);
 
-		private BucketBaseSprite(ResourceLocation res) {
-			super(res, getSizeInfo(getResource(new ResourceLocation("textures/item/bucket.png"))), getResource(new ResourceLocation("textures/item/bucket.png")).getMetadata(AnimationMetadataSection.SERIALIZER));
+		private BucketBaseSprite(Identifier res) {
+			super(res, getSizeInfo(getResource(new Identifier("textures/item/bucket.png"))), getResource(new Identifier("textures/item/bucket.png")).getMetadata(AnimationResourceMetadata.READER));
 		}
 
         /* TODO Custom TAS
@@ -342,13 +342,13 @@ public final class ModelDynBucket implements IUnbakedModel {
 	/**
 	 * Creates a bucket cover sprite from the vanilla resource.
 	 */
-	private static final class BucketCoverSprite extends TextureAtlasSprite {
-		private final ResourceLocation bucket = new ResourceLocation("item/bucket");
-		private final ResourceLocation bucketCoverMask = new ResourceLocation(ForgeVersion.MOD_ID, "item/vanilla_bucket_cover_mask");
-		private final ImmutableList<ResourceLocation> dependencies = ImmutableList.of(bucket, bucketCoverMask);
+	private static final class BucketCoverSprite extends Sprite {
+		private final Identifier bucket = new Identifier("item/bucket");
+		private final Identifier bucketCoverMask = new Identifier(ForgeVersion.MOD_ID, "item/vanilla_bucket_cover_mask");
+		private final ImmutableList<Identifier> dependencies = ImmutableList.of(bucket, bucketCoverMask);
 
-		private BucketCoverSprite(ResourceLocation res) {
-			super(res, getSizeInfo(getResource(new ResourceLocation("textures/item/bucket.png"))), getResource(new ResourceLocation("textures/item/bucket.png")).getMetadata(AnimationMetadataSection.SERIALIZER));
+		private BucketCoverSprite(Identifier res) {
+			super(res, getSizeInfo(getResource(new Identifier("textures/item/bucket.png"))), getResource(new Identifier("textures/item/bucket.png")).getMetadata(AnimationResourceMetadata.READER));
 		}
 
         /* TODO Custom TAS
@@ -406,15 +406,15 @@ public final class ModelDynBucket implements IUnbakedModel {
         }*/
 	}
 
-	private static final class BakedDynBucketOverrideHandler extends ItemOverrideList {
-		private final ModelBakery bakery;
+	private static final class BakedDynBucketOverrideHandler extends ModelItemPropertyOverrideList {
+		private final ModelLoader bakery;
 
-		private BakedDynBucketOverrideHandler(ModelBakery bakery) {
+		private BakedDynBucketOverrideHandler(ModelLoader bakery) {
 			this.bakery = bakery;
 		}
 
 		@Override
-		public IBakedModel getModelWithOverrides(IBakedModel originalModel, ItemStack stack, @Nullable World world, @Nullable LivingEntity entity) {
+		public BakedModel apply(BakedModel originalModel, ItemStack stack, @Nullable World world, @Nullable LivingEntity entity) {
 			return FluidUtil.getFluidContained(stack)
 					.map(fluidStack -> {
 						BakedDynBucket model = (BakedDynBucket) originalModel;
@@ -423,11 +423,11 @@ public final class ModelDynBucket implements IUnbakedModel {
 						String name = fluid.getRegistryName().toString();
 
 						if (!model.cache.containsKey(name)) {
-							IUnbakedModel parent = model.parent.process(ImmutableMap.of("fluid", name));
-							Function<ResourceLocation, TextureAtlasSprite> textureGetter;
-							textureGetter = location -> Minecraft.getInstance().getTextureMap().getAtlasSprite(location.toString());
+							UnbakedModel parent = model.parent.process(ImmutableMap.of("fluid", name));
+							Function<Identifier, Sprite> textureGetter;
+							textureGetter = location -> MinecraftClient.getInstance().getSpriteAtlas().getSprite(location.toString());
 
-							IBakedModel bakedModel = parent.bake(bakery, textureGetter, new SimpleModelState(model.transforms), model.format);
+							BakedModel bakedModel = parent.bake(bakery, textureGetter, new SimpleModelState(model.transforms), model.format);
 							model.cache.put(name, bakedModel);
 							return bakedModel;
 						}
@@ -442,16 +442,16 @@ public final class ModelDynBucket implements IUnbakedModel {
 	// the dynamic bucket is based on the empty bucket
 	private static final class BakedDynBucket extends BakedItemModel {
 		private final ModelDynBucket parent;
-		private final Map<String, IBakedModel> cache; // contains all the baked models since they'll never change
+		private final Map<String, BakedModel> cache; // contains all the baked models since they'll never change
 		private final VertexFormat format;
 
-		BakedDynBucket(ModelBakery bakery,
+		BakedDynBucket(ModelLoader bakery,
 					   ModelDynBucket parent,
 					   ImmutableList<BakedQuad> quads,
-					   TextureAtlasSprite particle,
+					   Sprite particle,
 					   VertexFormat format,
-					   ImmutableMap<TransformType, TRSRTransformation> transforms,
-					   Map<String, IBakedModel> cache,
+					   ImmutableMap<Type, TRSRTransformation> transforms,
+					   Map<String, BakedModel> cache,
 					   boolean untransformed) {
 			super(quads, particle, transforms, new BakedDynBucketOverrideHandler(bakery), untransformed);
 			this.format = format;

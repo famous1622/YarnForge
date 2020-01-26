@@ -25,26 +25,26 @@ import net.minecraftforge.fml.VersionChecker;
 import net.minecraftforge.fml.loading.moddiscovery.ModInfo;
 import net.minecraftforge.versions.forge.ForgeVersion;
 
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.AbstractGui;
-import net.minecraft.client.gui.FontRenderer;
-import net.minecraft.client.gui.widget.list.ExtendedList;
-import net.minecraft.util.ResourceLocation;
+import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.gui.DrawableHelper;
+import net.minecraft.client.font.TextRenderer;
+import net.minecraft.client.gui.widget.AlwaysSelectedEntryListWidget;
+import net.minecraft.util.Identifier;
 
-public class GuiSlotModList extends ExtendedList<GuiSlotModList.ModEntry> {
-	private static final ResourceLocation VERSION_CHECK_ICONS = new ResourceLocation(ForgeVersion.MOD_ID, "textures/gui/version_check_icons.png");
+public class GuiSlotModList extends AlwaysSelectedEntryListWidget<GuiSlotModList.ModEntry> {
+	private static final Identifier VERSION_CHECK_ICONS = new Identifier(ForgeVersion.MOD_ID, "textures/gui/version_check_icons.png");
 	private final int listWidth;
 	private GuiModList parent;
 
 	public GuiSlotModList(GuiModList parent, int listWidth) {
-		super(parent.getMinecraftInstance(), listWidth, parent.height, 32, parent.height - 91 + 4, parent.getFontRenderer().FONT_HEIGHT * 2 + 8);
+		super(parent.getMinecraftInstance(), listWidth, parent.height, 32, parent.height - 91 + 4, parent.getFontRenderer().fontHeight * 2 + 8);
 		this.parent = parent;
 		this.listWidth = listWidth;
 		this.refreshList();
 	}
 
 	private static String stripControlCodes(String value) {
-		return net.minecraft.util.StringUtils.stripControlCodes(value);
+		return net.minecraft.util.ChatUtil.stripTextFormat(value);
 	}
 
 	@Override
@@ -67,7 +67,7 @@ public class GuiSlotModList extends ExtendedList<GuiSlotModList.ModEntry> {
 		this.parent.renderBackground();
 	}
 
-	class ModEntry extends ExtendedList.AbstractListEntry<ModEntry> {
+	class ModEntry extends AlwaysSelectedEntryListWidget.Entry<ModEntry> {
 		private final ModInfo modInfo;
 		private final GuiModList parent;
 
@@ -81,15 +81,15 @@ public class GuiSlotModList extends ExtendedList<GuiSlotModList.ModEntry> {
 			String name = stripControlCodes(modInfo.getDisplayName());
 			String version = stripControlCodes(MavenVersionStringHelper.artifactVersionToString(modInfo.getVersion()));
 			VersionChecker.CheckResult vercheck = VersionChecker.getResult(modInfo);
-			FontRenderer font = this.parent.getFontRenderer();
-			font.drawString(font.trimStringToWidth(name, listWidth), left + 3, top + 2, 0xFFFFFF);
-			font.drawString(font.trimStringToWidth(version, listWidth), left + 3, top + 2 + font.FONT_HEIGHT, 0xCCCCCC);
+			TextRenderer font = this.parent.getFontRenderer();
+			font.draw(font.trimToWidth(name, listWidth), left + 3, top + 2, 0xFFFFFF);
+			font.draw(font.trimToWidth(version, listWidth), left + 3, top + 2 + font.fontHeight, 0xCCCCCC);
 			if (vercheck.status.shouldDraw()) {
 				//TODO: Consider adding more icons for visualization
-				Minecraft.getInstance().getTextureManager().bindTexture(VERSION_CHECK_ICONS);
+				MinecraftClient.getInstance().getTextureManager().bindTexture(VERSION_CHECK_ICONS);
 				GlStateManager.color4f(1, 1, 1, 1);
 				GlStateManager.pushMatrix();
-				AbstractGui.blit(getRight() - (height / 2 + 4), GuiSlotModList.this.getTop() + (height / 2 - 4), vercheck.status.getSheetOffset() * 8, (vercheck.status.isAnimated() && ((System.currentTimeMillis() / 800 & 1)) == 1) ? 8 : 0, 8, 8, 64, 16);
+				DrawableHelper.blit(getRight() - (height / 2 + 4), GuiSlotModList.this.getTop() + (height / 2 - 4), vercheck.status.getSheetOffset() * 8, (vercheck.status.isAnimated() && ((System.currentTimeMillis() / 800 & 1)) == 1) ? 8 : 0, 8, 8, 64, 16);
 				GlStateManager.popMatrix();
 			}
 		}

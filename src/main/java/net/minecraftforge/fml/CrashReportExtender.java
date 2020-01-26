@@ -27,15 +27,15 @@ import java.util.concurrent.Callable;
 import cpw.mods.modlauncher.log.TransformingThrowablePatternConverter;
 import net.minecraftforge.fml.common.ICrashCallable;
 
-import net.minecraft.crash.CrashReport;
-import net.minecraft.crash.CrashReportCategory;
+import net.minecraft.util.crash.CrashReport;
+import net.minecraft.util.crash.CrashReportSection;
 
 public class CrashReportExtender {
 	private static List<ICrashCallable> crashCallables = Collections.synchronizedList(new ArrayList<>());
 
-	public static void enhanceCrashReport(final CrashReport crashReport, final CrashReportCategory category) {
+	public static void enhanceCrashReport(final CrashReport crashReport, final CrashReportSection category) {
 		for (final ICrashCallable call : crashCallables) {
-			category.addDetail(call.getLabel(), call);
+			category.add(call.getLabel(), call);
 		}
 	}
 

@@ -1,0 +1,11 @@
+--- a/net/minecraft/structure/pool/SinglePoolElement.java
++++ b/net/minecraft/structure/pool/SinglePoolElement.java
+@@ -88,7 +88,7 @@
+       if (!template.method_15172(worldIn, p_214848_3_, placementsettings, 18)) {
+          return false;
+       } else {
+-         for(Structure.StructureBlockInfo template$blockinfo : Structure.process(worldIn, p_214848_3_, placementsettings, this.method_16614(p_214848_1_, p_214848_3_, p_214848_4_, false))) {
++         for(Structure.StructureBlockInfo template$blockinfo : Structure.processBlockInfos(template, worldIn, p_214848_3_, placementsettings, this.method_16614(p_214848_1_, p_214848_3_, p_214848_4_, false))) {
+             this.method_16756(worldIn, template$blockinfo, p_214848_3_, p_214848_4_, p_214848_6_, p_214848_5_);
+          }
+ 

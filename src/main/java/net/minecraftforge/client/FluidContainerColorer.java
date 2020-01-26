@@ -23,10 +23,10 @@ import javax.annotation.Nonnull;
 
 import net.minecraftforge.fluids.FluidUtil;
 
-import net.minecraft.client.renderer.color.IItemColor;
+import net.minecraft.client.color.item.ItemColorProvider;
 import net.minecraft.item.ItemStack;
 
-public class FluidContainerColorer implements IItemColor {
+public class FluidContainerColorer implements ItemColorProvider {
 	@Override
 	public int getColor(@Nonnull ItemStack stack, int tintIndex) {
 		if (tintIndex != 1) return 0xFFFFFFFF;

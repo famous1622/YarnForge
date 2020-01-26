@@ -1,0 +1,35 @@
+--- a/net/minecraft/client/gui/screen/ingame/AbstractInventoryScreen.java
++++ b/net/minecraft/client/gui/screen/ingame/AbstractInventoryScreen.java
+@@ -1,6 +1,5 @@
+ package net.minecraft.client.gui;
+ 
+-import com.google.common.collect.Ordering;
+ import com.mojang.blaze3d.platform.GlStateManager;
+ import java.util.Collection;
+ import net.minecraft.client.texture.SpriteAtlasTexture;
+@@ -33,6 +32,7 @@
+          this.left = (this.width - this.containerWidth) / 2;
+          this.offsetGuiForEffects = false;
+       } else {
++         if (net.minecraftforge.common.MinecraftForge.EVENT_BUS.post(new net.minecraftforge.client.event.GuiScreenEvent.PotionShiftEvent(this))) this.left = (this.width - this.containerWidth) / 2; else
+          this.left = 160 + (this.width - this.containerWidth - 200) / 2;
+          this.offsetGuiForEffects = true;
+       }
+@@ -58,7 +58,7 @@
+             j = 132 / (collection.size() - 1);
+          }
+ 
+-         Iterable<StatusEffectInstance> iterable = Ordering.<StatusEffectInstance>natural().sortedCopy(collection);
++         Iterable<StatusEffectInstance> iterable = collection.stream().filter( effectInstance -> effectInstance.getEffectType().shouldRender(effectInstance)).sorted().collect(java.util.stream.Collectors.toList());
+          this.method_18642(i, j, iterable);
+          this.method_18643(i, j, iterable);
+          this.method_18644(i, j, iterable);
+@@ -94,6 +94,8 @@
+       int i = this.top;
+ 
+       for(StatusEffectInstance effectinstance : p_214078_3_) {
++         effectinstance.getEffectType().renderInventoryEffect(effectinstance, this, p_214078_1_, i, this.blitOffset);
++         if (!effectinstance.getEffectType().shouldRenderInvText(effectinstance)) { i += p_214078_2_; continue; }
+          String s = I18n.translate(effectinstance.getEffectType().getTranslationKey());
+          if (effectinstance.getAmplifier() >= 1 && effectinstance.getAmplifier() <= 9) {
+             s = s + ' ' + I18n.translate("enchantment.level." + (effectinstance.getAmplifier() + 1));

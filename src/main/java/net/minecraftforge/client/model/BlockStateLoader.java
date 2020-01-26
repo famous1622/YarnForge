@@ -45,13 +45,13 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import net.minecraft.client.renderer.model.BlockModelDefinition;
-import net.minecraft.client.renderer.model.IUnbakedModel;
-import net.minecraft.client.renderer.model.ModelBakery;
-import net.minecraft.client.renderer.model.ModelRotation;
-import net.minecraft.client.renderer.model.Variant;
-import net.minecraft.client.renderer.model.VariantList;
-import net.minecraft.util.ResourceLocation;
+import net.minecraft.client.render.model.json.ModelVariantMap;
+import net.minecraft.client.render.model.UnbakedModel;
+import net.minecraft.client.render.model.ModelLoader;
+import net.minecraft.client.render.model.ModelRotation;
+import net.minecraft.client.render.model.json.ModelVariant;
+import net.minecraft.client.render.model.json.WeightedUnbakedModel;
+import net.minecraft.util.Identifier;
 
 public class BlockStateLoader {
 	private static final Gson GSON = (new GsonBuilder())
@@ -76,7 +76,7 @@ public class BlockStateLoader {
 	 * @param vanillaGSON ModelBlockDefinition's GSON reader.
 	 * @return Model definition including variants for all known combinations.
 	 */
-	public static BlockModelDefinition load(Reader reader, ResourceLocation location, final Gson vanillaGSON, ModelBakery bakery, BiConsumer<ResourceLocation, IUnbakedModel> modelConsumer) {
+	public static ModelVariantMap load(Reader reader, Identifier location, final Gson vanillaGSON, ModelLoader bakery, BiConsumer<Identifier, UnbakedModel> modelConsumer) {
 		try {
 			byte[] data = IOUtils.toByteArray(reader, StandardCharsets.UTF_8);
 			reader = new InputStreamReader(new ByteArrayInputStream(data), StandardCharsets.UTF_8);
@@ -86,36 +86,36 @@ public class BlockStateLoader {
 			switch (marker.forge_marker) {
 			case 1: // Version 1
 				ForgeBlockStateV1 v1 = GSON.fromJson(reader, ForgeBlockStateV1.class);
-				Map<String, VariantList> variants = Maps.newLinkedHashMap();
+				Map<String, WeightedUnbakedModel> variants = Maps.newLinkedHashMap();
 
 				for (Entry<String, Collection<ForgeBlockStateV1.Variant>> entry : v1.variants.asMap().entrySet()) {   // Convert Version1 variants into vanilla variants for the ModelBlockDefinition.
-					List<Variant> mcVars = Lists.newArrayList();
+					List<ModelVariant> mcVars = Lists.newArrayList();
 					for (ForgeBlockStateV1.Variant var : entry.getValue()) {
 						boolean uvLock = var.getUvLock().orElse(false);
 						int weight = var.getWeight().orElse(1);
 
-						ResourceLocation modelLocation = var.getModel();
+						Identifier modelLocation = var.getModel();
 						if (!var.isVanillaCompatible() && bakery != null) {
-							modelLocation = new ResourceLocation(
+							modelLocation = new Identifier(
 									"internal",
 									String.format("%d/%s/%s/%s", internalGeneratedModelId++, location.getNamespace(), location.getPath(),
 											entry.getKey().replace("=", "_").replace(",", "_"))
 							);
 
-							IUnbakedModel model = ForgeVariantHelper.prepareInjectedModel((ModelLoader) bakery, modelLocation, var.getModel(), var.getSmooth(), var.getGui3d(), var.getTextures(), var.getOnlyPartsVariant(), var.getCustomData());
+							UnbakedModel model = ForgeVariantHelper.prepareInjectedModel((ModelLoader) bakery, modelLocation, var.getModel(), var.getSmooth(), var.getGui3d(), var.getTextures(), var.getOnlyPartsVariant(), var.getCustomData());
 
 							modelConsumer.accept(modelLocation, model);
 						}
 
 						mcVars.add(new ForgeVariant(modelLocation, var.getState().orElse(ModelRotation.X0_Y0), uvLock, weight));
 					}
-					variants.put(entry.getKey(), new VariantList(mcVars));
+					variants.put(entry.getKey(), new WeightedUnbakedModel(mcVars));
 				}
 
-				return new BlockModelDefinition(variants, null);
+				return new ModelVariantMap(variants, null);
 
 			default: //Unknown version.. try loading it as normal.
-				return vanillaGSON.fromJson(reader, BlockModelDefinition.class);
+				return vanillaGSON.fromJson(reader, ModelVariantMap.class);
 			}
 		} catch (IOException e) {
 			throw new RuntimeException(e);
@@ -134,10 +134,10 @@ public class BlockStateLoader {
 		private final boolean gui3d;
 		private final ImmutableMap<String, String> textures;
 		@Nullable
-		private final ResourceLocation model;
+		private final Identifier model;
 		private final ImmutableMap<String, String> customData;
 
-		public SubModel(IModelState state, boolean uvLock, boolean smooth, boolean gui3d, ImmutableMap<String, String> textures, @Nullable ResourceLocation model, ImmutableMap<String, String> customData) {
+		public SubModel(IModelState state, boolean uvLock, boolean smooth, boolean gui3d, ImmutableMap<String, String> textures, @Nullable Identifier model, ImmutableMap<String, String> customData) {
 			this.state = state;
 			this.uvLock = uvLock;
 			this.smooth = smooth;
@@ -160,7 +160,7 @@ public class BlockStateLoader {
 		}
 
 		@Nullable
-		public ResourceLocation getModelLocation() {
+		public Identifier getModelLocation() {
 			return model;
 		}
 
@@ -169,10 +169,10 @@ public class BlockStateLoader {
 		}
 	}
 
-	private static class ForgeVariant extends Variant {
+	private static class ForgeVariant extends ModelVariant {
 		private final IModelState state;
 
-		ForgeVariant(ResourceLocation model, IModelState state, boolean uvLock, int weight) {
+		ForgeVariant(Identifier model, IModelState state, boolean uvLock, int weight) {
 			super(model, state instanceof ModelRotation ? (ModelRotation) state : ModelRotation.X0_Y0, uvLock, weight);
 			this.state = state;
 		}
@@ -189,10 +189,10 @@ public class BlockStateLoader {
 	}
 
 	private static class ForgeVariantHelper {
-		public static IUnbakedModel prepareInjectedModel(ModelLoader bakery, ResourceLocation blockstateLocation, @Nullable ResourceLocation modelLocation, Optional<Boolean> smooth, Optional<Boolean> gui3d, ImmutableMap<String, String> textures, ImmutableMap<String, SubModel> parts, ImmutableMap<String, String> customData) {
+		public static UnbakedModel prepareInjectedModel(ModelLoader bakery, Identifier blockstateLocation, @Nullable Identifier modelLocation, Optional<Boolean> smooth, Optional<Boolean> gui3d, ImmutableMap<String, String> textures, ImmutableMap<String, SubModel> parts, ImmutableMap<String, String> customData) {
 			int size = parts.size();
 
-			IUnbakedModel base = null;
+			UnbakedModel base = null;
 			if (modelLocation != null) {
 				try {
 					base = ModelLoaderRegistry.getModel(modelLocation);
@@ -212,12 +212,12 @@ public class BlockStateLoader {
 				}
 			}
 
-			ImmutableMap.Builder<String, Pair<IUnbakedModel, IModelState>> models = ImmutableMap.builder();
+			ImmutableMap.Builder<String, Pair<UnbakedModel, IModelState>> models = ImmutableMap.builder();
 			for (Entry<String, SubModel> entry : parts.entrySet()) {
 				SubModel part = entry.getValue();
 
-				final ResourceLocation location = part.getModelLocation();
-				final IUnbakedModel model;
+				final Identifier location = part.getModelLocation();
+				final UnbakedModel model;
 				if (location == null) {
 					LOGGER.error("model not found for variant {} for blockstate {}", entry.getKey(), blockstateLocation);
 					model = ModelLoaderRegistry.getMissingModel(blockstateLocation, new Throwable());
@@ -225,7 +225,7 @@ public class BlockStateLoader {
 					model = ModelLoaderRegistry.getModelOrLogError(location, "Unable to load block sub-model '" + entry.getKey() + "': '" + location + "'");
 				}
 
-				IUnbakedModel base1 = model;
+				UnbakedModel base1 = model;
 				base1 = base1.process(part.getCustomData());
 				base1 = base1.retexture(part.getTextures());
 				base1 = Optional.of(part.smooth).map(base1::smoothLighting).orElse(base1);

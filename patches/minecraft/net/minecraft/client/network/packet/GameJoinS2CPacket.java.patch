@@ -1,0 +1,28 @@
+--- a/net/minecraft/client/network/packet/GameJoinS2CPacket.java
++++ b/net/minecraft/client/network/packet/GameJoinS2CPacket.java
+@@ -19,6 +19,7 @@
+    private LevelGeneratorType generatorType;
+    private int chunkLoadDistance;
+    private boolean reducedDebugInfo;
++   private int dimensionInt;
+ 
+    public GameJoinS2CPacket() {
+    }
+@@ -40,7 +41,7 @@
+       this.hardcore = (i & 8) == 8;
+       i = i & -9;
+       this.gameMode = GameMode.byId(i);
+-      this.dimension = DimensionType.byRawId(buf.readInt());
++      this.dimensionInt = buf.readInt();
+       this.maxPlayers = buf.readUnsignedByte();
+       this.generatorType = LevelGeneratorType.getTypeFromName(buf.readString(16));
+       if (this.generatorType == null) {
+@@ -87,7 +88,7 @@
+ 
+    @OnlyIn(Dist.CLIENT)
+    public DimensionType getDimension() {
+-      return this.dimension;
++      return this.dimension == null ? this.dimension = net.minecraftforge.fml.network.NetworkHooks.getDummyDimType(this.dimensionInt) : this.dimension;
+    }
+ 
+    @OnlyIn(Dist.CLIENT)

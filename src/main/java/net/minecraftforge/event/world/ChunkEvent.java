@@ -19,9 +19,8 @@
 
 package net.minecraftforge.event.world;
 
-import net.minecraftforge.common.MinecraftForge;
 
-import net.minecraft.world.chunk.IChunk;
+import net.minecraft.world.chunk.Chunk;
 
 /**
  * ChunkEvent is fired when an event involving a chunk occurs.<br>
@@ -33,14 +32,14 @@ import net.minecraft.world.chunk.IChunk;
  * All children of this event are fired on the {@link MinecraftForge#EVENT_BUS}.<br>
  **/
 public class ChunkEvent extends WorldEvent {
-	private final IChunk chunk;
+	private final Chunk chunk;
 
-	public ChunkEvent(IChunk chunk) {
+	public ChunkEvent(Chunk chunk) {
 		super(chunk.getWorldForge());
 		this.chunk = chunk;
 	}
 
-	public IChunk getChunk() {
+	public Chunk getChunk() {
 		return chunk;
 	}
 
@@ -57,7 +56,7 @@ public class ChunkEvent extends WorldEvent {
 	 * This event is fired on the {@link MinecraftForge#EVENT_BUS}.<br>
 	 **/
 	public static class Load extends ChunkEvent {
-		public Load(IChunk chunk) {
+		public Load(Chunk chunk) {
 			super(chunk);
 		}
 	}
@@ -74,7 +73,7 @@ public class ChunkEvent extends WorldEvent {
 	 * This event is fired on the {@link MinecraftForge#EVENT_BUS}.<br>
 	 **/
 	public static class Unload extends ChunkEvent {
-		public Unload(IChunk chunk) {
+		public Unload(Chunk chunk) {
 			super(chunk);
 		}
 	}

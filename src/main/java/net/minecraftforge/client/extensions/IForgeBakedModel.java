@@ -28,17 +28,17 @@ import javax.annotation.Nullable;
 import net.minecraftforge.client.model.data.IModelData;
 
 import net.minecraft.block.BlockState;
-import net.minecraft.client.renderer.model.BakedQuad;
-import net.minecraft.client.renderer.model.IBakedModel;
-import net.minecraft.client.renderer.model.ItemCameraTransforms;
-import net.minecraft.client.renderer.texture.TextureAtlasSprite;
-import net.minecraft.util.Direction;
+import net.minecraft.client.render.model.BakedQuad;
+import net.minecraft.client.render.model.BakedModel;
+import net.minecraft.client.render.model.json.ModelTransformation;
+import net.minecraft.client.texture.Sprite;
+import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.IEnviromentBlockReader;
+import net.minecraft.world.ExtendedBlockView;
 
 public interface IForgeBakedModel {
-	default IBakedModel getBakedModel() {
-		return (IBakedModel) this;
+	default BakedModel getBakedModel() {
+		return (BakedModel) this;
 	}
 
 	@Nonnull
@@ -47,23 +47,23 @@ public interface IForgeBakedModel {
 	}
 
 	default boolean isAmbientOcclusion(BlockState state) {
-		return getBakedModel().isAmbientOcclusion();
+		return getBakedModel().useAmbientOcclusion();
 	}
 
 	/*
 	 * Returns the pair of the model for the given perspective, and the matrix that
 	 * should be applied to the GL state before rendering it (matrix may be null).
 	 */
-	default org.apache.commons.lang3.tuple.Pair<? extends IBakedModel, javax.vecmath.Matrix4f> handlePerspective(ItemCameraTransforms.TransformType cameraTransformType) {
+	default org.apache.commons.lang3.tuple.Pair<? extends BakedModel, javax.vecmath.Matrix4f> handlePerspective(ModelTransformation.Type cameraTransformType) {
 		return net.minecraftforge.client.ForgeHooksClient.handlePerspective(getBakedModel(), cameraTransformType);
 	}
 
 	default @Nonnull
-	IModelData getModelData(@Nonnull IEnviromentBlockReader world, @Nonnull BlockPos pos, @Nonnull BlockState state, @Nonnull IModelData tileData) {
+	IModelData getModelData(@Nonnull ExtendedBlockView world, @Nonnull BlockPos pos, @Nonnull BlockState state, @Nonnull IModelData tileData) {
 		return tileData;
 	}
 
-	default TextureAtlasSprite getParticleTexture(@Nonnull IModelData data) {
-		return getBakedModel().getParticleTexture();
+	default Sprite getParticleTexture(@Nonnull IModelData data) {
+		return getBakedModel().getSprite();
 	}
 }

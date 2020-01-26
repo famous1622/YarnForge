@@ -1,0 +1,24 @@
+--- a/net/minecraft/block/entity/ShulkerBoxBlockEntity.java
++++ b/net/minecraft/block/entity/ShulkerBoxBlockEntity.java
+@@ -30,8 +30,8 @@
+ import net.minecraft.text.TranslatableText;
+ import net.minecraftforge.api.distmarker.Dist;
+ import net.minecraftforge.api.distmarker.OnlyIn;
+-import net.minecraft.util.Tickable;
+ 
++import net.minecraft.util.Tickable;
+ 
+ public class ShulkerBoxBlockEntity extends LootableContainerBlockEntity implements SidedInventory, Tickable {
+    private static final int[] AVAILABLE_SLOTS = IntStream.range(0, 27).toArray();
+@@ -290,6 +290,11 @@
+       return new ShulkerBoxContainer(id, player, this);
+    }
+ 
++   @Override
++   protected net.minecraftforge.items.IItemHandler createUnSidedHandler() {
++      return new net.minecraftforge.items.wrapper.SidedInvWrapper(this, Direction.UP);
++   }
++
+    public static enum AnimationStage {
+       CLOSED,
+       OPENING,

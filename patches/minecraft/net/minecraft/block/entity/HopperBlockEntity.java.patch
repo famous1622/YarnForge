@@ -1,0 +1,52 @@
+--- a/net/minecraft/block/entity/HopperBlockEntity.java
++++ b/net/minecraft/block/entity/HopperBlockEntity.java
+@@ -31,8 +31,8 @@
+ import net.minecraft.text.Text;
+ import net.minecraft.text.TranslatableText;
+ import net.minecraft.world.World;
+-import net.minecraft.util.Tickable;
+ 
++import net.minecraft.util.Tickable;
+ 
+ public class HopperBlockEntity extends LootableContainerBlockEntity implements Hopper, Tickable {
+    private DefaultedList<ItemStack> inventory = DefaultedList.ofSize(5, ItemStack.EMPTY);
+@@ -149,6 +149,7 @@
+    }
+ 
+    private boolean insert() {
++      if (net.minecraftforge.items.VanillaInventoryCodeHooks.insertHook(this)) return true;
+       Inventory iinventory = this.getOutputInventory();
+       if (iinventory == null) {
+          return false;
+@@ -193,6 +194,8 @@
+    }
+ 
+    public static boolean extract(Hopper hopper) {
++      Boolean ret = net.minecraftforge.items.VanillaInventoryCodeHooks.extractHook(hopper);
++      if (ret != null) return ret;
+       Inventory iinventory = getInputInventory(hopper);
+       if (iinventory != null) {
+          Direction direction = Direction.DOWN;
+@@ -341,7 +344,7 @@
+       Block block = blockstate.getBlock();
+       if (block instanceof InventoryProvider) {
+          iinventory = ((InventoryProvider)block).getInventory(blockstate, worldIn, blockpos);
+-      } else if (block.hasBlockEntity()) {
++      } else if (blockstate.hasTileEntity()) {
+          BlockEntity tileentity = worldIn.getBlockEntity(blockpos);
+          if (tileentity instanceof Inventory) {
+             iinventory = (Inventory)tileentity;
+@@ -420,4 +423,13 @@
+    protected Container createContainer(int id, PlayerInventory player) {
+       return new HopperContainer(id, player, this);
+    }
++
++   @Override
++   protected net.minecraftforge.items.IItemHandler createUnSidedHandler() {
++      return new net.minecraftforge.items.VanillaHopperItemHandler(this);
++   }
++
++   public long getLastUpdateTime() {
++      return this.lastTickTime;
++   }
+ }

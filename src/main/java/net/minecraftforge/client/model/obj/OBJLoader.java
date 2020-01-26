@@ -31,10 +31,10 @@ import org.apache.commons.io.IOUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import net.minecraft.client.renderer.model.IUnbakedModel;
-import net.minecraft.resources.IResource;
-import net.minecraft.resources.IResourceManager;
-import net.minecraft.util.ResourceLocation;
+import net.minecraft.client.render.model.UnbakedModel;
+import net.minecraft.resource.Resource;
+import net.minecraft.resource.ResourceManager;
+import net.minecraft.util.Identifier;
 
 /*
  * Loader for OBJ models.
@@ -46,9 +46,9 @@ public enum OBJLoader implements ICustomModelLoader {
 
 	private static final Logger LOGGER = LogManager.getLogger();
 	private final Set<String> enabledDomains = new HashSet<>();
-	private final Map<ResourceLocation, OBJModel> cache = new HashMap<>();
-	private final Map<ResourceLocation, Exception> errors = new HashMap<>();
-	private IResourceManager manager;
+	private final Map<Identifier, OBJModel> cache = new HashMap<>();
+	private final Map<Identifier, Exception> errors = new HashMap<>();
+	private ResourceManager manager;
 
 	public void addDomain(String domain) {
 		enabledDomains.add(domain.toLowerCase());
@@ -56,30 +56,30 @@ public enum OBJLoader implements ICustomModelLoader {
 	}
 
 	@Override
-	public void onResourceManagerReload(IResourceManager resourceManager) {
+	public void apply(ResourceManager resourceManager) {
 		this.manager = resourceManager;
 		cache.clear();
 		errors.clear();
 	}
 
 	@Override
-	public boolean accepts(ResourceLocation modelLocation) {
+	public boolean accepts(Identifier modelLocation) {
 		return enabledDomains.contains(modelLocation.getNamespace()) && modelLocation.getPath().endsWith(".obj");
 	}
 
 	@Override
-	public IUnbakedModel loadModel(ResourceLocation modelLocation) throws Exception {
-		ResourceLocation file = new ResourceLocation(modelLocation.getNamespace(), modelLocation.getPath());
+	public UnbakedModel loadModel(Identifier modelLocation) throws Exception {
+		Identifier file = new Identifier(modelLocation.getNamespace(), modelLocation.getPath());
 		if (!cache.containsKey(file)) {
-			IResource resource = null;
+			Resource resource = null;
 			try {
 				try {
 					resource = manager.getResource(file);
 				} catch (FileNotFoundException e) {
 					if (modelLocation.getPath().startsWith("models/block/")) {
-						resource = manager.getResource(new ResourceLocation(file.getNamespace(), "models/item/" + file.getPath().substring("models/block/".length())));
+						resource = manager.getResource(new Identifier(file.getNamespace(), "models/item/" + file.getPath().substring("models/block/".length())));
 					} else if (modelLocation.getPath().startsWith("models/item/")) {
-						resource = manager.getResource(new ResourceLocation(file.getNamespace(), "models/block/" + file.getPath().substring("models/item/".length())));
+						resource = manager.getResource(new Identifier(file.getNamespace(), "models/block/" + file.getPath().substring("models/item/".length())));
 					} else {
 						throw e;
 					}

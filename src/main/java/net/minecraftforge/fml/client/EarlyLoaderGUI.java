@@ -32,20 +32,20 @@ import org.lwjgl.opengl.GL14;
 import org.lwjgl.stb.STBEasyFont;
 import org.lwjgl.system.MemoryUtil;
 
-import net.minecraft.client.MainWindow;
-import net.minecraft.client.Minecraft;
+import net.minecraft.client.util.Window;
+import net.minecraft.client.MinecraftClient;
 import net.minecraft.util.math.MathHelper;
 
 public class EarlyLoaderGUI {
 	private static final float[] memorycolour = new float[] {0.0f, 0.0f, 0.0f};
-	private final MainWindow window;
+	private final Window window;
 	private boolean handledElsewhere;
 
-	public EarlyLoaderGUI(final MainWindow window) {
+	public EarlyLoaderGUI(final Window window) {
 		this.window = window;
 		GlStateManager.clearColor(1.0f, 1.0f, 1.0f, 1.0f);
-		GlStateManager.clear(GL11.GL_COLOR_BUFFER_BIT, Minecraft.IS_RUNNING_ON_MAC);
-		window.update(false);
+		GlStateManager.clear(GL11.GL_COLOR_BUFFER_BIT, MinecraftClient.IS_SYSTEM_MAC);
+		window.setFullscreen(false);
 	}
 
 	public void handleElsewhere() {
@@ -58,14 +58,14 @@ public class EarlyLoaderGUI {
 
 	void renderTick() {
 		if (handledElsewhere) return;
-		int guiScale = window.calcGuiScale(0, false);
-		window.setGuiScale(guiScale);
+		int guiScale = window.calculateScaleFactor(0, false);
+		window.setScaleFactor(guiScale);
 
 		GlStateManager.clearColor(1.0f, 1.0f, 1.0f, 1.0f);
-		GlStateManager.clear(GL11.GL_COLOR_BUFFER_BIT, Minecraft.IS_RUNNING_ON_MAC);
-		window.loadGUIRenderMatrix(Minecraft.IS_RUNNING_ON_MAC);
+		GlStateManager.clear(GL11.GL_COLOR_BUFFER_BIT, MinecraftClient.IS_SYSTEM_MAC);
+		window.method_4493(MinecraftClient.IS_SYSTEM_MAC);
 		renderMessages();
-		window.update(false);
+		window.setFullscreen(false);
 	}
 
 	private void renderMessages() {
@@ -86,7 +86,7 @@ public class EarlyLoaderGUI {
 		final float pctmemory = (float) heapusage.getUsed() / heapusage.getMax();
 		String memory = String.format("Memory Heap: %d / %d MB (%.1f%%)  OffHeap: %d MB", heapusage.getUsed() >> 20, heapusage.getMax() >> 20, pctmemory * 100.0, offheapusage.getUsed() >> 20);
 
-		final int i = MathHelper.hsvToRGB((1.0f - (float) Math.pow(pctmemory, 1.5f)) / 3f, 1.0f, 0.5f);
+		final int i = MathHelper.hsvToRgb((1.0f - (float) Math.pow(pctmemory, 1.5f)) / 3f, 1.0f, 0.5f);
 		memorycolour[2] = ((i) & 0xFF) / 255.0f;
 		memorycolour[1] = ((i >> 8) & 0xFF) / 255.0f;
 		memorycolour[0] = ((i >> 16) & 0xFF) / 255.0f;

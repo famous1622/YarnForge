@@ -33,7 +33,7 @@ import com.mojang.brigadier.suggestion.SuggestionsBuilder;
 import net.minecraftforge.fml.ModContainer;
 import net.minecraftforge.fml.ModList;
 
-import net.minecraft.command.ISuggestionProvider;
+import net.minecraft.server.command.CommandSource;
 
 public class ModIdArgument implements ArgumentType<String> {
 	private static final List<String> EXAMPLES = Arrays.asList("forge", "inventorysorter");
@@ -49,7 +49,7 @@ public class ModIdArgument implements ArgumentType<String> {
 
 	@Override
 	public <S> CompletableFuture<Suggestions> listSuggestions(final CommandContext<S> context, final SuggestionsBuilder builder) {
-		return ISuggestionProvider.suggest(ModList.get().applyForEachModContainer(ModContainer::getModId), builder);
+		return CommandSource.suggestMatching(ModList.get().applyForEachModContainer(ModContainer::getModId), builder);
 	}
 
 	@Override

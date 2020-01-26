@@ -21,7 +21,9 @@ package net.minecraftforge.fml.client.config;
 
 import javax.annotation.Nullable;
 
-import net.minecraft.client.Minecraft;
+import net.minecraft.client.MinecraftClient;
+
+import net.minecraft.client.gui.widget.ButtonWidget.PressAction;
 
 /**
  * This class is blatantly stolen from iChunUtils with permission.
@@ -53,11 +55,11 @@ public class GuiSlider extends GuiButtonExt {
 
 	public boolean drawString = true;
 
-	public GuiSlider(int xPos, int yPos, int width, int height, String prefix, String suf, double minVal, double maxVal, double currentVal, boolean showDec, boolean drawStr, IPressable handler) {
+	public GuiSlider(int xPos, int yPos, int width, int height, String prefix, String suf, double minVal, double maxVal, double currentVal, boolean showDec, boolean drawStr, PressAction handler) {
 		this(xPos, yPos, width, height, prefix, suf, minVal, maxVal, currentVal, showDec, drawStr, handler, null);
 	}
 
-	public GuiSlider(int xPos, int yPos, int width, int height, String prefix, String suf, double minVal, double maxVal, double currentVal, boolean showDec, boolean drawStr, IPressable handler, @Nullable ISlider par) {
+	public GuiSlider(int xPos, int yPos, int width, int height, String prefix, String suf, double minVal, double maxVal, double currentVal, boolean showDec, boolean drawStr, PressAction handler, @Nullable ISlider par) {
 		super(xPos, yPos, width, height, prefix, handler);
 		minValue = minVal;
 		maxValue = maxVal;
@@ -84,7 +86,7 @@ public class GuiSlider extends GuiButtonExt {
 		}
 	}
 
-	public GuiSlider(int xPos, int yPos, String displayStr, double minVal, double maxVal, double currentVal, IPressable handler, ISlider par) {
+	public GuiSlider(int xPos, int yPos, String displayStr, double minVal, double maxVal, double currentVal, PressAction handler, ISlider par) {
 		this(xPos, yPos, 150, 20, displayStr, "", minVal, maxVal, currentVal, true, true, handler, par);
 	}
 
@@ -101,7 +103,7 @@ public class GuiSlider extends GuiButtonExt {
 	 * Fired when the mouse button is dragged. Equivalent of MouseListener.mouseDragged(MouseEvent e).
 	 */
 	@Override
-	protected void renderBg(Minecraft par1Minecraft, int par2, int par3) {
+	protected void renderBg(MinecraftClient par1Minecraft, int par2, int par3) {
 		if (this.visible) {
 			if (this.dragging) {
 				this.sliderValue = (par2 - (this.x + 4)) / (float) (this.width - 8);

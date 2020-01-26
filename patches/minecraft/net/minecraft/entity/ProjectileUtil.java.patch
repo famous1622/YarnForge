@@ -1,0 +1,23 @@
+--- a/net/minecraft/entity/ProjectileUtil.java
++++ b/net/minecraft/entity/ProjectileUtil.java
+@@ -22,10 +22,10 @@
+ import net.minecraft.world.World;
+ import net.minecraftforge.api.distmarker.Dist;
+ import net.minecraftforge.api.distmarker.OnlyIn;
++
+ import net.minecraft.entity.projectile.ArrowEntity;
+ import net.minecraft.entity.projectile.ProjectileEntity;
+ 
+-
+ public final class ProjectileUtil {
+    public static HitResult getCollision(Entity p_221266_0_, boolean p_221266_1_, boolean p_221266_2_, @Nullable Entity p_221266_3_, RayTraceContext.ShapeType p_221266_4_) {
+       return getCollision(p_221266_0_, p_221266_1_, p_221266_2_, p_221266_3_, p_221266_4_, true, (p_221270_2_) -> {
+@@ -90,7 +90,7 @@
+             Vec3d vec3d1 = optional.get();
+             double d1 = p_221273_1_.squaredDistanceTo(vec3d1);
+             if (d1 < d0 || d0 == 0.0D) {
+-               if (entity1.getRootVehicle() == p_221273_0_.getRootVehicle()) {
++               if (entity1.getRootVehicle() == p_221273_0_.getRootVehicle() && !entity1.canRiderInteract()) {
+                   if (d0 == 0.0D) {
+                      entity = entity1;
+                      vec3d = vec3d1;

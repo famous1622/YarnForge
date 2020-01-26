@@ -27,28 +27,28 @@ import net.minecraftforge.fml.client.ClientModLoader;
 import net.minecraftforge.fml.loading.FMLConfig;
 import net.minecraftforge.versions.forge.ForgeVersion;
 
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.screen.MainMenuScreen;
+import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.gui.screen.TitleScreen;
 import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.client.gui.widget.button.Button;
-import net.minecraft.util.ResourceLocation;
-import net.minecraft.util.text.TranslationTextComponent;
+import net.minecraft.client.gui.widget.ButtonWidget;
+import net.minecraft.util.Identifier;
+import net.minecraft.text.TranslatableText;
 
 @OnlyIn(Dist.CLIENT)
 public class NotificationModUpdateScreen extends Screen {
 
-	private static final ResourceLocation VERSION_CHECK_ICONS = new ResourceLocation(ForgeVersion.MOD_ID, "textures/gui/version_check_icons.png");
+	private static final Identifier VERSION_CHECK_ICONS = new Identifier(ForgeVersion.MOD_ID, "textures/gui/version_check_icons.png");
 
-	private final Button modButton;
+	private final ButtonWidget modButton;
 	private VersionChecker.Status showNotification = null;
 	private boolean hasCheckedForUpdates = false;
 
-	public NotificationModUpdateScreen(Button modButton) {
-		super(new TranslationTextComponent("forge.menu.updatescreen.title"));
+	public NotificationModUpdateScreen(ButtonWidget modButton) {
+		super(new TranslatableText("forge.menu.updatescreen.title"));
 		this.modButton = modButton;
 	}
 
-	public static NotificationModUpdateScreen init(MainMenuScreen guiMainMenu, Button modButton) {
+	public static NotificationModUpdateScreen init(TitleScreen guiMainMenu, ButtonWidget modButton) {
 		NotificationModUpdateScreen notificationModUpdateScreen = new NotificationModUpdateScreen(modButton);
 		notificationModUpdateScreen.init(guiMainMenu.getMinecraft(), guiMainMenu.width, guiMainMenu.height);
 		notificationModUpdateScreen.init();
@@ -71,7 +71,7 @@ public class NotificationModUpdateScreen extends Screen {
 			return;
 		}
 
-		Minecraft.getInstance().getTextureManager().bindTexture(VERSION_CHECK_ICONS);
+		MinecraftClient.getInstance().getTextureManager().bindTexture(VERSION_CHECK_ICONS);
 		GlStateManager.color4f(1, 1, 1, 1);
 		GlStateManager.pushMatrix();
 

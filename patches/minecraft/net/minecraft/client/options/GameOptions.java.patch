@@ -1,0 +1,85 @@
+--- a/net/minecraft/client/options/GameOptions.java
++++ b/net/minecraft/client/options/GameOptions.java
+@@ -39,8 +39,8 @@
+ import org.apache.commons.lang3.ArrayUtils;
+ import org.apache.logging.log4j.LogManager;
+ import org.apache.logging.log4j.Logger;
+-import net.minecraft.client.MinecraftClient;
+ 
++import net.minecraft.client.MinecraftClient;
+ 
+ @OnlyIn(Dist.CLIENT)
+ public class GameOptions {
+@@ -137,7 +137,7 @@
+    public final KeyBinding[] keysHotbar = new KeyBinding[]{new KeyBinding("key.hotbar.1", 49, "key.categories.inventory"), new KeyBinding("key.hotbar.2", 50, "key.categories.inventory"), new KeyBinding("key.hotbar.3", 51, "key.categories.inventory"), new KeyBinding("key.hotbar.4", 52, "key.categories.inventory"), new KeyBinding("key.hotbar.5", 53, "key.categories.inventory"), new KeyBinding("key.hotbar.6", 54, "key.categories.inventory"), new KeyBinding("key.hotbar.7", 55, "key.categories.inventory"), new KeyBinding("key.hotbar.8", 56, "key.categories.inventory"), new KeyBinding("key.hotbar.9", 57, "key.categories.inventory")};
+    public final KeyBinding keySaveToolbarActivator = new KeyBinding("key.saveToolbarActivator", 67, "key.categories.creative");
+    public final KeyBinding keyLoadToolbarActivator = new KeyBinding("key.loadToolbarActivator", 88, "key.categories.creative");
+-   public final KeyBinding[] keysAll = ArrayUtils.addAll(new KeyBinding[]{this.keyAttack, this.keyUse, this.keyForward, this.keyLeft, this.keyBack, this.keyRight, this.keyJump, this.keySneak, this.keySprint, this.keyDrop, this.keyInventory, this.keyChat, this.keyPlayerList, this.keyPickItem, this.keyCommand, this.keyScreenshot, this.keyTogglePerspective, this.keySmoothCamera, this.keyFullscreen, this.keySpectatorOutlines, this.keySwapHands, this.keySaveToolbarActivator, this.keyLoadToolbarActivator, this.keyAdvancements}, this.keysHotbar);
++   public KeyBinding[] keysAll = ArrayUtils.addAll(new KeyBinding[]{this.keyAttack, this.keyUse, this.keyForward, this.keyLeft, this.keyBack, this.keyRight, this.keyJump, this.keySneak, this.keySprint, this.keyDrop, this.keyInventory, this.keyChat, this.keyPlayerList, this.keyPickItem, this.keyCommand, this.keyScreenshot, this.keyTogglePerspective, this.keySmoothCamera, this.keyFullscreen, this.keySpectatorOutlines, this.keySwapHands, this.keySaveToolbarActivator, this.keyLoadToolbarActivator, this.keyAdvancements}, this.keysHotbar);
+    protected MinecraftClient client;
+    private final File optionsFile;
+    public Difficulty difficulty = Difficulty.NORMAL;
+@@ -156,6 +156,7 @@
+    public String language = "en_us";
+ 
+    public GameOptions(MinecraftClient mcIn, File mcDataDir) {
++      setForgeKeybindProperties();
+       this.client = mcIn;
+       this.optionsFile = new File(mcDataDir, "options.txt");
+       if (mcIn.is64Bit() && Runtime.getRuntime().maxMemory() >= 1000000000L) {
+@@ -461,7 +462,11 @@
+ 
+                for(KeyBinding keybinding : this.keysAll) {
+                   if (s1.equals("key_" + keybinding.getId())) {
+-                     keybinding.setKeyCode(InputUtil.fromName(s2));
++                     if (s2.indexOf(':') != -1) {
++                        String[] pts = s2.split(":");
++                        keybinding.setKeyModifierAndCode(net.minecraftforge.client.settings.KeyModifier.valueFromString(pts[1]), InputUtil.fromName(pts[0]));
++                     } else
++                         keybinding.setKeyModifierAndCode(net.minecraftforge.client.settings.KeyModifier.NONE, InputUtil.fromName(s2));
+                   }
+                }
+ 
+@@ -509,6 +514,7 @@
+    }
+ 
+    public void write() {
++      if (net.minecraftforge.fml.client.ClientModLoader.isLoading()) return; //Don't save settings before mods add keybindigns and the like to prevent them from being deleted.
+       try (PrintWriter printwriter = new PrintWriter(new OutputStreamWriter(new FileOutputStream(this.optionsFile), StandardCharsets.UTF_8))) {
+          printwriter.println("version:" + SharedConstants.getGameVersion().getWorldVersion());
+          printwriter.println("autoJump:" + Option.AUTO_JUMP.get(this));
+@@ -583,7 +589,7 @@
+          printwriter.println("glDebugVerbosity:" + this.glDebugVerbosity);
+ 
+          for(KeyBinding keybinding : this.keysAll) {
+-            printwriter.println("key_" + keybinding.getId() + ":" + keybinding.getName());
++            printwriter.println("key_" + keybinding.getId() + ":" + keybinding.getName() + (keybinding.getKeyModifier() != net.minecraftforge.client.settings.KeyModifier.NONE ? ":" + keybinding.getKeyModifier() : ""));
+          }
+ 
+          for(SoundCategory soundcategory : SoundCategory.values()) {
+@@ -680,6 +686,25 @@
+          }
+       }
+ 
++      if (net.minecraftforge.fml.client.ClientModLoader.isLoading()) return; //Don't save settings before mods add keybindigns and the like to prevent them from being deleted.
+       resourcePackListIn.setEnabled(set);
+    }
++
++   private void setForgeKeybindProperties() {
++      net.minecraftforge.client.settings.KeyConflictContext inGame = net.minecraftforge.client.settings.KeyConflictContext.IN_GAME;
++      keyForward.setKeyConflictContext(inGame);
++      keyLeft.setKeyConflictContext(inGame);
++      keyBack.setKeyConflictContext(inGame);
++      keyRight.setKeyConflictContext(inGame);
++      keyJump.setKeyConflictContext(inGame);
++      keySneak.setKeyConflictContext(inGame);
++      keySprint.setKeyConflictContext(inGame);
++      keyAttack.setKeyConflictContext(inGame);
++      keyChat.setKeyConflictContext(inGame);
++      keyPlayerList.setKeyConflictContext(inGame);
++      keyCommand.setKeyConflictContext(inGame);
++      keyTogglePerspective.setKeyConflictContext(inGame);
++      keySmoothCamera.setKeyConflictContext(inGame);
++      keySwapHands.setKeyConflictContext(inGame);
++   }
+ }

@@ -1,0 +1,28 @@
+--- a/net/minecraft/entity/mob/SilverfishEntity.java
++++ b/net/minecraft/entity/mob/SilverfishEntity.java
+@@ -24,7 +24,6 @@
+ import net.minecraft.sound.SoundEvent;
+ import net.minecraft.sound.SoundEvents;
+ import net.minecraft.util.math.BlockPos;
+-import net.minecraft.world.GameRules;
+ import net.minecraft.world.IWorld;
+ import net.minecraft.world.ViewableWorld;
+ import net.minecraft.world.World;
+@@ -136,7 +135,7 @@
+             return false;
+          } else {
+             Random random = this.mob.getRand();
+-            if (this.mob.world.getGameRules().getBoolean(GameRules.MOB_GRIEFING) && random.nextInt(10) == 0) {
++            if (net.minecraftforge.event.ForgeEventFactory.getMobGriefingEvent(this.mob.world, this.mob) && random.nextInt(10) == 0) {
+                this.direction = Direction.random(random);
+                BlockPos blockpos = (new BlockPos(this.mob.x, this.mob.y + 0.5D, this.mob.z)).offset(this.direction);
+                BlockState blockstate = this.mob.world.getBlockState(blockpos);
+@@ -205,7 +204,7 @@
+                      BlockState blockstate = world.getBlockState(blockpos1);
+                      Block block = blockstate.getBlock();
+                      if (block instanceof InfestedBlock) {
+-                        if (world.getGameRules().getBoolean(GameRules.MOB_GRIEFING)) {
++                        if (net.minecraftforge.event.ForgeEventFactory.getMobGriefingEvent(world, this.silverfish)) {
+                            world.breakBlock(blockpos1, true);
+                         } else {
+                            world.setBlockState(blockpos1, ((InfestedBlock)block).getRegularBlock().getDefaultState(), 3);

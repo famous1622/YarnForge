@@ -1,0 +1,49 @@
+--- a/net/minecraft/data/server/EntityLootTableGenerator.java
++++ b/net/minecraft/data/server/EntityLootTableGenerator.java
+@@ -51,7 +51,7 @@
+       return LootSupplier.builder().withPool(LootPool.builder().withRolls(ConstantLootTableRange.create(1)).withEntry(ItemEntry.builder(p_218583_0_))).withPool(LootPool.builder().withRolls(ConstantLootTableRange.create(1)).withEntry(LootTableEntry.builder(EntityType.SHEEP.getLootTableId())));
+    }
+ 
+-   public void accept(BiConsumer<Identifier, LootSupplier.Builder> p_accept_1_) {
++   protected void addTables() {
+       this.method_16368(EntityType.ARMOR_STAND, LootSupplier.builder());
+       this.method_16368(EntityType.BAT, LootSupplier.builder());
+       this.method_16368(EntityType.BLAZE, LootSupplier.builder().withPool(LootPool.builder().withRolls(ConstantLootTableRange.create(1)).withEntry(ItemEntry.builder(Items.BLAZE_ROD).withFunction(SetCountLootFunction.builder(UniformLootTableRange.between(0.0F, 1.0F))).withFunction(LootingEnchantLootFunction.builder(UniformLootTableRange.between(0.0F, 1.0F)))).withCondition(KilledByPlayerLootCondition.builder())));
+@@ -136,8 +136,12 @@
+       this.method_16368(EntityType.ZOMBIE_HORSE, LootSupplier.builder().withPool(LootPool.builder().withRolls(ConstantLootTableRange.create(1)).withEntry(ItemEntry.builder(Items.ROTTEN_FLESH).withFunction(SetCountLootFunction.builder(UniformLootTableRange.between(0.0F, 2.0F))).withFunction(LootingEnchantLootFunction.builder(UniformLootTableRange.between(0.0F, 1.0F))))));
+       this.method_16368(EntityType.ZOMBIE_PIGMAN, LootSupplier.builder().withPool(LootPool.builder().withRolls(ConstantLootTableRange.create(1)).withEntry(ItemEntry.builder(Items.ROTTEN_FLESH).withFunction(SetCountLootFunction.builder(UniformLootTableRange.between(0.0F, 1.0F))).withFunction(LootingEnchantLootFunction.builder(UniformLootTableRange.between(0.0F, 1.0F))))).withPool(LootPool.builder().withRolls(ConstantLootTableRange.create(1)).withEntry(ItemEntry.builder(Items.GOLD_NUGGET).withFunction(SetCountLootFunction.builder(UniformLootTableRange.between(0.0F, 1.0F))).withFunction(LootingEnchantLootFunction.builder(UniformLootTableRange.between(0.0F, 1.0F))))).withPool(LootPool.builder().withRolls(ConstantLootTableRange.create(1)).withEntry(ItemEntry.builder(Items.GOLD_INGOT)).withCondition(KilledByPlayerLootCondition.builder()).withCondition(RandomChanceWithLootingLootCondition.builder(0.025F, 0.01F))));
+       this.method_16368(EntityType.ZOMBIE_VILLAGER, LootSupplier.builder().withPool(LootPool.builder().withRolls(ConstantLootTableRange.create(1)).withEntry(ItemEntry.builder(Items.ROTTEN_FLESH).withFunction(SetCountLootFunction.builder(UniformLootTableRange.between(0.0F, 2.0F))).withFunction(LootingEnchantLootFunction.builder(UniformLootTableRange.between(0.0F, 1.0F))))).withPool(LootPool.builder().withRolls(ConstantLootTableRange.create(1)).withEntry(ItemEntry.builder(Items.IRON_INGOT)).withEntry(ItemEntry.builder(Items.CARROT)).withEntry(ItemEntry.builder(Items.POTATO)).withCondition(KilledByPlayerLootCondition.builder()).withCondition(RandomChanceWithLootingLootCondition.builder(0.025F, 0.01F))));
++   }
++
++   public void accept(BiConsumer<Identifier, LootSupplier.Builder> p_accept_1_) {
++      this.addTables();
+       Set<Identifier> set = Sets.newHashSet();
+-      Iterator iterator = Registry.ENTITY_TYPE.iterator();
++      Iterator iterator = getKnownEntities().iterator();
+ 
+       EntityType<?> entitytype;
+       Identifier resourcelocation;
+@@ -149,7 +153,7 @@
+ 
+          entitytype = (EntityType)iterator.next();
+          resourcelocation = entitytype.getLootTableId();
+-         if (!field_19339.contains(entitytype) && entitytype.getCategory() == EntityCategory.MISC) {
++         if (isNonLiving(entitytype)) {
+             if (resourcelocation != LootTables.EMPTY && this.field_16543.remove(resourcelocation) != null) {
+                break;
+             }
+@@ -166,6 +170,14 @@
+       throw new IllegalStateException(String.format("Weird loottable '%s' for '%s', not a LivingEntity so should not have loot", resourcelocation, Registry.ENTITY_TYPE.getId(entitytype)));
+    }
+ 
++   protected Iterable<EntityType<?>> getKnownEntities() {
++      return Registry.ENTITY_TYPE;
++   }
++
++   protected boolean isNonLiving(EntityType<?> entitytype) {
++      return !field_19339.contains(entitytype) && entitytype.getCategory() == EntityCategory.MISC; 
++   }
++
+    protected void method_16368(EntityType<?> p_218582_1_, LootSupplier.Builder p_218582_2_) {
+       this.method_16369(p_218582_1_.getLootTableId(), p_218582_2_);
+    }

@@ -1,0 +1,67 @@
+--- a/net/minecraft/entity/ai/pathing/LandPathNodeMaker.java
++++ b/net/minecraft/entity/ai/pathing/LandPathNodeMaker.java
+@@ -24,12 +24,13 @@
+ import net.minecraft.util.shape.VoxelShape;
+ import net.minecraft.world.BlockView;
+ import net.minecraft.world.ViewableWorld;
++
+ import net.minecraft.block.BlockPlacementEnvironment;
+ import net.minecraft.class_4459;
+ 
+-
+ public class LandPathNodeMaker extends PathNodeMaker {
+    protected float waterPathNodeTypeWeight;
++   protected MobEntity currentEntity;
+ 
+    public void init(ViewableWorld sourceIn, MobEntity mob) {
+       super.init(sourceIn, mob);
+@@ -272,7 +273,9 @@
+       PathNodeType pathnodetype = PathNodeType.BLOCKED;
+       double d0 = (double)entitylivingIn.getWidth() / 2.0D;
+       BlockPos blockpos = new BlockPos(entitylivingIn);
++      this.currentEntity = entitylivingIn;
+       pathnodetype = this.method_64(blockaccessIn, x, y, z, xSize, ySize, zSize, canBreakDoorsIn, canEnterDoorsIn, enumset, pathnodetype, blockpos);
++      this.currentEntity = entitylivingIn;
+       if (enumset.contains(PathNodeType.FENCE)) {
+          return PathNodeType.FENCE;
+       } else {
+@@ -362,6 +365,7 @@
+          if (pathnodetype1 == PathNodeType.DAMAGE_OTHER) {
+             pathnodetype = PathNodeType.DAMAGE_OTHER;
+          }
++         if (pathnodetype1 == PathNodeType.DAMAGE_OTHER) pathnodetype = PathNodeType.DAMAGE_OTHER; // Forge: consider modded damage types
+       }
+ 
+       pathnodetype = this.method_59(blockaccessIn, x, y, z, pathnodetype);
+@@ -374,12 +378,14 @@
+             for(int i = -1; i <= 1; ++i) {
+                for(int j = -1; j <= 1; ++j) {
+                   if (i != 0 || j != 0) {
+-                     Block block = blockaccessIn.getBlockState(blockpos$pooledmutableblockpos.set(i + x, y, j + z)).getBlock();
+-                     if (block == Blocks.CACTUS) {
++                     BlockState state = blockaccessIn.getBlockState(blockpos$pooledmutableblockpos.set(i + x, y, j + z));
++                     Block block = state.getBlock();
++                     PathNodeType type = block.getAiPathNodeType(state, blockaccessIn, blockpos$pooledmutableblockpos, this.currentEntity);
++                     if (block == Blocks.CACTUS || type == PathNodeType.DAMAGE_CACTUS) {
+                         nodeType = PathNodeType.DANGER_CACTUS;
+-                     } else if (block == Blocks.FIRE) {
++                     } else if (block == Blocks.FIRE || type == PathNodeType.DAMAGE_FIRE) {
+                         nodeType = PathNodeType.DANGER_FIRE;
+-                     } else if (block == Blocks.SWEET_BERRY_BUSH) {
++                     } else if (block == Blocks.SWEET_BERRY_BUSH || type == PathNodeType.DAMAGE_OTHER) {
+                         nodeType = PathNodeType.DANGER_OTHER;
+                      }
+                   }
+@@ -394,9 +400,11 @@
+    protected PathNodeType getBasicPathNodeType(BlockView blockaccessIn, int x, int y, int z) {
+       BlockPos blockpos = new BlockPos(x, y, z);
+       BlockState blockstate = blockaccessIn.getBlockState(blockpos);
++      PathNodeType type = blockstate.getAiPathNodeType(blockaccessIn, blockpos, this.currentEntity);
++      if (type != null) return type;
+       Block block = blockstate.getBlock();
+       Material material = blockstate.getMaterial();
+-      if (blockstate.isAir()) {
++      if (blockstate.isAir(blockaccessIn, blockpos)) {
+          return PathNodeType.OPEN;
+       } else if (!block.matches(BlockTags.TRAPDOORS) && block != Blocks.LILY_PAD) {
+          if (block == Blocks.FIRE) {

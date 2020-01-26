@@ -1,0 +1,147 @@
+--- a/net/minecraft/server/network/ServerPlayerInteractionManager.java
++++ b/net/minecraft/server/network/ServerPlayerInteractionManager.java
+@@ -75,7 +75,7 @@
+       ++this.field_14000;
+       if (this.field_20328) {
+          BlockState blockstate = this.world.getBlockState(this.field_20329);
+-         if (blockstate.isAir()) {
++         if (blockstate.isAir(world, field_20329)) {
+             this.field_20328 = false;
+          } else {
+             float f = this.method_21716(blockstate, this.field_20329);
+@@ -86,7 +86,7 @@
+          }
+       } else if (this.field_14003) {
+          BlockState blockstate1 = this.world.getBlockState(this.field_20327);
+-         if (blockstate1.isAir()) {
++         if (blockstate1.isAir(world, field_20327)) {
+             this.world.setBlockBreakingProgress(this.player.getEntityId(), this.field_20327, -1);
+             this.field_20331 = -1;
+             this.field_14003 = false;
+@@ -114,7 +114,15 @@
+       double d1 = this.player.y - ((double)p_225416_1_.getY() + 0.5D) + 1.5D;
+       double d2 = this.player.z - ((double)p_225416_1_.getZ() + 0.5D);
+       double d3 = d0 * d0 + d1 * d1 + d2 * d2;
+-      if (d3 > 36.0D) {
++      double dist = player.getAttributeInstance(net.minecraft.entity.player.PlayerEntity.REACH_DISTANCE).getValue() + 1;
++      net.minecraftforge.event.entity.player.PlayerInteractEvent.LeftClickBlock event = net.minecraftforge.common.ForgeHooks.onLeftClickBlock(player, p_225416_1_, p_225416_3_);
++      if (event.isCanceled() || (!this.isCreative() && event.getUseItem() == net.minecraftforge.eventbus.api.Event.Result.DENY)) { // Restore block and te data
++         player.networkHandler.sendPacket(new BlockPlayerActionS2CPacket(p_225416_1_, world.getBlockState(p_225416_1_), p_225416_2_, false));
++         world.updateListeners(p_225416_1_, world.getBlockState(p_225416_1_), world.getBlockState(p_225416_1_), 3);
++         return;
++      }
++      dist *= dist;
++      if (d3 > dist) {
+          this.player.networkHandler.sendPacket(new BlockPlayerActionS2CPacket(p_225416_1_, this.world.getBlockState(p_225416_1_), p_225416_2_, false));
+       } else if (p_225416_1_.getY() >= p_225416_4_) {
+          this.player.networkHandler.sendPacket(new BlockPlayerActionS2CPacket(p_225416_1_, this.world.getBlockState(p_225416_1_), p_225416_2_, false));
+@@ -144,12 +152,13 @@
+             this.field_20326 = this.field_14000;
+             float f = 1.0F;
+             BlockState blockstate = this.world.getBlockState(p_225416_1_);
+-            if (!blockstate.isAir()) {
++            if (!blockstate.isAir(world, p_225416_1_)) {
++               if (event.getUseBlock() != net.minecraftforge.eventbus.api.Event.Result.DENY)
+                blockstate.onBlockBreakStart(this.world, p_225416_1_, this.player);
+                f = blockstate.calcBlockBreakingDelta(this.player, this.player.world, p_225416_1_);
+             }
+ 
+-            if (!blockstate.isAir() && f >= 1.0F) {
++            if (!blockstate.isAir(world, p_225416_1_) && f >= 1.0F) {
+                this.method_21717(p_225416_1_, p_225416_2_);
+             } else {
+                this.field_14003 = true;
+@@ -202,7 +211,8 @@
+ 
+    public boolean tryBreakBlock(BlockPos pos) {
+       BlockState blockstate = this.world.getBlockState(pos);
+-      if (!this.player.getMainHandStack().getItem().canMine(blockstate, this.world, pos, this.player)) {
++      int exp = net.minecraftforge.common.ForgeHooks.onBlockBreakEvent(world, gameMode, player, pos);
++      if (exp == -1) {
+          return false;
+       } else {
+          BlockEntity tileentity = this.world.getBlockEntity(pos);
+@@ -210,25 +220,30 @@
+          if ((block instanceof CommandBlock || block instanceof StructureBlock || block instanceof JigsawBlock) && !this.player.isCreativeLevelTwoOp()) {
+             this.world.updateListeners(pos, blockstate, blockstate, 3);
+             return false;
++         } else if (player.getMainHandStack().onBlockStartBreak(pos, player)) {
++            return false;
+          } else if (this.player.method_21701(this.world, pos, this.gameMode)) {
+             return false;
+          } else {
+-            block.onBreak(this.world, pos, blockstate, this.player);
+-            boolean flag = this.world.clearBlockState(pos, false);
+-            if (flag) {
+-               block.onBroken(this.world, pos, blockstate);
+-            }
+-
+             if (this.isCreative()) {
++               removeBlock(pos, false);
+                return true;
+             } else {
+                ItemStack itemstack = this.player.getMainHandStack();
+-               boolean flag1 = this.player.isUsingEffectiveTool(blockstate);
++               ItemStack copy = itemstack.copy();
++               boolean flag1 = blockstate.canHarvestBlock(this.world, pos, this.player);
+                itemstack.postMine(this.world, blockstate, pos, this.player);
++               if (itemstack.isEmpty() && !copy.isEmpty()) {
++                  net.minecraftforge.event.ForgeEventFactory.onPlayerDestroyItem(this.player, copy, Hand.MAIN_HAND);
++               }
++               boolean flag = removeBlock(pos, flag1);
+                if (flag && flag1) {
+                   ItemStack itemstack1 = itemstack.isEmpty() ? ItemStack.EMPTY : itemstack.copy();
+                   block.afterBreak(this.world, this.player, pos, blockstate, tileentity, itemstack1);
+                }
++               if (flag && exp > 0) {
++                  blockstate.getBlock().dropExperience(world, pos, exp);
++               }
+ 
+                return true;
+             }
+@@ -236,12 +251,22 @@
+       }
+    }
+ 
++   private boolean removeBlock(BlockPos pos, boolean canHarvest) {
++      BlockState state = this.world.getBlockState(pos);
++      boolean removed = state.removedByPlayer(this.world, pos, this.player, canHarvest, this.world.getFluidState(pos));
++      if (removed)
++        state.getBlock().onBroken(this.world, pos, state);
++      return removed;
++   }
++
+    public ActionResult interactItem(PlayerEntity player, World worldIn, ItemStack stack, Hand hand) {
+       if (this.gameMode == GameMode.SPECTATOR) {
+          return ActionResult.PASS;
+       } else if (player.getItemCooldownManager().isCoolingDown(stack.getItem())) {
+          return ActionResult.PASS;
+       } else {
++         ActionResult cancelResult = net.minecraftforge.common.ForgeHooks.onItemRightClick(player, hand);
++         if (cancelResult != null) return cancelResult;
+          int i = stack.getCount();
+          int j = stack.getDamage();
+          TypedActionResult<ItemStack> actionresult = stack.use(worldIn, player, hand);
+@@ -284,12 +309,19 @@
+             return ActionResult.PASS;
+          }
+       } else {
++         net.minecraftforge.event.entity.player.PlayerInteractEvent.RightClickBlock event = net.minecraftforge.common.ForgeHooks.onRightClickBlock(p_219441_1_, p_219441_4_, blockpos, p_219441_5_.getSide());
++         if (event.isCanceled()) return event.getCancellationResult();
++         ItemUsageContext itemusecontext = new ItemUsageContext(p_219441_1_, p_219441_4_, p_219441_5_);
++         if (event.getUseItem() != net.minecraftforge.eventbus.api.Event.Result.DENY) {
++            ActionResult result = p_219441_3_.onItemUseFirst(itemusecontext);
++            if (result != ActionResult.PASS) return result;
++         }
+          boolean flag = !p_219441_1_.getMainHandStack().isEmpty() || !p_219441_1_.getOffHandStack().isEmpty();
+-         boolean flag1 = p_219441_1_.isSneaking() && flag;
+-         if (!flag1 && blockstate.activate(p_219441_2_, p_219441_1_, p_219441_4_, p_219441_5_)) {
++         boolean flag1 = !(p_219441_1_.isSneaking() && flag) || (p_219441_1_.getMainHandStack().doesSneakBypassUse(p_219441_2_,blockpos,p_219441_1_) && p_219441_1_.getOffHandStack().doesSneakBypassUse(p_219441_2_,blockpos,p_219441_1_));
++         if (event.getUseBlock() != net.minecraftforge.eventbus.api.Event.Result.DENY && flag1 && blockstate.activate(p_219441_2_, p_219441_1_, p_219441_4_, p_219441_5_)) {
+             return ActionResult.SUCCESS;
+          } else if (!p_219441_3_.isEmpty() && !p_219441_1_.getItemCooldownManager().isCoolingDown(p_219441_3_.getItem())) {
+-            ItemUsageContext itemusecontext = new ItemUsageContext(p_219441_1_, p_219441_4_, p_219441_5_);
++            if (event.getUseItem() == net.minecraftforge.eventbus.api.Event.Result.DENY) return ActionResult.PASS;
+             if (this.isCreative()) {
+                int i = p_219441_3_.getCount();
+                ActionResult actionresulttype = p_219441_3_.useOnBlock(itemusecontext);

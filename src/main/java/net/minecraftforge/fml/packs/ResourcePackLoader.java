@@ -32,35 +32,35 @@ import net.minecraftforge.fml.ModList;
 import net.minecraftforge.fml.loading.moddiscovery.ModFile;
 import net.minecraftforge.fml.loading.moddiscovery.ModFileInfo;
 
-import net.minecraft.resources.IPackFinder;
-import net.minecraft.resources.ResourcePackInfo;
-import net.minecraft.resources.ResourcePackList;
+import net.minecraft.resource.ResourcePackCreator;
+import net.minecraft.resource.ResourcePackContainer;
+import net.minecraft.resource.ResourcePackContainerManager;
 
 public class ResourcePackLoader {
 	private static Map<ModFile, ModFileResourcePack> modResourcePacks;
-	private static ResourcePackList<?> resourcePackList;
+	private static ResourcePackContainerManager<?> resourcePackList;
 
 	public static Optional<ModFileResourcePack> getResourcePackFor(String modId) {
 		return Optional.ofNullable(ModList.get().getModFileById(modId)).
 				map(ModFileInfo::getFile).map(mf -> modResourcePacks.get(mf));
 	}
 
-	public static <T extends ResourcePackInfo> void loadResourcePacks(ResourcePackList<T> resourcePacks, BiFunction<Map<ModFile, ? extends ModFileResourcePack>, BiConsumer<? super ModFileResourcePack, T>, IPackInfoFinder> packFinder) {
+	public static <T extends ResourcePackContainer> void loadResourcePacks(ResourcePackContainerManager<T> resourcePacks, BiFunction<Map<ModFile, ? extends ModFileResourcePack>, BiConsumer<? super ModFileResourcePack, T>, IPackInfoFinder> packFinder) {
 		resourcePackList = resourcePacks;
 		modResourcePacks = ModList.get().getModFiles().stream().
 				filter(mf -> !Objects.equals(mf.getModLoader(), "minecraft")).
 				map(mf -> new ModFileResourcePack(mf.getFile())).
 				collect(Collectors.toMap(ModFileResourcePack::getModFile, Function.identity()));
-		resourcePacks.addPackFinder(new LambdaFriendlyPackFinder(packFinder.apply(modResourcePacks, ModFileResourcePack::setPackInfo)));
+		resourcePacks.addCreator(new LambdaFriendlyPackFinder(packFinder.apply(modResourcePacks, ModFileResourcePack::setPackInfo)));
 	}
 
-	public interface IPackInfoFinder<T extends ResourcePackInfo> {
-		void addPackInfosToMap(Map<String, T> packList, ResourcePackInfo.IFactory<T> factory);
+	public interface IPackInfoFinder<T extends ResourcePackContainer> {
+		void addPackInfosToMap(Map<String, T> packList, ResourcePackContainer.Factory<T> factory);
 	}
 
 	// SO GROSS - DON'T @ me bro
 	@SuppressWarnings("unchecked")
-	private static class LambdaFriendlyPackFinder implements IPackFinder {
+	private static class LambdaFriendlyPackFinder implements ResourcePackCreator {
 		private IPackInfoFinder wrapped;
 
 		private LambdaFriendlyPackFinder(final IPackInfoFinder wrapped) {
@@ -68,7 +68,7 @@ public class ResourcePackLoader {
 		}
 
 		@Override
-		public <T extends ResourcePackInfo> void addPackInfosToMap(Map<String, T> packList, ResourcePackInfo.IFactory<T> factory) {
+		public <T extends ResourcePackContainer> void registerContainer(Map<String, T> packList, ResourcePackContainer.Factory<T> factory) {
 			wrapped.addPackInfosToMap(packList, factory);
 		}
 	}

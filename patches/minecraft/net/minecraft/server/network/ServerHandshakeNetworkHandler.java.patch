@@ -1,0 +1,20 @@
+--- a/net/minecraft/server/network/ServerHandshakeNetworkHandler.java
++++ b/net/minecraft/server/network/ServerHandshakeNetworkHandler.java
+@@ -8,8 +8,8 @@
+ import net.minecraft.SharedConstants;
+ import net.minecraft.text.Text;
+ import net.minecraft.text.TranslatableText;
+-import net.minecraft.network.listener.ServerHandshakePacketListener;
+ 
++import net.minecraft.network.listener.ServerHandshakePacketListener;
+ 
+ public class ServerHandshakeNetworkHandler implements ServerHandshakePacketListener {
+    private final MinecraftServer server;
+@@ -21,6 +21,7 @@
+    }
+ 
+    public void onHandshake(HandshakeC2SPacket packetIn) {
++      if (!net.minecraftforge.fml.server.ServerLifecycleHooks.handleServerLogin(packetIn, this.client)) return;
+       switch(packetIn.getIntendedState()) {
+       case LOGIN:
+          this.client.setState(NetworkState.LOGIN);

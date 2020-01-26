@@ -1,0 +1,11 @@
+--- a/net/minecraft/client/render/block/entity/BlockEntityRenderer.java
++++ b/net/minecraft/client/render/block/entity/BlockEntityRenderer.java
+@@ -66,6 +66,8 @@
+       return false;
+    }
+ 
++   public void renderTileEntityFast(T te, double x, double y, double z, float partialTicks, int destroyStage, net.minecraft.client.render.BufferBuilder buffer) {}
++
+    protected void renderName(T te, String str, double x, double y, double z, int maxDistance) {
+       Camera activerenderinfo = this.renderManager.cameraEntity;
+       double d0 = te.getSquaredDistance(activerenderinfo.getPos().x, activerenderinfo.getPos().y, activerenderinfo.getPos().z);

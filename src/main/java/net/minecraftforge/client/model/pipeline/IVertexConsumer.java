@@ -19,9 +19,9 @@
 
 package net.minecraftforge.client.model.pipeline;
 
-import net.minecraft.client.renderer.texture.TextureAtlasSprite;
-import net.minecraft.client.renderer.vertex.VertexFormat;
-import net.minecraft.util.Direction;
+import net.minecraft.client.texture.Sprite;
+import net.minecraft.client.render.VertexFormat;
+import net.minecraft.util.math.Direction;
 
 /**
  * Assumes that the data length is not less than e.getElementCount().
@@ -40,7 +40,7 @@ public interface IVertexConsumer {
 
 	void setApplyDiffuseLighting(boolean diffuse);
 
-	void setTexture(TextureAtlasSprite texture);
+	void setTexture(Sprite texture);
 
 	void put(int element, float... data);
 }

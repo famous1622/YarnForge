@@ -1,0 +1,31 @@
+--- a/net/minecraft/world/gen/feature/OakTreeFeature.java
++++ b/net/minecraft/world/gen/feature/OakTreeFeature.java
+@@ -38,7 +38,7 @@
+    public boolean generate(Set<BlockPos> changedBlocks, ModifiableTestableWorld worldIn, Random rand, BlockPos position, MutableIntBoundingBox p_208519_5_) {
+       int i = this.getTreeHeight(rand);
+       boolean flag = true;
+-      if (position.getY() >= 1 && position.getY() + i + 1 <= 256) {
++      if (position.getY() >= 1 && position.getY() + i + 1 <= worldIn.getMaxHeight()) {
+          for(int j = position.getY(); j <= position.getY() + 1 + i; ++j) {
+             int k = 1;
+             if (j == position.getY()) {
+@@ -53,7 +53,7 @@
+ 
+             for(int l = position.getX() - k; l <= position.getX() + k && flag; ++l) {
+                for(int i1 = position.getZ() - k; i1 <= position.getZ() + k && flag; ++i1) {
+-                  if (j >= 0 && j < 256) {
++                  if (j >= 0 && j < worldIn.getMaxHeight()) {
+                      if (!canTreeReplace(worldIn, blockpos$mutableblockpos.set(l, j, i1))) {
+                         flag = false;
+                      }
+@@ -66,8 +66,8 @@
+ 
+          if (!flag) {
+             return false;
+-         } else if (isDirtOrGrass(worldIn, position.down()) && position.getY() < 256 - i - 1) {
+-            this.setToDirt(worldIn, position.down());
++         } else if (isSoil(worldIn, position.down(), getSapling()) && position.getY() < worldIn.getMaxHeight() - i - 1) {
++            this.setDirtAt(worldIn, position.down(), position);
+             int j2 = 3;
+             int k2 = 0;
+ 

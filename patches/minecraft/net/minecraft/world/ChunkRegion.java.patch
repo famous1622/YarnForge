@@ -1,0 +1,80 @@
+--- a/net/minecraft/world/ChunkRegion.java
++++ b/net/minecraft/world/ChunkRegion.java
+@@ -8,7 +8,6 @@
+ import net.minecraft.block.Block;
+ import net.minecraft.block.BlockState;
+ import net.minecraft.block.Blocks;
+-import net.minecraft.block.BlockEntityProvider;
+ import net.minecraft.entity.Entity;
+ import net.minecraft.entity.player.PlayerEntity;
+ import net.minecraft.fluid.Fluid;
+@@ -35,8 +34,8 @@
+ import net.minecraftforge.api.distmarker.OnlyIn;
+ import org.apache.logging.log4j.LogManager;
+ import org.apache.logging.log4j.Logger;
+-import net.minecraft.world.gen.chunk.ChunkGeneratorConfig;
+ 
++import net.minecraft.world.gen.chunk.ChunkGeneratorConfig;
+ 
+ public class ChunkRegion implements IWorld {
+    private static final Logger LOGGER = LogManager.getLogger();
+@@ -162,11 +161,11 @@
+ 
+    public boolean breakBlock(BlockPos pos, boolean dropBlock) {
+       BlockState blockstate = this.getBlockState(pos);
+-      if (blockstate.isAir()) {
++      if (blockstate.isAir(this, pos)) {
+          return false;
+       } else {
+          if (dropBlock) {
+-            BlockEntity tileentity = blockstate.getBlock().hasBlockEntity() ? this.getBlockEntity(pos) : null;
++            BlockEntity tileentity = blockstate.hasTileEntity() ? this.getBlockEntity(pos) : null;
+             Block.dropStacks(blockstate, this.world, pos, tileentity);
+          }
+ 
+@@ -184,12 +183,12 @@
+          CompoundTag compoundnbt = ichunk.getBlockEntityTagAt(pos);
+          if (compoundnbt != null) {
+             if ("DUMMY".equals(compoundnbt.getString("id"))) {
+-               Block block = this.getBlockState(pos).getBlock();
+-               if (!(block instanceof BlockEntityProvider)) {
++               BlockState state = this.getBlockState(pos);
++               if (!state.hasTileEntity()) {
+                   return null;
+                }
+ 
+-               tileentity = ((BlockEntityProvider)block).createBlockEntity(this.world);
++               tileentity = state.createTileEntity(this.world);
+             } else {
+                tileentity = BlockEntity.createFromTag(compoundnbt);
+             }
+@@ -200,7 +199,7 @@
+             }
+          }
+ 
+-         if (ichunk.getBlockState(pos).getBlock() instanceof BlockEntityProvider) {
++         if (ichunk.getBlockState(pos).hasTileEntity()) {
+             LOGGER.warn("Tried to access a block entity before it was created. {}", (Object)pos);
+          }
+ 
+@@ -216,9 +215,9 @@
+       }
+ 
+       Block block = newState.getBlock();
+-      if (block.hasBlockEntity()) {
++      if (newState.hasTileEntity()) {
+          if (ichunk.getStatus().getChunkType() == ChunkStatus.ChunkType.LEVELCHUNK) {
+-            ichunk.setBlockEntity(pos, ((BlockEntityProvider)block).createBlockEntity(this));
++            ichunk.setBlockEntity(pos, newState.createTileEntity(this));
+          } else {
+             CompoundTag compoundnbt = new CompoundTag();
+             compoundnbt.putInt("x", pos.getX());
+@@ -227,7 +226,7 @@
+             compoundnbt.putString("id", "DUMMY");
+             ichunk.addPendingBlockEntityTag(compoundnbt);
+          }
+-      } else if (blockstate != null && blockstate.getBlock().hasBlockEntity()) {
++      } else if (blockstate != null && blockstate.hasTileEntity()) {
+          ichunk.removeBlockEntity(pos);
+       }
+ 

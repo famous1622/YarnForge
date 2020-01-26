@@ -34,9 +34,9 @@ import org.apache.commons.lang3.Validate;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
-import net.minecraft.block.FlowingFluidBlock;
-import net.minecraft.block.material.Material;
-import net.minecraft.fluid.FlowingFluid;
+import net.minecraft.block.FluidBlock;
+import net.minecraft.block.Material;
+import net.minecraft.fluid.BaseFluid;
 import net.minecraft.fluid.Fluid;
 import net.minecraft.fluid.Fluids;
 import net.minecraft.item.BucketItem;
@@ -44,31 +44,31 @@ import net.minecraft.item.Item;
 import net.minecraft.item.ItemGroup;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
-import net.minecraft.util.ResourceLocation;
+import net.minecraft.util.Identifier;
 
 @Mod(NewFluidTest.MODID)
 public class NewFluidTest {
 	public static final String MODID = "new_fluid_test";
 
-	public static final ResourceLocation FLUID_STILL = new ResourceLocation("minecraft:block/brown_mushroom_block");
-	public static final ResourceLocation FLUID_FLOWING = new ResourceLocation("minecraft:block/mushroom_stem");
+	public static final Identifier FLUID_STILL = new Identifier("minecraft:block/brown_mushroom_block");
+	public static final Identifier FLUID_FLOWING = new Identifier("minecraft:block/mushroom_stem");
 
 	public static final DeferredRegister<Block> BLOCKS = new DeferredRegister<>(ForgeRegistries.BLOCKS, MODID);
 	public static final DeferredRegister<Item> ITEMS = new DeferredRegister<>(ForgeRegistries.ITEMS, MODID);
 	public static final DeferredRegister<Fluid> FLUIDS = new DeferredRegister<>(ForgeRegistries.FLUIDS, MODID);
 
-	public static RegistryObject<FlowingFluid> test_fluid = FLUIDS.register("test_fluid", () ->
+	public static RegistryObject<BaseFluid> test_fluid = FLUIDS.register("test_fluid", () ->
 			new ForgeFlowingFluid.Source(NewFluidTest.test_fluid_properties)
 	);
-	public static RegistryObject<FlowingFluid> test_fluid_flowing = FLUIDS.register("test_fluid_flowing", () ->
+	public static RegistryObject<BaseFluid> test_fluid_flowing = FLUIDS.register("test_fluid_flowing", () ->
 			new ForgeFlowingFluid.Flowing(NewFluidTest.test_fluid_properties)
 	);
 
-	public static RegistryObject<FlowingFluidBlock> test_fluid_block = BLOCKS.register("test_fluid_block", () ->
-			new FlowingFluidBlock(test_fluid, Block.Properties.create(Material.WATER).doesNotBlockMovement().hardnessAndResistance(100.0F).noDrops())
+	public static RegistryObject<FluidBlock> test_fluid_block = BLOCKS.register("test_fluid_block", () ->
+			new FluidBlock(test_fluid, Block.Settings.of(Material.WATER).noCollision().strength(100.0F).dropsNothing())
 	);
 	public static RegistryObject<Item> test_fluid_bucket = ITEMS.register("test_fluid_bucket", () ->
-			new BucketItem(test_fluid, new Item.Properties().containerItem(Items.BUCKET).maxStackSize(1).group(ItemGroup.MISC))
+			new BucketItem(test_fluid, new Item.Settings().recipeRemainder(Items.BUCKET).maxCount(1).group(ItemGroup.MISC))
 	);
 
 	public static final ForgeFlowingFluid.Properties test_fluid_properties =
@@ -91,6 +91,6 @@ public class NewFluidTest {
 		BlockState state2 = Fluids.WATER.getAttributes().getBlock(null, null, Fluids.WATER.getDefaultState());
 		Validate.isTrue(state.getBlock() == Blocks.WATER && state2 == state);
 		ItemStack stack = Fluids.WATER.getAttributes().getBucket(new FluidStack(Fluids.WATER, 1));
-		Validate.isTrue(stack.getItem() == Fluids.WATER.getFilledBucket());
+		Validate.isTrue(stack.getItem() == Fluids.WATER.getBucketItem());
 	}
 }

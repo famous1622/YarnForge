@@ -25,24 +25,24 @@ import java.util.stream.Stream;
 import javax.annotation.Nullable;
 
 import net.minecraft.block.BlockState;
-import net.minecraft.block.material.Material;
+import net.minecraft.block.Material;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.fluid.Fluid;
-import net.minecraft.fluid.IFluidState;
+import net.minecraft.fluid.FluidState;
 import net.minecraft.item.ItemStack;
-import net.minecraft.item.Rarity;
-import net.minecraft.particles.ParticleTypes;
-import net.minecraft.util.ResourceLocation;
-import net.minecraft.util.SoundCategory;
-import net.minecraft.util.SoundEvent;
-import net.minecraft.util.SoundEvents;
-import net.minecraft.util.Util;
+import net.minecraft.util.Rarity;
+import net.minecraft.particle.ParticleTypes;
+import net.minecraft.util.Identifier;
+import net.minecraft.sound.SoundCategory;
+import net.minecraft.sound.SoundEvent;
+import net.minecraft.sound.SoundEvents;
+import net.minecraft.util.SystemUtil;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.text.ITextComponent;
-import net.minecraft.util.text.TranslationTextComponent;
-import net.minecraft.world.IEnviromentBlockReader;
+import net.minecraft.text.Text;
+import net.minecraft.text.TranslatableText;
+import net.minecraft.world.ExtendedBlockView;
 import net.minecraft.world.World;
-import net.minecraft.world.biome.BiomeColors;
+import net.minecraft.client.color.world.BiomeColors;
 
 /**
  * Minecraft Forge Fluid Implementation
@@ -61,10 +61,10 @@ import net.minecraft.world.biome.BiomeColors;
  */
 public class FluidAttributes {
 	public static final int BUCKET_VOLUME = 1000;
-	private final ResourceLocation stillTexture;
-	private final ResourceLocation flowingTexture;
+	private final Identifier stillTexture;
+	private final Identifier flowingTexture;
 	@Nullable
-	private final ResourceLocation overlayTexture;
+	private final Identifier overlayTexture;
 	private final SoundEvent fillSound;
 	private final SoundEvent emptySound;
 	/**
@@ -121,7 +121,7 @@ public class FluidAttributes {
 	private String translationKey;
 
 	protected FluidAttributes(Builder builder, Fluid fluid) {
-		this.translationKey = builder.translationKey != null ? builder.translationKey : Util.makeTranslationKey("fluid", fluid.getRegistryName());
+		this.translationKey = builder.translationKey != null ? builder.translationKey : SystemUtil.createTranslationKey("fluid", fluid.getRegistryName());
 		this.stillTexture = builder.stillTexture;
 		this.flowingTexture = builder.flowingTexture;
 		this.overlayTexture = builder.overlayTexture;
@@ -136,27 +136,27 @@ public class FluidAttributes {
 		this.rarity = builder.rarity;
 	}
 
-	public static Builder builder(ResourceLocation stillTexture, ResourceLocation flowingTexture) {
+	public static Builder builder(Identifier stillTexture, Identifier flowingTexture) {
 		return new Builder(stillTexture, flowingTexture, FluidAttributes::new);
 	}
 
 	public ItemStack getBucket(FluidStack stack) {
-		return new ItemStack(stack.getFluid().getFilledBucket());
+		return new ItemStack(stack.getFluid().getBucketItem());
 	}
 
-	public BlockState getBlock(IEnviromentBlockReader reader, BlockPos pos, IFluidState state) {
+	public BlockState getBlock(ExtendedBlockView reader, BlockPos pos, FluidState state) {
 		return state.getBlockState();
 	}
 
-	public IFluidState getStateForPlacement(IEnviromentBlockReader reader, BlockPos pos, FluidStack state) {
+	public FluidState getStateForPlacement(ExtendedBlockView reader, BlockPos pos, FluidStack state) {
 		return state.getFluid().getDefaultState();
 	}
 
-	public final boolean canBePlacedInWorld(IEnviromentBlockReader reader, BlockPos pos, IFluidState state) {
+	public final boolean canBePlacedInWorld(ExtendedBlockView reader, BlockPos pos, FluidState state) {
 		return !getBlock(reader, pos, state).isAir(reader, pos);
 	}
 
-	public final boolean canBePlacedInWorld(IEnviromentBlockReader reader, BlockPos pos, FluidStack state) {
+	public final boolean canBePlacedInWorld(ExtendedBlockView reader, BlockPos pos, FluidStack state) {
 		return !getBlock(reader, pos, getStateForPlacement(reader, pos, state)).isAir(reader, pos);
 	}
 
@@ -173,7 +173,7 @@ public class FluidAttributes {
 	 * @param fluidStack The fluidStack is trying to be placed.
 	 * @return true if this fluid should vaporize in dimensions where water vaporizes when placed.
 	 */
-	public boolean doesVaporize(IEnviromentBlockReader reader, BlockPos pos, FluidStack fluidStack) {
+	public boolean doesVaporize(ExtendedBlockView reader, BlockPos pos, FluidStack fluidStack) {
 		BlockState blockstate = getBlock(reader, pos, getStateForPlacement(reader, pos, fluidStack));
 		if (blockstate == null) {
 			return false;
@@ -192,18 +192,18 @@ public class FluidAttributes {
 	 * @param fluidStack The fluidStack that was going to be placed.
 	 */
 	public void vaporize(@Nullable PlayerEntity player, World worldIn, BlockPos pos, FluidStack fluidStack) {
-		worldIn.playSound(player, pos, SoundEvents.BLOCK_FIRE_EXTINGUISH, SoundCategory.BLOCKS, 0.5F, 2.6F + (worldIn.rand.nextFloat() - worldIn.rand.nextFloat()) * 0.8F);
+		worldIn.playSound(player, pos, SoundEvents.BLOCK_FIRE_EXTINGUISH, SoundCategory.BLOCKS, 0.5F, 2.6F + (worldIn.random.nextFloat() - worldIn.random.nextFloat()) * 0.8F);
 
 		for (int l = 0; l < 8; ++l) {
-			worldIn.addOptionalParticle(ParticleTypes.LARGE_SMOKE, (double) pos.getX() + Math.random(), (double) pos.getY() + Math.random(), (double) pos.getZ() + Math.random(), 0.0D, 0.0D, 0.0D);
+			worldIn.addImportantParticle(ParticleTypes.LARGE_SMOKE, (double) pos.getX() + Math.random(), (double) pos.getY() + Math.random(), (double) pos.getZ() + Math.random(), 0.0D, 0.0D, 0.0D);
 		}
 	}
 
 	/**
 	 * Returns the localized name of this fluid.
 	 */
-	public ITextComponent getDisplayName(FluidStack stack) {
-		return new TranslationTextComponent(getTranslationKey());
+	public Text getDisplayName(FluidStack stack) {
+		return new TranslatableText(getTranslationKey());
 	}
 
 	/**
@@ -249,16 +249,16 @@ public class FluidAttributes {
 		return color;
 	}
 
-	public ResourceLocation getStillTexture() {
+	public Identifier getStillTexture() {
 		return stillTexture;
 	}
 
-	public ResourceLocation getFlowingTexture() {
+	public Identifier getFlowingTexture() {
 		return flowingTexture;
 	}
 
 	@Nullable
-	public ResourceLocation getOverlayTexture() {
+	public Identifier getOverlayTexture() {
 		return overlayTexture;
 	}
 
@@ -299,11 +299,11 @@ public class FluidAttributes {
 		return getColor();
 	}
 
-	public ResourceLocation getStill(FluidStack stack) {
+	public Identifier getStill(FluidStack stack) {
 		return getStillTexture();
 	}
 
-	public ResourceLocation getFlowing(FluidStack stack) {
+	public Identifier getFlowing(FluidStack stack) {
 		return getFlowingTexture();
 	}
 
@@ -316,51 +316,51 @@ public class FluidAttributes {
 	}
 
 	/* World-based Accessors */
-	public int getLuminosity(IEnviromentBlockReader world, BlockPos pos) {
+	public int getLuminosity(ExtendedBlockView world, BlockPos pos) {
 		return getLuminosity();
 	}
 
-	public int getDensity(IEnviromentBlockReader world, BlockPos pos) {
+	public int getDensity(ExtendedBlockView world, BlockPos pos) {
 		return getDensity();
 	}
 
-	public int getTemperature(IEnviromentBlockReader world, BlockPos pos) {
+	public int getTemperature(ExtendedBlockView world, BlockPos pos) {
 		return getTemperature();
 	}
 
-	public int getViscosity(IEnviromentBlockReader world, BlockPos pos) {
+	public int getViscosity(ExtendedBlockView world, BlockPos pos) {
 		return getViscosity();
 	}
 
-	public boolean isGaseous(IEnviromentBlockReader world, BlockPos pos) {
+	public boolean isGaseous(ExtendedBlockView world, BlockPos pos) {
 		return isGaseous();
 	}
 
-	public Rarity getRarity(IEnviromentBlockReader world, BlockPos pos) {
+	public Rarity getRarity(ExtendedBlockView world, BlockPos pos) {
 		return getRarity();
 	}
 
-	public int getColor(IEnviromentBlockReader world, BlockPos pos) {
+	public int getColor(ExtendedBlockView world, BlockPos pos) {
 		return getColor();
 	}
 
-	public ResourceLocation getStill(IEnviromentBlockReader world, BlockPos pos) {
+	public Identifier getStill(ExtendedBlockView world, BlockPos pos) {
 		return getStillTexture();
 	}
 
-	public ResourceLocation getFlowing(IEnviromentBlockReader world, BlockPos pos) {
+	public Identifier getFlowing(ExtendedBlockView world, BlockPos pos) {
 		return getFlowingTexture();
 	}
 
-	public SoundEvent getFillSound(IEnviromentBlockReader world, BlockPos pos) {
+	public SoundEvent getFillSound(ExtendedBlockView world, BlockPos pos) {
 		return getFillSound();
 	}
 
-	public SoundEvent getEmptySound(IEnviromentBlockReader world, BlockPos pos) {
+	public SoundEvent getEmptySound(ExtendedBlockView world, BlockPos pos) {
 		return getEmptySound();
 	}
 
-	public Stream<ResourceLocation> getTextures() {
+	public Stream<Identifier> getTextures() {
 		if (overlayTexture != null) {
 			return Stream.of(stillTexture, flowingTexture, overlayTexture);
 		}
@@ -368,9 +368,9 @@ public class FluidAttributes {
 	}
 
 	public static class Builder {
-		private final ResourceLocation stillTexture;
-		private final ResourceLocation flowingTexture;
-		private ResourceLocation overlayTexture;
+		private final Identifier stillTexture;
+		private final Identifier flowingTexture;
+		private Identifier overlayTexture;
 		private int color = 0xFFFFFFFF;
 		private String translationKey;
 		private SoundEvent fillSound;
@@ -383,7 +383,7 @@ public class FluidAttributes {
 		private Rarity rarity = Rarity.COMMON;
 		private BiFunction<Builder, Fluid, FluidAttributes> factory;
 
-		protected Builder(ResourceLocation stillTexture, ResourceLocation flowingTexture, BiFunction<Builder, Fluid, FluidAttributes> factory) {
+		protected Builder(Identifier stillTexture, Identifier flowingTexture, BiFunction<Builder, Fluid, FluidAttributes> factory) {
 			this.factory = factory;
 			this.stillTexture = stillTexture;
 			this.flowingTexture = flowingTexture;
@@ -399,7 +399,7 @@ public class FluidAttributes {
 			return this;
 		}
 
-		public final Builder overlay(ResourceLocation texture) {
+		public final Builder overlay(Identifier texture) {
 			overlayTexture = texture;
 			return this;
 		}
@@ -455,12 +455,12 @@ public class FluidAttributes {
 			super(builder, fluid);
 		}
 
-		public static Builder builder(ResourceLocation stillTexture, ResourceLocation flowingTexture) {
+		public static Builder builder(Identifier stillTexture, Identifier flowingTexture) {
 			return new Builder(stillTexture, flowingTexture, Water::new);
 		}
 
 		@Override
-		public int getColor(IEnviromentBlockReader world, BlockPos pos) {
+		public int getColor(ExtendedBlockView world, BlockPos pos) {
 			return BiomeColors.getWaterColor(world, pos) | 0xFF000000;
 		}
 	}

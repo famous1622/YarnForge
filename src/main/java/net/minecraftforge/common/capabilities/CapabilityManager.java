@@ -19,7 +19,6 @@
 
 package net.minecraftforge.common.capabilities;
 
-import static net.minecraftforge.fml.Logging.CAPABILITIES;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;

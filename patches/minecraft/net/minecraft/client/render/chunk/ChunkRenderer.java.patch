@@ -1,0 +1,75 @@
+--- a/net/minecraft/client/render/chunk/ChunkRenderer.java
++++ b/net/minecraft/client/render/chunk/ChunkRenderer.java
+@@ -33,7 +33,7 @@
+ import net.minecraftforge.api.distmarker.OnlyIn;
+ 
+ @OnlyIn(Dist.CLIENT)
+-public class ChunkRenderer {
++public class ChunkRenderer implements net.minecraftforge.client.extensions.IForgeRenderChunk {
+    private volatile World world;
+    private final WorldRenderer renderer;
+    public static int chunkUpdateCount;
+@@ -151,22 +151,24 @@
+                   lvt_10_1_.markClosed(blockpos2);
+                }
+ 
+-               if (block.hasBlockEntity()) {
++               if (blockstate.hasTileEntity()) {
+                   BlockEntity tileentity = lvt_12_1_.getBlockEntity(blockpos2, WorldChunk.CreationType.CHECK);
+                   if (tileentity != null) {
+                      BlockEntityRenderer<BlockEntity> tileentityrenderer = BlockEntityRenderDispatcher.INSTANCE.get(tileentity);
+                      if (tileentityrenderer != null) {
+-                        compiledchunk.addBlockEntity(tileentity);
+                         if (tileentityrenderer.method_3563(tileentity)) {
+                            lvt_11_1_.add(tileentity);
+                         }
++                        else compiledchunk.addBlockEntity(tileentity); // FORGE: Fix MC-112730
+                      }
+                   }
+                }
+ 
+                FluidState ifluidstate = lvt_12_1_.getFluidState(blockpos2);
+-               if (!ifluidstate.isEmpty()) {
+-                  BlockRenderLayer blockrenderlayer1 = ifluidstate.getRenderLayer();
++               net.minecraftforge.client.model.data.IModelData modelData = generator.getModelData(blockpos2);
++               for(BlockRenderLayer blockrenderlayer1 : BlockRenderLayer.values()) {
++                   net.minecraftforge.client.ForgeHooksClient.setRenderLayer(blockrenderlayer1);
++               if (!ifluidstate.isEmpty() && ifluidstate.canRenderInLayer(blockrenderlayer1)) {
+                   int j = blockrenderlayer1.ordinal();
+                   BufferBuilder bufferbuilder = generator.getBufferBuilders().get(j);
+                   if (!compiledchunk.isBufferInitialized(blockrenderlayer1)) {
+@@ -177,17 +179,18 @@
+                   aboolean[j] |= blockrendererdispatcher.tesselateFluid(blockpos2, lvt_12_1_, bufferbuilder, ifluidstate);
+                }
+ 
+-               if (blockstate.getRenderType() != BlockRenderType.INVISIBLE) {
+-                  BlockRenderLayer blockrenderlayer2 = block.getRenderLayer();
+-                  int k = blockrenderlayer2.ordinal();
++               if (blockstate.getRenderType() != BlockRenderType.INVISIBLE && blockstate.canRenderInLayer(blockrenderlayer1)) {
++                  int k = blockrenderlayer1.ordinal();
+                   BufferBuilder bufferbuilder1 = generator.getBufferBuilders().get(k);
+-                  if (!compiledchunk.isBufferInitialized(blockrenderlayer2)) {
+-                     compiledchunk.markBufferInitialized(blockrenderlayer2);
++                  if (!compiledchunk.isBufferInitialized(blockrenderlayer1)) {
++                     compiledchunk.markBufferInitialized(blockrenderlayer1);
+                      this.beginBufferBuilding(bufferbuilder1, blockpos);
+                   }
+ 
+-                  aboolean[k] |= blockrendererdispatcher.tesselateBlock(blockstate, blockpos2, lvt_12_1_, bufferbuilder1, random);
++                  aboolean[k] |= blockrendererdispatcher.renderBlock(blockstate, blockpos2, lvt_12_1_, bufferbuilder1, random, modelData);
+                }
++               }
++               net.minecraftforge.client.ForgeHooksClient.setRenderLayer(null);
+             }
+ 
+             for(BlockRenderLayer blockrenderlayer : BlockRenderLayer.values()) {
+@@ -247,7 +250,8 @@
+          this.cancel();
+          BlockPos blockpos = this.origin.toImmutable();
+          int i = 1;
+-         ChunkRendererRegion chunkrendercache = ChunkRendererRegion.create(this.world, blockpos.add(-1, -1, -1), blockpos.add(16, 16, 16), 1);
++         ChunkRendererRegion chunkrendercache = createRegionRenderCache(world, blockpos.add(-1, -1, -1), blockpos.add(16, 16, 16), 1);
++
+          this.task = new ChunkRenderTask(this, ChunkRenderTask.Mode.REBUILD_CHUNK, this.getSquaredCameraDistance(), chunkrendercache);
+          chunkrendertask = this.task;
+       } finally {

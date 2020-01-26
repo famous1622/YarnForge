@@ -26,7 +26,7 @@ import net.minecraftforge.registries.ObjectHolder;
 
 import net.minecraft.block.Block;
 import net.minecraft.block.WallBlock;
-import net.minecraft.block.material.Material;
+import net.minecraft.block.Material;
 import net.minecraft.item.BlockItem;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemGroup;
@@ -39,7 +39,7 @@ public class ForgeBlockStatesLoaderTest {
 	@SubscribeEvent
 	public static void registerBlocks(RegistryEvent.Register<Block> event) {
 		event.getRegistry().registerAll(
-				new WallBlock(Block.Properties.create(Material.ROCK))
+				new WallBlock(Block.Settings.of(Material.STONE))
 						.setRegistryName(MODID, "custom_wall")
 		);
 	}
@@ -47,7 +47,7 @@ public class ForgeBlockStatesLoaderTest {
 	@SubscribeEvent
 	public static void registerItems(RegistryEvent.Register<Item> event) {
 		event.getRegistry().registerAll(
-				new BlockItem(BLOCKS.custom_wall, new Item.Properties().group(ItemGroup.DECORATIONS)).setRegistryName(BLOCKS.custom_wall.getRegistryName())
+				new BlockItem(BLOCKS.custom_wall, new Item.Settings().group(ItemGroup.DECORATIONS)).setRegistryName(BLOCKS.custom_wall.getRegistryName())
 		);
 	}
 

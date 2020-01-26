@@ -22,9 +22,9 @@ package net.minecraftforge.event;
 import net.minecraftforge.eventbus.api.Cancelable;
 import net.minecraftforge.eventbus.api.Event;
 
-import net.minecraft.util.ResourceLocation;
-import net.minecraft.world.storage.loot.LootTable;
-import net.minecraft.world.storage.loot.LootTableManager;
+import net.minecraft.util.Identifier;
+import net.minecraft.world.loot.LootSupplier;
+import net.minecraft.world.loot.LootManager;
 
 /**
  * Event fired when a LootTable json is loaded from json.
@@ -36,29 +36,29 @@ import net.minecraft.world.storage.loot.LootTableManager;
  */
 @Cancelable
 public class LootTableLoadEvent extends Event {
-	private final ResourceLocation name;
-	private LootTable table;
-	private LootTableManager lootTableManager;
+	private final Identifier name;
+	private LootSupplier table;
+	private LootManager lootTableManager;
 
-	public LootTableLoadEvent(ResourceLocation name, LootTable table, LootTableManager lootTableManager) {
+	public LootTableLoadEvent(Identifier name, LootSupplier table, LootManager lootTableManager) {
 		this.name = name;
 		this.table = table;
 		this.lootTableManager = lootTableManager;
 	}
 
-	public ResourceLocation getName() {
+	public Identifier getName() {
 		return this.name;
 	}
 
-	public LootTable getTable() {
+	public LootSupplier getTable() {
 		return this.table;
 	}
 
-	public void setTable(LootTable table) {
+	public void setTable(LootSupplier table) {
 		this.table = table;
 	}
 
-	public LootTableManager getLootTableManager() {
+	public LootManager getLootTableManager() {
 		return this.lootTableManager;
 	}
 }
