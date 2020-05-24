@@ -1,0 +1,18 @@
+--- a/net\minecraft\loot\context\LootContextTypes.java
++++ b/net\minecraft\loot\context\LootContextTypes.java
+@@ -12,6 +12,7 @@
+    });
+    public static final LootContextType field_1179 = register("chest", (p_216259_0_) -> {
+       p_216259_0_.require(LootContextParameters.field_1232).allow(LootContextParameters.field_1226);
++      p_216259_0_.allow(LootContextParameters.field_1230); //Forge: Chest Minecarts can have killers.
+    });
+    public static final LootContextType field_20761 = register("command", (p_216250_0_) -> {
+       p_216250_0_.require(LootContextParameters.field_1232).allow(LootContextParameters.field_1226);
+@@ -21,6 +22,7 @@
+    });
+    public static final LootContextType field_1176 = register("fishing", (p_216258_0_) -> {
+       p_216258_0_.require(LootContextParameters.field_1232).require(LootContextParameters.field_1229);
++      p_216258_0_.allow(LootContextParameters.field_1230).allow(LootContextParameters.field_1226); //Forge: Allow fisher, and bobber
+    });
+    public static final LootContextType field_1173 = register("entity", (p_216251_0_) -> {
+       p_216251_0_.require(LootContextParameters.field_1226).require(LootContextParameters.field_1232).require(LootContextParameters.field_1231).allow(LootContextParameters.field_1230).allow(LootContextParameters.field_1227).allow(LootContextParameters.field_1233);

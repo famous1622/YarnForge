@@ -19,10 +19,10 @@
 
 package net.minecraftforge.common.extensions;
 
-import net.minecraft.entity.item.minecart.AbstractMinecartEntity;
 import net.minecraft.item.Items;
+import net.minecraft.tag.BlockTags;
+import net.minecraft.entity.vehicle.AbstractMinecartEntity;
 import net.minecraft.item.ItemStack;
-import net.minecraft.tags.BlockTags;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
 import net.minecraftforge.common.IMinecartCollisionHandler;
@@ -52,11 +52,11 @@ public interface IForgeEntityMinecart
      */
     default BlockPos getCurrentRailPosition()
     {
-        int x = MathHelper.floor(getMinecart().getPosX());
-        int y = MathHelper.floor(getMinecart().getPosY());
-        int z = MathHelper.floor(getMinecart().getPosZ());
+        int x = MathHelper.floor(getMinecart().getX());
+        int y = MathHelper.floor(getMinecart().getY());
+        int z = MathHelper.floor(getMinecart().getZ());
         BlockPos pos = new BlockPos(x, y - 1, z);
-        if (getMinecart().world.getBlockState(pos).isIn(BlockTags.RAILS)) pos = pos.down();
+        if (getMinecart().world.getBlockState(pos).matches(BlockTags.field_15463)) pos = pos.down();
         return pos;
     }
 
@@ -78,12 +78,12 @@ public interface IForgeEntityMinecart
     {
         switch (getMinecart().getMinecartType())
         {
-            case FURNACE: return new ItemStack(Items.FURNACE_MINECART);
-            case CHEST:   return new ItemStack(Items.CHEST_MINECART);
-            case TNT:     return new ItemStack(Items.TNT_MINECART);
-            case HOPPER:  return new ItemStack(Items.HOPPER_MINECART);
-            case COMMAND_BLOCK: return new ItemStack(Items.COMMAND_BLOCK_MINECART);
-            default:      return new ItemStack(Items.MINECART);
+            case field_7679: return new ItemStack(Items.field_8063);
+            case field_7678:   return new ItemStack(Items.field_8388);
+            case field_7675:     return new ItemStack(Items.field_8069);
+            case field_7677:  return new ItemStack(Items.field_8836);
+            case field_7681: return new ItemStack(Items.field_8220);
+            default:      return new ItemStack(Items.field_8045);
         }
     }
 
@@ -114,7 +114,7 @@ public interface IForgeEntityMinecart
      * @return True if powered.
      */
     default boolean isPoweredCart() {
-        return getMinecart().getMinecartType() == AbstractMinecartEntity.Type.FURNACE;
+        return getMinecart().getMinecartType() == AbstractMinecartEntity.Type.field_7679;
     }
 
     /**
@@ -122,7 +122,7 @@ public interface IForgeEntityMinecart
      * @return True if this cart can be ridden.
      */
     default boolean canBeRidden() {
-        return getMinecart().getMinecartType() == AbstractMinecartEntity.Type.RIDEABLE;
+        return getMinecart().getMinecartType() == AbstractMinecartEntity.Type.field_7674;
     }
 
     /**

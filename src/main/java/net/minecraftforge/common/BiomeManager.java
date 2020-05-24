@@ -26,10 +26,9 @@ import java.util.List;
 import com.google.common.collect.ImmutableList;
 
 import net.minecraft.world.biome.Biomes;
-import net.minecraft.util.WeightedRandom;
+import net.minecraft.world.biome.source.BiomeSource;
+import net.minecraft.util.WeightedPicker;
 import net.minecraft.world.biome.Biome;
-import net.minecraft.world.biome.provider.BiomeProvider;
-
 import javax.annotation.Nullable;
 
 public class BiomeManager
@@ -40,9 +39,9 @@ public class BiomeManager
 
     static
     {
-        oceanBiomes.add(Biomes.OCEAN);
-        oceanBiomes.add(Biomes.DEEP_OCEAN);
-        oceanBiomes.add(Biomes.FROZEN_OCEAN);
+        oceanBiomes.add(Biomes.field_9423);
+        oceanBiomes.add(Biomes.field_9446);
+        oceanBiomes.add(Biomes.field_9435);
     }
 
     private static TrackedList<BiomeEntry>[] setupBiomes()
@@ -51,26 +50,26 @@ public class BiomeManager
         TrackedList<BiomeEntry>[] currentBiomes = new TrackedList[BiomeType.values().length];
         List<BiomeEntry> list = new ArrayList<BiomeEntry>();
 
-        list.add(new BiomeEntry(Biomes.FOREST, 10));
-        list.add(new BiomeEntry(Biomes.DARK_FOREST, 10));
-        list.add(new BiomeEntry(Biomes.MOUNTAINS, 10));
-        list.add(new BiomeEntry(Biomes.PLAINS, 10));
-        list.add(new BiomeEntry(Biomes.BIRCH_FOREST, 10));
-        list.add(new BiomeEntry(Biomes.SWAMP, 10));
+        list.add(new BiomeEntry(Biomes.field_9409, 10));
+        list.add(new BiomeEntry(Biomes.field_9475, 10));
+        list.add(new BiomeEntry(Biomes.field_9472, 10));
+        list.add(new BiomeEntry(Biomes.field_9451, 10));
+        list.add(new BiomeEntry(Biomes.field_9412, 10));
+        list.add(new BiomeEntry(Biomes.field_9471, 10));
 
         currentBiomes[BiomeType.WARM.ordinal()] = new TrackedList<BiomeEntry>(list);
         list.clear();
 
-        list.add(new BiomeEntry(Biomes.FOREST, 10));
-        list.add(new BiomeEntry(Biomes.MOUNTAINS, 10));
-        list.add(new BiomeEntry(Biomes.TAIGA, 10));
-        list.add(new BiomeEntry(Biomes.PLAINS, 10));
+        list.add(new BiomeEntry(Biomes.field_9409, 10));
+        list.add(new BiomeEntry(Biomes.field_9472, 10));
+        list.add(new BiomeEntry(Biomes.field_9420, 10));
+        list.add(new BiomeEntry(Biomes.field_9451, 10));
 
         currentBiomes[BiomeType.COOL.ordinal()] = new TrackedList<BiomeEntry>(list);
         list.clear();
 
-        list.add(new BiomeEntry(Biomes.SNOWY_TUNDRA, 30));
-        list.add(new BiomeEntry(Biomes.SNOWY_TAIGA, 10));
+        list.add(new BiomeEntry(Biomes.field_9452, 30));
+        list.add(new BiomeEntry(Biomes.field_9454, 10));
 
         currentBiomes[BiomeType.ICY.ordinal()] = new TrackedList<BiomeEntry>(list);
         list.clear();
@@ -82,17 +81,17 @@ public class BiomeManager
 
     public static void addSpawnBiome(Biome biome)
     {
-        if (!BiomeProvider.BIOMES_TO_SPAWN_IN.contains(biome))
+        if (!BiomeSource.SPAWN_BIOMES.contains(biome))
         {
-            BiomeProvider.BIOMES_TO_SPAWN_IN.add(biome);
+            BiomeSource.SPAWN_BIOMES.add(biome);
         }
     }
 
     public static void removeSpawnBiome(Biome biome)
     {
-        if (BiomeProvider.BIOMES_TO_SPAWN_IN.contains(biome))
+        if (BiomeSource.SPAWN_BIOMES.contains(biome))
         {
-            BiomeProvider.BIOMES_TO_SPAWN_IN.remove(biome);
+            BiomeSource.SPAWN_BIOMES.remove(biome);
         }
     }
 
@@ -142,7 +141,7 @@ public class BiomeManager
         }
     }
 
-    public static class BiomeEntry extends WeightedRandom.Item
+    public static class BiomeEntry extends WeightedPicker.Entry
     {
         public final Biome biome;
 

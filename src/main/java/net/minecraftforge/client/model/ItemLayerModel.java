@@ -22,13 +22,20 @@ package net.minecraftforge.client.model;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.mojang.datafixers.util.Pair;
-import net.minecraft.client.renderer.TransformationMatrix;
+import net.minecraft.client.render.VertexFormat;
+import net.minecraft.client.render.model.BakedModel;
+import net.minecraft.client.render.model.BakedQuad;
+import net.minecraft.client.render.model.ModelBakeSettings;
+import net.minecraft.client.render.model.ModelLoader;
+import net.minecraft.client.render.model.UnbakedModel;
+import net.minecraft.client.render.model.json.ModelItemPropertyOverrideList;
+import net.minecraft.client.render.model.json.ModelTransformation.Mode;
 import net.minecraft.client.renderer.model.*;
-import net.minecraft.client.renderer.model.ItemCameraTransforms.TransformType;
-import net.minecraft.client.renderer.texture.TextureAtlasSprite;
-import net.minecraft.client.renderer.vertex.VertexFormat;
-import net.minecraft.util.Direction;
-import net.minecraft.util.ResourceLocation;
+import net.minecraft.client.texture.Sprite;
+import net.minecraft.client.util.SpriteIdentifier;
+import net.minecraft.client.util.math.Rotation3;
+import net.minecraft.util.Identifier;
+import net.minecraft.util.math.Direction;
 import net.minecraftforge.client.model.geometry.IModelGeometry;
 import net.minecraftforge.client.model.pipeline.BakedQuadBuilder;
 import net.minecraftforge.client.model.pipeline.IVertexConsumer;
@@ -55,12 +62,12 @@ public final class ItemLayerModel implements IModelGeometry<ItemLayerModel>
 {
     public static final ItemLayerModel INSTANCE = new ItemLayerModel(ImmutableList.of());
 
-    private static final Direction[] HORIZONTALS = {Direction.UP, Direction.DOWN};
-    private static final Direction[] VERTICALS = {Direction.WEST, Direction.EAST};
+    private static final Direction[] HORIZONTALS = {Direction.field_11036, Direction.field_11033};
+    private static final Direction[] VERTICALS = {Direction.field_11039, Direction.field_11034};
 
-    private ImmutableList<Material> textures;
+    private ImmutableList<SpriteIdentifier> textures;
 
-    public ItemLayerModel(ImmutableList<Material> textures)
+    public ItemLayerModel(ImmutableList<SpriteIdentifier> textures)
     {
         this.textures = textures;
     }
@@ -70,9 +77,9 @@ public final class ItemLayerModel implements IModelGeometry<ItemLayerModel>
         this.textures = null;
     }
 
-    private static ImmutableList<Material> getTextures(IModelConfiguration model)
+    private static ImmutableList<SpriteIdentifier> getTextures(IModelConfiguration model)
     {
-        ImmutableList.Builder<Material> builder = ImmutableList.builder();
+        ImmutableList.Builder<SpriteIdentifier> builder = ImmutableList.builder();
         for(int i = 0; model.isTexturePresent("layer" + i); i++)
         {
             builder.add(model.resolveTexture("layer" + i));
@@ -81,30 +88,30 @@ public final class ItemLayerModel implements IModelGeometry<ItemLayerModel>
     }
 
     @Override
-    public IBakedModel bake(IModelConfiguration owner, ModelBakery bakery, Function<Material, TextureAtlasSprite> spriteGetter, IModelTransform modelTransform, ItemOverrideList overrides, ResourceLocation modelLocation)
+    public BakedModel bake(IModelConfiguration owner, ModelLoader bakery, Function<SpriteIdentifier, Sprite> spriteGetter, ModelBakeSettings modelTransform, ModelItemPropertyOverrideList overrides, Identifier modelLocation)
     {
         //TODO: Verify
-        TransformationMatrix transform = modelTransform.getRotation();
+        Rotation3 transform = modelTransform.getRotation();
         ImmutableList<BakedQuad> quads = getQuadsForSprites(textures, transform, spriteGetter);
-        TextureAtlasSprite particle = spriteGetter.apply(
+        Sprite particle = spriteGetter.apply(
                 owner.isTexturePresent("particle") ? owner.resolveTexture("particle") : textures.get(0)
         );
-        ImmutableMap<TransformType, TransformationMatrix> map = PerspectiveMapWrapper.getTransforms(modelTransform);
+        ImmutableMap<Mode, Rotation3> map = PerspectiveMapWrapper.getTransforms(modelTransform);
         return new BakedItemModel(quads, particle, map, overrides, transform.isIdentity(), owner.isSideLit());
     }
 
-    public static ImmutableList<BakedQuad> getQuadsForSprites(List<Material> textures, TransformationMatrix transform, Function<Material, TextureAtlasSprite> spriteGetter)
+    public static ImmutableList<BakedQuad> getQuadsForSprites(List<SpriteIdentifier> textures, Rotation3 transform, Function<SpriteIdentifier, Sprite> spriteGetter)
     {
         ImmutableList.Builder<BakedQuad> builder = ImmutableList.builder();
         for(int i = 0; i < textures.size(); i++)
         {
-            TextureAtlasSprite tas = spriteGetter.apply(textures.get(i));
+            Sprite tas = spriteGetter.apply(textures.get(i));
             builder.addAll(getQuadsForSprite(i, tas, transform));
         }
         return builder.build();
     }
 
-    public static ImmutableList<BakedQuad> getQuadsForSprite(int tint, TextureAtlasSprite sprite, TransformationMatrix transform)
+    public static ImmutableList<BakedQuad> getQuadsForSprite(int tint, Sprite sprite, Rotation3 transform)
     {
         ImmutableList.Builder<BakedQuad> builder = ImmutableList.builder();
 
@@ -134,19 +141,19 @@ public final class ItemLayerModel implements IModelGeometry<ItemLayerModel>
 
                     if(ptu && !t) // left - transparent, right - opaque
                     {
-                        faceData.set(Direction.WEST, u, v);
+                        faceData.set(Direction.field_11039, u, v);
                     }
                     if(!ptu && t) // left - opaque, right - transparent
                     {
-                        faceData.set(Direction.EAST, u-1, v);
+                        faceData.set(Direction.field_11034, u-1, v);
                     }
                     if(ptv[u] && !t) // up - transparent, down - opaque
                     {
-                        faceData.set(Direction.UP, u, v);
+                        faceData.set(Direction.field_11036, u, v);
                     }
                     if(!ptv[u] && t) // up - opaque, down - transparent
                     {
-                        faceData.set(Direction.DOWN, u, v-1);
+                        faceData.set(Direction.field_11033, u, v-1);
                     }
 
                     ptu = t;
@@ -154,7 +161,7 @@ public final class ItemLayerModel implements IModelGeometry<ItemLayerModel>
                 }
                 if(!ptu) // last - opaque
                 {
-                    faceData.set(Direction.EAST, uMax-1, v);
+                    faceData.set(Direction.field_11034, uMax-1, v);
                 }
             }
             // last line
@@ -162,7 +169,7 @@ public final class ItemLayerModel implements IModelGeometry<ItemLayerModel>
             {
                 if(!ptv[u])
                 {
-                    faceData.set(Direction.DOWN, u, vMax-1);
+                    faceData.set(Direction.field_11033, u, vMax-1);
                 }
             }
         }
@@ -194,7 +201,7 @@ public final class ItemLayerModel implements IModelGeometry<ItemLayerModel>
                         if (building && !face) // finish current quad
                         {
                             // make quad [uStart, u]
-                            int off = facing == Direction.DOWN ? 1 : 0;
+                            int off = facing == Direction.field_11033 ? 1 : 0;
                             builder.add(buildSideQuad(transform, facing, tint, sprite, uStart, v+off, u-uStart));
                             building = false;
                         }
@@ -208,7 +215,7 @@ public final class ItemLayerModel implements IModelGeometry<ItemLayerModel>
                 if (building) // build remaining quad
                 {
                     // make quad [uStart, uEnd]
-                    int off = facing == Direction.DOWN ? 1 : 0;
+                    int off = facing == Direction.field_11033 ? 1 : 0;
                     builder.add(buildSideQuad(transform, facing, tint, sprite, uStart, v+off, uEnd-uStart));
                 }
             }
@@ -241,7 +248,7 @@ public final class ItemLayerModel implements IModelGeometry<ItemLayerModel>
                         if (building && !face) // finish current quad
                         {
                             // make quad [vStart, v]
-                            int off = facing == Direction.EAST ? 1 : 0;
+                            int off = facing == Direction.field_11034 ? 1 : 0;
                             builder.add(buildSideQuad(transform, facing, tint, sprite, u+off, vStart, v-vStart));
                             building = false;
                         }
@@ -255,21 +262,21 @@ public final class ItemLayerModel implements IModelGeometry<ItemLayerModel>
                 if (building) // build remaining quad
                 {
                     // make quad [vStart, vEnd]
-                    int off = facing == Direction.EAST ? 1 : 0;
+                    int off = facing == Direction.field_11034 ? 1 : 0;
                     builder.add(buildSideQuad(transform, facing, tint, sprite, u+off, vStart, vEnd-vStart));
                 }
             }
         }
 
         // front
-        builder.add(buildQuad(transform, Direction.NORTH, sprite, tint,
+        builder.add(buildQuad(transform, Direction.field_11043, sprite, tint,
             0, 0, 7.5f / 16f, sprite.getMinU(), sprite.getMaxV(),
             0, 1, 7.5f / 16f, sprite.getMinU(), sprite.getMinV(),
             1, 1, 7.5f / 16f, sprite.getMaxU(), sprite.getMinV(),
             1, 0, 7.5f / 16f, sprite.getMaxU(), sprite.getMaxV()
         ));
         // back
-        builder.add(buildQuad(transform, Direction.SOUTH, sprite, tint,
+        builder.add(buildQuad(transform, Direction.field_11035, sprite, tint,
             0, 0, 8.5f / 16f, sprite.getMinU(), sprite.getMaxV(),
             1, 0, 8.5f / 16f, sprite.getMaxU(), sprite.getMaxV(),
             1, 1, 8.5f / 16f, sprite.getMaxU(), sprite.getMinV(),
@@ -280,7 +287,7 @@ public final class ItemLayerModel implements IModelGeometry<ItemLayerModel>
     }
 
     @Override
-    public Collection<Material> getTextures(IModelConfiguration owner, Function<ResourceLocation, IUnbakedModel> modelGetter, Set<Pair<String, String>> missingTextureErrors)
+    public Collection<SpriteIdentifier> getTextures(IModelConfiguration owner, Function<Identifier, UnbakedModel> modelGetter, Set<Pair<String, String>> missingTextureErrors)
     {
         textures = getTextures(owner);
         return textures;
@@ -296,10 +303,10 @@ public final class ItemLayerModel implements IModelGeometry<ItemLayerModel>
         {
             this.vMax = vMax;
 
-            data.put(Direction.WEST, new BitSet(uMax * vMax));
-            data.put(Direction.EAST, new BitSet(uMax * vMax));
-            data.put(Direction.UP,   new BitSet(uMax * vMax));
-            data.put(Direction.DOWN, new BitSet(uMax * vMax));
+            data.put(Direction.field_11039, new BitSet(uMax * vMax));
+            data.put(Direction.field_11034, new BitSet(uMax * vMax));
+            data.put(Direction.field_11036,   new BitSet(uMax * vMax));
+            data.put(Direction.field_11033, new BitSet(uMax * vMax));
         }
 
         public void set(Direction facing, int u, int v)
@@ -318,7 +325,7 @@ public final class ItemLayerModel implements IModelGeometry<ItemLayerModel>
         }
     }
 
-    private static BakedQuad buildSideQuad(TransformationMatrix transform, Direction side, int tint, TextureAtlasSprite sprite, int u, int v, int size)
+    private static BakedQuad buildSideQuad(Rotation3 transform, Direction side, int tint, Sprite sprite, int u, int v, int size)
     {
         final float eps = 1e-2f;
 
@@ -332,24 +339,24 @@ public final class ItemLayerModel implements IModelGeometry<ItemLayerModel>
 
         switch(side)
         {
-        case WEST:
+        case field_11039:
             z0 = 8.5f / 16f;
             z1 = 7.5f / 16f;
-        case EAST:
+        case field_11034:
             y1 = (float) (v + size) / height;
             break;
-        case DOWN:
+        case field_11033:
             z0 = 8.5f / 16f;
             z1 = 7.5f / 16f;
-        case UP:
+        case field_11036:
             x1 = (float) (u + size) / width;
             break;
         default:
             throw new IllegalArgumentException("can't handle z-oriented side");
         }
 
-        float dx = side.getDirectionVec().getX() * eps / width;
-        float dy = side.getDirectionVec().getY() * eps / height;
+        float dx = side.getVector().getX() * eps / width;
+        float dy = side.getVector().getY() * eps / height;
 
         float u0 = 16f * (x0 - dx);
         float u1 = 16f * (x1 - dx);
@@ -358,20 +365,20 @@ public final class ItemLayerModel implements IModelGeometry<ItemLayerModel>
 
         return buildQuad(
             transform, remap(side), sprite, tint,
-            x0, y0, z0, sprite.getInterpolatedU(u0), sprite.getInterpolatedV(v0),
-            x1, y1, z0, sprite.getInterpolatedU(u1), sprite.getInterpolatedV(v1),
-            x1, y1, z1, sprite.getInterpolatedU(u1), sprite.getInterpolatedV(v1),
-            x0, y0, z1, sprite.getInterpolatedU(u0), sprite.getInterpolatedV(v0)
+            x0, y0, z0, sprite.getFrameU(u0), sprite.getFrameV(v0),
+            x1, y1, z0, sprite.getFrameU(u1), sprite.getFrameV(v1),
+            x1, y1, z1, sprite.getFrameU(u1), sprite.getFrameV(v1),
+            x0, y0, z1, sprite.getFrameU(u0), sprite.getFrameV(v0)
         );
     }
 
     private static Direction remap(Direction side)
     {
         // getOpposite is related to the swapping of V direction
-        return side.getAxis() == Direction.Axis.Y ? side.getOpposite() : side;
+        return side.getAxis() == Direction.Axis.field_11052 ? side.getOpposite() : side;
     }
 
-    private static BakedQuad buildQuad(TransformationMatrix transform, Direction side, TextureAtlasSprite sprite, int tint,
+    private static BakedQuad buildQuad(Rotation3 transform, Direction side, Sprite sprite, int tint,
         float x0, float y0, float z0, float u0, float v0,
         float x1, float y1, float z1, float u1, float v1,
         float x2, float y2, float z2, float u2, float v2,
@@ -398,21 +405,21 @@ public final class ItemLayerModel implements IModelGeometry<ItemLayerModel>
         VertexFormat format = consumer.getVertexFormat();
         for(int e = 0; e < format.getElements().size(); e++)
         {
-            switch(format.getElements().get(e).getUsage())
+            switch(format.getElements().get(e).getType())
             {
-            case POSITION:
+            case field_1633:
                 consumer.put(e, x, y, z, 1f);
                 break;
-            case COLOR:
+            case field_1632:
                 consumer.put(e, 1f, 1f, 1f, 1f);
                 break;
-            case NORMAL:
-                float offX = (float) side.getXOffset();
-                float offY = (float) side.getYOffset();
-                float offZ = (float) side.getZOffset();
+            case field_1635:
+                float offX = (float) side.getOffsetX();
+                float offY = (float) side.getOffsetY();
+                float offZ = (float) side.getOffsetZ();
                 consumer.put(e, offX, offY, offZ, 0f);
                 break;
-            case UV:
+            case field_1636:
                 if(format.getElements().get(e).getIndex() == 0)
                 {
                     consumer.put(e, u, v, 0f, 1f);

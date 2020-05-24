@@ -1,0 +1,65 @@
+--- a/net\minecraft\entity\mob\MobEntity.java
++++ b/net\minecraft\entity\mob\MobEntity.java
+@@ -180,6 +180,7 @@
+ 
+    public void setTarget(@Nullable LivingEntity entitylivingbaseIn) {
+       this.target = entitylivingbaseIn;
++      net.minecraftforge.common.ForgeHooks.onLivingSetAttackTarget(this, entitylivingbaseIn);
+    }
+ 
+    public boolean canTarget(EntityType<?> typeIn) {
+@@ -464,7 +465,7 @@
+    public void tickMovement() {
+       super.tickMovement();
+       this.world.getProfiler().push("looting");
+-      if (!this.world.isClient && this.canPickUpLoot() && this.isAlive() && !this.dead && this.world.getGameRules().getBoolean(GameRules.field_19388)) {
++      if (!this.world.isClient && this.canPickUpLoot() && this.isAlive() && !this.dead && net.minecraftforge.event.ForgeEventFactory.getMobGriefingEvent(this.world, this)) {
+          for(ItemEntity itementity : this.world.getNonSpectatingEntities(ItemEntity.class, this.getBoundingBox().expand(1.0D, 0.0D, 1.0D))) {
+             if (!itementity.removed && !itementity.getStack().isEmpty() && !itementity.cannotPickup()) {
+                this.loot(itementity);
+@@ -560,6 +561,14 @@
+          this.remove();
+       } else if (!this.isPersistent() && !this.cannotDespawn()) {
+          Entity entity = this.world.getClosestPlayer(this, -1.0D);
++         net.minecraftforge.eventbus.api.Event.Result result = net.minecraftforge.event.ForgeEventFactory.canEntityDespawn(this);
++         if (result == net.minecraftforge.eventbus.api.Event.Result.DENY) {
++            despawnCounter = 0;
++            entity = null;
++         } else if (result == net.minecraftforge.eventbus.api.Event.Result.ALLOW) {
++            this.remove();
++            entity = null;
++         }
+          if (entity != null) {
+             double d0 = entity.squaredDistanceTo(this);
+             if (d0 > 16384.0D && this.canImmediatelyDespawn(d0)) {
+@@ -795,6 +804,8 @@
+    }
+ 
+    public static EquipmentSlot getPreferredEquipmentSlot(ItemStack stack) {
++      final EquipmentSlot slot = stack.getEquipmentSlot();
++      if (slot != null) return slot; // FORGE: Allow modders to set a non-default equipment slot for a stack; e.g. a non-armor chestplate-slot item
+       Item item = stack.getItem();
+       if (item != Blocks.field_10147.asItem() && (!(item instanceof BlockItem) || !(((BlockItem)item).getBlock() instanceof AbstractSkullBlock))) {
+          if (item instanceof ArmorItem) {
+@@ -802,7 +813,7 @@
+          } else if (item == Items.field_8833) {
+             return EquipmentSlot.field_6174;
+          } else {
+-            return item == Items.field_8255 ? EquipmentSlot.field_6171 : EquipmentSlot.field_6173;
++            return stack.isShield(null) ? EquipmentSlot.field_6171 : EquipmentSlot.field_6173;
+          }
+       } else {
+          return EquipmentSlot.field_6169;
+@@ -1182,10 +1193,10 @@
+             PlayerEntity playerentity = (PlayerEntity)entityIn;
+             ItemStack itemstack = this.getMainHandStack();
+             ItemStack itemstack1 = playerentity.isUsingItem() ? playerentity.getActiveItem() : ItemStack.EMPTY;
+-            if (!itemstack.isEmpty() && !itemstack1.isEmpty() && itemstack.getItem() instanceof AxeItem && itemstack1.getItem() == Items.field_8255) {
++            if (!itemstack.isEmpty() && !itemstack1.isEmpty() && itemstack.canDisableShield(itemstack1, playerentity, this) && itemstack1.isShield(playerentity)) {
+                float f2 = 0.25F + (float)EnchantmentHelper.getEfficiency(this) * 0.05F;
+                if (this.random.nextFloat() < f2) {
+-                  playerentity.getItemCooldownManager().set(Items.field_8255, 100);
++                  playerentity.getItemCooldownManager().set(itemstack.getItem(), 100);
+                   this.world.sendEntityStatus(playerentity, (byte)30);
+                }
+             }

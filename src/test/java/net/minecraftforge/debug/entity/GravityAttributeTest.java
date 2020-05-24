@@ -32,17 +32,17 @@ import com.google.common.collect.Multimap;
 
 import net.minecraft.client.world.ClientWorld;
 import net.minecraft.entity.Entity;
+import net.minecraft.entity.EquipmentSlot;
 import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.ai.attributes.AttributeModifier;
-import net.minecraft.entity.ai.attributes.AttributeModifier.Operation;
-import net.minecraft.entity.ai.attributes.IAttributeInstance;
-import net.minecraft.inventory.EquipmentSlotType;
+import net.minecraft.entity.attribute.EntityAttributeInstance;
+import net.minecraft.entity.attribute.EntityAttributeModifier;
+import net.minecraft.entity.attribute.EntityAttributeModifier.Operation;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemGroup;
-import net.minecraft.item.Rarity;
+import net.minecraft.server.world.ServerWorld;
+import net.minecraft.util.Rarity;
 import net.minecraft.world.World;
 import net.minecraft.world.biome.Biome.Category;
-import net.minecraft.world.server.ServerWorld;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.RegistryEvent;
 import net.minecraftforge.event.TickEvent;
@@ -57,7 +57,7 @@ public class GravityAttributeTest
     private static Logger logger = LogManager.getLogger();
     private int ticks;
     private static final UUID REDUCED_GRAVITY_ID = UUID.fromString("DEB06000-7979-4242-8888-00000DEB0600");
-    private static final AttributeModifier REDUCED_GRAVITY = (new AttributeModifier(REDUCED_GRAVITY_ID, "Reduced gravity", (double)-0.80, Operation.MULTIPLY_TOTAL)).setSaved(false);
+    private static final EntityAttributeModifier REDUCED_GRAVITY = (new EntityAttributeModifier(REDUCED_GRAVITY_ID, "Reduced gravity", (double)-0.80, Operation.field_6331)).setSerialize(false);
 
 
     public GravityAttributeTest()
@@ -72,18 +72,18 @@ public class GravityAttributeTest
     @SubscribeEvent
     public void worldTick(TickEvent.WorldTickEvent event)
     {
-        if (!event.world.isRemote)
+        if (!event.world.isClient)
         {
             if (ticks++ > 60)
             {
                 ticks = 0;
                 World w = event.world;
                 List<LivingEntity> list;
-                if(w.isRemote)
+                if(w.isClient)
                 {
                     ClientWorld cw = (ClientWorld)w;
                     list = new ArrayList<>(100);
-                    for(Entity e : cw.getAllEntities())
+                    for(Entity e : cw.getEntities())
                     {
                         if(e.isAlive() && e instanceof LivingEntity)
                             list.add((LivingEntity)e);
@@ -98,12 +98,12 @@ public class GravityAttributeTest
 
                 for(LivingEntity liv : list)
                 {
-                    IAttributeInstance grav = liv.getAttribute(LivingEntity.ENTITY_GRAVITY);
-                    boolean inPlains = liv.world.getBiome(liv.getPosition()).getCategory() == Category.PLAINS;
+                    EntityAttributeInstance grav = liv.getAttributeInstance(LivingEntity.ENTITY_GRAVITY);
+                    boolean inPlains = liv.world.getBiome(liv.getBlockPos()).getCategory() == Category.field_9355;
                     if (inPlains && !grav.hasModifier(REDUCED_GRAVITY))
                     {
                         logger.info("Granted low gravity to Entity: {}", liv);
-                        grav.applyModifier(REDUCED_GRAVITY);
+                        grav.addModifier(REDUCED_GRAVITY);
                     }
                     else if (!inPlains && grav.hasModifier(REDUCED_GRAVITY))
                     {
@@ -119,25 +119,25 @@ public class GravityAttributeTest
     @SubscribeEvent
     public void registerItems(RegistryEvent.Register<Item> event)
     {
-        event.getRegistry().register(new ItemGravityStick(new Item.Properties().group(ItemGroup.TOOLS).rarity(Rarity.RARE)).setRegistryName("gravity_attribute_test:gravity_stick"));
+        event.getRegistry().register(new ItemGravityStick(new Item.Settings().group(ItemGroup.TOOLS).rarity(Rarity.field_8903)).setRegistryName("gravity_attribute_test:gravity_stick"));
     }
 
     public static class ItemGravityStick extends Item
     {
         private static final UUID GRAVITY_MODIFIER = UUID.fromString("DEB06001-7979-4242-8888-10000DEB0601");
 
-        public ItemGravityStick(Properties properties)
+        public ItemGravityStick(Settings properties)
         {
             super(properties);
         }
 
         @Override
-        public Multimap<String, AttributeModifier> getAttributeModifiers(EquipmentSlotType slot)
+        public Multimap<String, EntityAttributeModifier> getModifiers(EquipmentSlot slot)
         {
             @SuppressWarnings("deprecation")
-            Multimap<String, AttributeModifier> multimap = super.getAttributeModifiers(slot);
-            if (slot == EquipmentSlotType.MAINHAND)
-                multimap.put(LivingEntity.ENTITY_GRAVITY.getName(), new AttributeModifier(GRAVITY_MODIFIER, "More Gravity", 1.0D, Operation.ADDITION));
+            Multimap<String, EntityAttributeModifier> multimap = super.getModifiers(slot);
+            if (slot == EquipmentSlot.field_6173)
+                multimap.put(LivingEntity.ENTITY_GRAVITY.getId(), new EntityAttributeModifier(GRAVITY_MODIFIER, "More Gravity", 1.0D, Operation.field_6328));
 
             return multimap;
         }

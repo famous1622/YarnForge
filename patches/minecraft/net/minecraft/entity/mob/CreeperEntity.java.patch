@@ -1,0 +1,11 @@
+--- a/net\minecraft\entity\mob\CreeperEntity.java
++++ b/net\minecraft\entity\mob\CreeperEntity.java
+@@ -214,7 +214,7 @@
+ 
+    private void explode() {
+       if (!this.world.isClient) {
+-         Explosion.DestructionType explosion$mode = this.world.getGameRules().getBoolean(GameRules.field_19388) ? Explosion.DestructionType.field_18687 : Explosion.DestructionType.field_18685;
++         Explosion.DestructionType explosion$mode = net.minecraftforge.event.ForgeEventFactory.getMobGriefingEvent(this.world, this) ? Explosion.DestructionType.field_18687 : Explosion.DestructionType.field_18685;
+          float f = this.shouldRenderOverlay() ? 2.0F : 1.0F;
+          this.dead = true;
+          this.world.createExplosion(this, this.getX(), this.getY(), this.getZ(), (float)this.explosionRadius * f, explosion$mode);

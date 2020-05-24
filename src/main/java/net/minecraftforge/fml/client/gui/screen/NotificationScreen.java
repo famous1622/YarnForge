@@ -19,12 +19,12 @@
 
 package net.minecraftforge.fml.client.gui.screen;
 
-import net.minecraft.client.gui.widget.button.Button;
-import net.minecraft.client.renderer.Tessellator;
-import net.minecraft.client.Minecraft;
+import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.client.resources.I18n;
-import net.minecraft.util.text.TranslationTextComponent;
+import net.minecraft.client.gui.widget.ButtonWidget;
+import net.minecraft.client.render.Tessellator;
+import net.minecraft.client.resource.language.I18n;
+import net.minecraft.text.TranslatableText;
 import net.minecraftforge.client.gui.ScrollPanel;
 import net.minecraftforge.fml.StartupQuery;
 
@@ -32,7 +32,7 @@ public class NotificationScreen extends Screen
 {
     private class TextPanel extends ScrollPanel
     {
-        TextPanel(Minecraft client, int width, int height, int top, int left)
+        TextPanel(MinecraftClient client, int width, int height, int top, int left)
         {
             super(client, width, height, top, left);
         }
@@ -41,7 +41,7 @@ public class NotificationScreen extends Screen
         protected int getContentHeight()
         {
             int height = 0;
-            height += (textLines.length * font.FONT_HEIGHT) + 4;
+            height += (textLines.length * font.fontHeight) + 4;
             if (height < this.height - 50)
                 height = this.height - 50;
             return height;
@@ -56,7 +56,7 @@ public class NotificationScreen extends Screen
         @Override
         protected int getScrollAmount()
         {
-            return font.FONT_HEIGHT * 3;
+            return font.fontHeight * 3;
         }
     }
 
@@ -72,7 +72,7 @@ public class NotificationScreen extends Screen
 
     public NotificationScreen(StartupQuery query)
     {
-        super(new TranslationTextComponent("fml.menu.notification.title"));
+        super(new TranslatableText("fml.menu.notification.title"));
         this.query = query;
         this.headerLines = query.getHeader().isEmpty() ? new String[0] : query.getHeader().split("\n");
         this.textLines = query.getText().split("\n");
@@ -83,10 +83,10 @@ public class NotificationScreen extends Screen
     public void init()
     {
         super.init();
-        int panelY = PADDING + headerLines.length * font.FONT_HEIGHT + PADDING;
+        int panelY = PADDING + headerLines.length * font.fontHeight + PADDING;
         int panelHeight = this.height - PADDING - 20 - panelY;
         if (!action.isEmpty()) {
-            panelHeight = panelHeight - font.FONT_HEIGHT - PADDING; 
+            panelHeight = panelHeight - font.fontHeight - PADDING; 
         }
         textPanel = new TextPanel(this.minecraft, this.width - (PADDING * 2), panelHeight, panelY, PADDING);
         this.children.add(textPanel);
@@ -94,8 +94,8 @@ public class NotificationScreen extends Screen
     }
 
     protected void addConfirmationButtons() {
-        this.buttons.add(new Button(this.width / 2 - 100, this.height - PADDING - 20, 200, 20, I18n.format("gui.done"), b -> {
-            NotificationScreen.this.minecraft.displayGuiScreen(null);
+        this.buttons.add(new ButtonWidget(this.width / 2 - 100, this.height - PADDING - 20, 200, 20, I18n.translate("gui.done"), b -> {
+            NotificationScreen.this.minecraft.openScreen(null);
             query.finish();
         }));
     }
@@ -114,7 +114,7 @@ public class NotificationScreen extends Screen
 
         if (!action.isEmpty())
         {
-            drawCenteredString(font, action, this.width / 2, this.height - PADDING - 20 - font.FONT_HEIGHT, -1);
+            drawCenteredString(font, action, this.width / 2, this.height - PADDING - 20 - font.fontHeight, -1);
         }
 
         super.render(mouseX, mouseY, partialTicks);
@@ -126,7 +126,7 @@ public class NotificationScreen extends Screen
         {
             if (!line.isEmpty())
                 this.drawCenteredString(font, line, this.width / 2, yStart, 0xFFFFFF);
-            yStart += font.FONT_HEIGHT;
+            yStart += font.fontHeight;
         }
     }
 }

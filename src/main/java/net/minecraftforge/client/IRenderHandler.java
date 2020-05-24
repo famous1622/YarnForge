@@ -20,7 +20,7 @@
 package net.minecraftforge.client;
 
 import net.minecraftforge.api.distmarker.Dist;
-import net.minecraft.client.Minecraft;
+import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.world.ClientWorld;
 import net.minecraftforge.api.distmarker.OnlyIn;
 
@@ -28,5 +28,5 @@ import net.minecraftforge.api.distmarker.OnlyIn;
 public interface IRenderHandler
 {
     @OnlyIn(Dist.CLIENT)
-    void render(int ticks, float partialTicks, ClientWorld world, Minecraft mc);
+    void render(int ticks, float partialTicks, ClientWorld world, MinecraftClient mc);
 }

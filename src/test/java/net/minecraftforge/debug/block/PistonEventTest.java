@@ -24,18 +24,18 @@ import java.util.List;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
+import net.minecraft.block.Material;
 import net.minecraft.block.PistonBlock;
-import net.minecraft.block.PistonBlockStructureHelper;
-import net.minecraft.block.material.Material;
-import net.minecraft.client.Minecraft;
+import net.minecraft.block.piston.PistonHandler;
+import net.minecraft.client.MinecraftClient;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.BlockItem;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemGroup;
-import net.minecraft.util.Direction;
-import net.minecraft.util.ResourceLocation;
+import net.minecraft.text.LiteralText;
+import net.minecraft.util.Identifier;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.text.StringTextComponent;
+import net.minecraft.util.math.Direction;
 import net.minecraft.world.World;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.event.RegistryEvent;
@@ -63,7 +63,7 @@ public class PistonEventTest
     @SubscribeEvent
     public static void regItem(RegistryEvent.Register<Item> event)
     {
-        event.getRegistry().register(new BlockItem(shiftOnMove, new Item.Properties().group(ItemGroup.BUILDING_BLOCKS)).setRegistryName(shiftOnMove.getRegistryName()));
+        event.getRegistry().register(new BlockItem(shiftOnMove, new Item.Settings().group(ItemGroup.BUILDING_BLOCKS)).setRegistryName(shiftOnMove.getRegistryName()));
     }
 
     @SubscribeEvent
@@ -78,77 +78,77 @@ public class PistonEventTest
         if (event.getPistonMoveType() == PistonMoveType.EXTEND)
         {
             World world = (World) event.getWorld();
-            PistonBlockStructureHelper pistonHelper = event.getStructureHelper();
-            PlayerEntity player = DistExecutor.callWhenOn(Dist.CLIENT, () -> () -> Minecraft.getInstance().player);
-            if (world.isRemote && player != null)
+            PistonHandler pistonHelper = event.getStructureHelper();
+            PlayerEntity player = DistExecutor.callWhenOn(Dist.CLIENT, () -> () -> MinecraftClient.getInstance().player);
+            if (world.isClient && player != null)
             {
-                if (pistonHelper.canMove())
+                if (pistonHelper.calculatePush())
                 {
-                    player.sendMessage(new StringTextComponent(String.format("Piston will extend moving %d blocks and destroy %d blocks", pistonHelper.getBlocksToMove().size(), pistonHelper.getBlocksToDestroy().size())));
+                    player.sendMessage(new LiteralText(String.format("Piston will extend moving %d blocks and destroy %d blocks", pistonHelper.getMovedBlocks().size(), pistonHelper.getBrokenBlocks().size())));
                 }
                 else
                 {
-                    player.sendMessage(new StringTextComponent("Piston won't extend"));
+                    player.sendMessage(new LiteralText("Piston won't extend"));
                 }
             }
 
-            if (pistonHelper.canMove())
+            if (pistonHelper.calculatePush())
             {
-                List<BlockPos> posList = pistonHelper.getBlocksToMove();
+                List<BlockPos> posList = pistonHelper.getMovedBlocks();
                 for (BlockPos newPos : posList)
                 {
                     BlockState state = event.getWorld().getBlockState(newPos);
-                    if (state.getBlock() == Blocks.BLACK_WOOL)
+                    if (state.getBlock() == Blocks.field_10146)
                     {
-                        Block.spawnDrops(state, world, newPos);
-                        world.setBlockState(newPos, Blocks.AIR.getDefaultState());
+                        Block.dropStacks(state, world, newPos);
+                        world.setBlockState(newPos, Blocks.field_10124.getDefaultState());
                     }
                 }
             }
 
             // Make the block move up and out of the way so long as it won't replace the piston
             BlockPos pushedBlockPos = event.getFaceOffsetPos();
-            if (world.getBlockState(pushedBlockPos).getBlock() == shiftOnMove && event.getDirection() != Direction.DOWN)
+            if (world.getBlockState(pushedBlockPos).getBlock() == shiftOnMove && event.getDirection() != Direction.field_11033)
             {
-                world.setBlockState(pushedBlockPos, Blocks.AIR.getDefaultState());
+                world.setBlockState(pushedBlockPos, Blocks.field_10124.getDefaultState());
                 world.setBlockState(pushedBlockPos.up(), shiftOnMove.getDefaultState());
             }
 
             // Block pushing cobblestone (directly, indirectly works)
-            event.setCanceled(event.getWorld().getBlockState(event.getFaceOffsetPos()).getBlock() == Blocks.COBBLESTONE);
+            event.setCanceled(event.getWorld().getBlockState(event.getFaceOffsetPos()).getBlock() == Blocks.field_10445);
         }
         else
         {
-            boolean isSticky = event.getWorld().getBlockState(event.getPos()).getBlock() == Blocks.STICKY_PISTON;
+            boolean isSticky = event.getWorld().getBlockState(event.getPos()).getBlock() == Blocks.field_10615;
 
-            PlayerEntity player = DistExecutor.callWhenOn(Dist.CLIENT, () -> () -> Minecraft.getInstance().player);
-            if (event.getWorld().isRemote() && player != null)
+            PlayerEntity player = DistExecutor.callWhenOn(Dist.CLIENT, () -> () -> MinecraftClient.getInstance().player);
+            if (event.getWorld().isClient() && player != null)
             {
                 if (isSticky)
                 {
                     BlockPos targetPos = event.getFaceOffsetPos().offset(event.getDirection());
-                    boolean canPush = PistonBlock.canPush(event.getWorld().getBlockState(targetPos), (World) event.getWorld(), event.getFaceOffsetPos(), event.getDirection().getOpposite(), false, event.getDirection());
-                    boolean isAir = event.getWorld().isAirBlock(targetPos);
-                    player.sendMessage(new StringTextComponent(String.format("Piston will retract moving %d blocks", !isAir && canPush ? 1 : 0)));
+                    boolean canPush = PistonBlock.isMovable(event.getWorld().getBlockState(targetPos), (World) event.getWorld(), event.getFaceOffsetPos(), event.getDirection().getOpposite(), false, event.getDirection());
+                    boolean isAir = event.getWorld().isAir(targetPos);
+                    player.sendMessage(new LiteralText(String.format("Piston will retract moving %d blocks", !isAir && canPush ? 1 : 0)));
                 }
                 else
                 {
-                    player.sendMessage(new StringTextComponent("Piston will retract"));
+                    player.sendMessage(new LiteralText("Piston will retract"));
                 }
             }
             // Offset twice to see if retraction will pull cobblestone
-            event.setCanceled(event.getWorld().getBlockState(event.getFaceOffsetPos().offset(event.getDirection())).getBlock() == Blocks.COBBLESTONE && isSticky);
+            event.setCanceled(event.getWorld().getBlockState(event.getFaceOffsetPos().offset(event.getDirection())).getBlock() == Blocks.field_10445 && isSticky);
         }
     }
 
     public static class BlockShiftOnMove extends Block
     {
         public static String blockName = "shiftonmove";
-        public static ResourceLocation blockId = new ResourceLocation(MODID, blockName);
+        public static Identifier blockId = new Identifier(MODID, blockName);
 
         public BlockShiftOnMove()
         {
-            super(Block.Properties.create(Material.ROCK));
+            super(Block.Settings.of(Material.STONE));
             this.setRegistryName(blockId);
         }
 

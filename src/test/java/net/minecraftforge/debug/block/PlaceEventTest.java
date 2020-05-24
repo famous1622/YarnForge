@@ -31,7 +31,7 @@ public class PlaceEventTest
     @SubscribeEvent
     public static void onBlockPlaced(EntityPlaceEvent event)
     {
-        if (event.getPlacedBlock().getBlock() == Blocks.CHEST && event.getPlacedAgainst().getBlock() != Blocks.DIAMOND_BLOCK)
+        if (event.getPlacedBlock().getBlock() == Blocks.field_10034 && event.getPlacedAgainst().getBlock() != Blocks.field_10201)
             event.setCanceled(true);
     }
 }

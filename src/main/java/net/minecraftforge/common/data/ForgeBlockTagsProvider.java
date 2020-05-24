@@ -20,14 +20,14 @@
 package net.minecraftforge.common.data;
 
 import net.minecraft.data.DataGenerator;
-import net.minecraft.item.DyeColor;
-import net.minecraft.tags.Tag;
-import net.minecraft.util.ResourceLocation;
+import net.minecraft.data.server.BlockTagsProvider;
+import net.minecraft.tag.Tag;
+import net.minecraft.util.DyeColor;
+import net.minecraft.util.Identifier;
 import net.minecraftforge.common.Tags;
 import net.minecraftforge.registries.ForgeRegistries;
 import net.minecraft.block.Block;
 import net.minecraft.block.Blocks;
-import net.minecraft.data.BlockTagsProvider;
 
 import static net.minecraftforge.common.Tags.Blocks.*;
 
@@ -39,7 +39,7 @@ import java.util.stream.Collectors;
 
 public class ForgeBlockTagsProvider extends BlockTagsProvider
 {
-    private Set<ResourceLocation> filter = null;
+    private Set<Identifier> filter = null;
 
     public ForgeBlockTagsProvider(DataGenerator gen)
     {
@@ -47,55 +47,55 @@ public class ForgeBlockTagsProvider extends BlockTagsProvider
     }
 
     @Override
-    public void registerTags()
+    public void configure()
     {
-        super.registerTags();
-        filter = this.tagToBuilder.entrySet().stream().map(e -> e.getKey().getId()).collect(Collectors.toSet());
+        super.configure();
+        filter = this.tagBuilders.entrySet().stream().map(e -> e.getKey().getId()).collect(Collectors.toSet());
 
-        getBuilder(CHESTS).add(CHESTS_ENDER, CHESTS_TRAPPED, CHESTS_WOODEN);
-        getBuilder(CHESTS_ENDER).add(Blocks.ENDER_CHEST);
-        getBuilder(CHESTS_TRAPPED).add(Blocks.TRAPPED_CHEST);
-        getBuilder(CHESTS_WOODEN).add(Blocks.CHEST, Blocks.TRAPPED_CHEST);
-        getBuilder(COBBLESTONE).add(Blocks.COBBLESTONE, Blocks.INFESTED_COBBLESTONE, Blocks.MOSSY_COBBLESTONE);
-        getBuilder(DIRT).add(Blocks.DIRT, Blocks.GRASS_BLOCK, Blocks.COARSE_DIRT, Blocks.PODZOL, Blocks.MYCELIUM);
-        getBuilder(END_STONES).add(Blocks.END_STONE);
-        getBuilder(FENCE_GATES).add(FENCE_GATES_WOODEN);
-        getBuilder(FENCE_GATES_WOODEN).add(Blocks.OAK_FENCE_GATE, Blocks.SPRUCE_FENCE_GATE, Blocks.BIRCH_FENCE_GATE, Blocks.JUNGLE_FENCE_GATE, Blocks.ACACIA_FENCE_GATE, Blocks.DARK_OAK_FENCE_GATE);
-        getBuilder(FENCES).add(FENCES_NETHER_BRICK, FENCES_WOODEN);
-        getBuilder(FENCES_NETHER_BRICK).add(Blocks.NETHER_BRICK_FENCE);
-        getBuilder(FENCES_WOODEN).add(Blocks.OAK_FENCE, Blocks.SPRUCE_FENCE, Blocks.BIRCH_FENCE, Blocks.JUNGLE_FENCE, Blocks.ACACIA_FENCE, Blocks.DARK_OAK_FENCE);
-        getBuilder(GLASS).add(GLASS_COLORLESS, STAINED_GLASS);
-        getBuilder(GLASS_COLORLESS).add(Blocks.GLASS);
-        addColored(getBuilder(STAINED_GLASS)::add, GLASS, "{color}_stained_glass");
-        getBuilder(GLASS_PANES).add(GLASS_PANES_COLORLESS, STAINED_GLASS_PANES);
-        getBuilder(GLASS_PANES_COLORLESS).add(Blocks.GLASS_PANE);
-        addColored(getBuilder(STAINED_GLASS_PANES)::add, GLASS_PANES, "{color}_stained_glass_pane");
-        getBuilder(GRAVEL).add(Blocks.GRAVEL);
-        getBuilder(NETHERRACK).add(Blocks.NETHERRACK);
-        getBuilder(OBSIDIAN).add(Blocks.OBSIDIAN);
-        getBuilder(ORES).add(ORES_COAL, ORES_DIAMOND, ORES_EMERALD, ORES_GOLD, ORES_IRON, ORES_LAPIS, ORES_REDSTONE, ORES_QUARTZ);
-        getBuilder(ORES_COAL).add(Blocks.COAL_ORE);
-        getBuilder(ORES_DIAMOND).add(Blocks.DIAMOND_ORE);
-        getBuilder(ORES_EMERALD).add(Blocks.EMERALD_ORE);
-        getBuilder(ORES_GOLD).add(Blocks.GOLD_ORE);
-        getBuilder(ORES_IRON).add(Blocks.IRON_ORE);
-        getBuilder(ORES_LAPIS).add(Blocks.LAPIS_ORE);
-        getBuilder(ORES_QUARTZ).add(Blocks.NETHER_QUARTZ_ORE);
-        getBuilder(ORES_REDSTONE).add(Blocks.REDSTONE_ORE);
-        getBuilder(SAND).add(SAND_COLORLESS, SAND_RED);
-        getBuilder(SAND_COLORLESS).add(Blocks.SAND);
-        getBuilder(SAND_RED).add(Blocks.RED_SAND);
-        getBuilder(SANDSTONE).add(Blocks.SANDSTONE, Blocks.CUT_SANDSTONE, Blocks.CHISELED_SANDSTONE, Blocks.SMOOTH_SANDSTONE, Blocks.RED_SANDSTONE, Blocks.CUT_RED_SANDSTONE, Blocks.CHISELED_RED_SANDSTONE, Blocks.SMOOTH_RED_SANDSTONE);
-        getBuilder(STONE).add(Blocks.ANDESITE, Blocks.DIORITE, Blocks.GRANITE, Blocks.INFESTED_STONE, Blocks.STONE, Blocks.POLISHED_ANDESITE, Blocks.POLISHED_DIORITE, Blocks.POLISHED_GRANITE);
-        getBuilder(STORAGE_BLOCKS).add(STORAGE_BLOCKS_COAL, STORAGE_BLOCKS_DIAMOND, STORAGE_BLOCKS_EMERALD, STORAGE_BLOCKS_GOLD, STORAGE_BLOCKS_IRON, STORAGE_BLOCKS_LAPIS, STORAGE_BLOCKS_QUARTZ, STORAGE_BLOCKS_REDSTONE);
-        getBuilder(STORAGE_BLOCKS_COAL).add(Blocks.COAL_BLOCK);
-        getBuilder(STORAGE_BLOCKS_DIAMOND).add(Blocks.DIAMOND_BLOCK);
-        getBuilder(STORAGE_BLOCKS_EMERALD).add(Blocks.EMERALD_BLOCK);
-        getBuilder(STORAGE_BLOCKS_GOLD).add(Blocks.GOLD_BLOCK);
-        getBuilder(STORAGE_BLOCKS_IRON).add(Blocks.IRON_BLOCK);
-        getBuilder(STORAGE_BLOCKS_LAPIS).add(Blocks.LAPIS_BLOCK);
-        getBuilder(STORAGE_BLOCKS_QUARTZ).add(Blocks.QUARTZ_BLOCK);
-        getBuilder(STORAGE_BLOCKS_REDSTONE).add(Blocks.REDSTONE_BLOCK);
+        getOrCreateTagBuilder(CHESTS).add(CHESTS_ENDER, CHESTS_TRAPPED, CHESTS_WOODEN);
+        getOrCreateTagBuilder(CHESTS_ENDER).add(Blocks.field_10443);
+        getOrCreateTagBuilder(CHESTS_TRAPPED).add(Blocks.field_10380);
+        getOrCreateTagBuilder(CHESTS_WOODEN).add(Blocks.field_10034, Blocks.field_10380);
+        getOrCreateTagBuilder(COBBLESTONE).add(Blocks.field_10445, Blocks.field_10492, Blocks.field_9989);
+        getOrCreateTagBuilder(DIRT).add(Blocks.field_10566, Blocks.field_10219, Blocks.field_10253, Blocks.field_10520, Blocks.field_10402);
+        getOrCreateTagBuilder(END_STONES).add(Blocks.field_10471);
+        getOrCreateTagBuilder(FENCE_GATES).add(FENCE_GATES_WOODEN);
+        getOrCreateTagBuilder(FENCE_GATES_WOODEN).add(Blocks.field_10188, Blocks.field_10291, Blocks.field_10513, Blocks.field_10041, Blocks.field_10457, Blocks.field_10196);
+        getOrCreateTagBuilder(FENCES).add(FENCES_NETHER_BRICK, FENCES_WOODEN);
+        getOrCreateTagBuilder(FENCES_NETHER_BRICK).add(Blocks.field_10364);
+        getOrCreateTagBuilder(FENCES_WOODEN).add(Blocks.field_10620, Blocks.field_10020, Blocks.field_10299, Blocks.field_10319, Blocks.field_10144, Blocks.field_10132);
+        getOrCreateTagBuilder(GLASS).add(GLASS_COLORLESS, STAINED_GLASS);
+        getOrCreateTagBuilder(GLASS_COLORLESS).add(Blocks.field_10033);
+        addColored(getOrCreateTagBuilder(STAINED_GLASS)::add, GLASS, "{color}_stained_glass");
+        getOrCreateTagBuilder(GLASS_PANES).add(GLASS_PANES_COLORLESS, STAINED_GLASS_PANES);
+        getOrCreateTagBuilder(GLASS_PANES_COLORLESS).add(Blocks.field_10285);
+        addColored(getOrCreateTagBuilder(STAINED_GLASS_PANES)::add, GLASS_PANES, "{color}_stained_glass_pane");
+        getOrCreateTagBuilder(GRAVEL).add(Blocks.field_10255);
+        getOrCreateTagBuilder(NETHERRACK).add(Blocks.field_10515);
+        getOrCreateTagBuilder(OBSIDIAN).add(Blocks.field_10540);
+        getOrCreateTagBuilder(ORES).add(ORES_COAL, ORES_DIAMOND, ORES_EMERALD, ORES_GOLD, ORES_IRON, ORES_LAPIS, ORES_REDSTONE, ORES_QUARTZ);
+        getOrCreateTagBuilder(ORES_COAL).add(Blocks.field_10418);
+        getOrCreateTagBuilder(ORES_DIAMOND).add(Blocks.field_10442);
+        getOrCreateTagBuilder(ORES_EMERALD).add(Blocks.field_10013);
+        getOrCreateTagBuilder(ORES_GOLD).add(Blocks.field_10571);
+        getOrCreateTagBuilder(ORES_IRON).add(Blocks.field_10212);
+        getOrCreateTagBuilder(ORES_LAPIS).add(Blocks.field_10090);
+        getOrCreateTagBuilder(ORES_QUARTZ).add(Blocks.field_10213);
+        getOrCreateTagBuilder(ORES_REDSTONE).add(Blocks.field_10080);
+        getOrCreateTagBuilder(SAND).add(SAND_COLORLESS, SAND_RED);
+        getOrCreateTagBuilder(SAND_COLORLESS).add(Blocks.field_10102);
+        getOrCreateTagBuilder(SAND_RED).add(Blocks.field_10534);
+        getOrCreateTagBuilder(SANDSTONE).add(Blocks.field_9979, Blocks.field_10361, Blocks.field_10292, Blocks.field_10467, Blocks.field_10344, Blocks.field_10518, Blocks.field_10117, Blocks.field_10483);
+        getOrCreateTagBuilder(STONE).add(Blocks.field_10115, Blocks.field_10508, Blocks.field_10474, Blocks.field_10277, Blocks.field_10340, Blocks.field_10093, Blocks.field_10346, Blocks.field_10289);
+        getOrCreateTagBuilder(STORAGE_BLOCKS).add(STORAGE_BLOCKS_COAL, STORAGE_BLOCKS_DIAMOND, STORAGE_BLOCKS_EMERALD, STORAGE_BLOCKS_GOLD, STORAGE_BLOCKS_IRON, STORAGE_BLOCKS_LAPIS, STORAGE_BLOCKS_QUARTZ, STORAGE_BLOCKS_REDSTONE);
+        getOrCreateTagBuilder(STORAGE_BLOCKS_COAL).add(Blocks.field_10381);
+        getOrCreateTagBuilder(STORAGE_BLOCKS_DIAMOND).add(Blocks.field_10201);
+        getOrCreateTagBuilder(STORAGE_BLOCKS_EMERALD).add(Blocks.field_10234);
+        getOrCreateTagBuilder(STORAGE_BLOCKS_GOLD).add(Blocks.field_10205);
+        getOrCreateTagBuilder(STORAGE_BLOCKS_IRON).add(Blocks.field_10085);
+        getOrCreateTagBuilder(STORAGE_BLOCKS_LAPIS).add(Blocks.field_10441);
+        getOrCreateTagBuilder(STORAGE_BLOCKS_QUARTZ).add(Blocks.field_10153);
+        getOrCreateTagBuilder(STORAGE_BLOCKS_REDSTONE).add(Blocks.field_10002);
     }
 
     private void addColored(Consumer<Block> consumer, Tag<Block> group, String pattern)
@@ -103,12 +103,12 @@ public class ForgeBlockTagsProvider extends BlockTagsProvider
         String prefix = group.getId().getPath().toUpperCase(Locale.ENGLISH) + '_';
         for (DyeColor color  : DyeColor.values())
         {
-            ResourceLocation key = new ResourceLocation("minecraft", pattern.replace("{color}",  color.getTranslationKey()));
-            Tag<Block> tag = getForgeTag(prefix + color.getTranslationKey());
+            Identifier key = new Identifier("minecraft", pattern.replace("{color}",  color.getName()));
+            Tag<Block> tag = getForgeTag(prefix + color.getName());
             Block block = ForgeRegistries.BLOCKS.getValue(key);
-            if (block == null || block  == Blocks.AIR)
+            if (block == null || block  == Blocks.field_10124)
                 throw new IllegalStateException("Unknown vanilla block: " + key.toString());
-            getBuilder(tag).add(block);
+            getOrCreateTagBuilder(tag).add(block);
             consumer.accept(block);
         }
     }
@@ -128,9 +128,9 @@ public class ForgeBlockTagsProvider extends BlockTagsProvider
     }
 
     @Override
-    protected Path makePath(ResourceLocation id)
+    protected Path getOutput(Identifier id)
     {
-        return filter != null && filter.contains(id) ? null : super.makePath(id); //We don't want to save vanilla tags.
+        return filter != null && filter.contains(id) ? null : super.getOutput(id); //We don't want to save vanilla tags.
     }
 
     @Override

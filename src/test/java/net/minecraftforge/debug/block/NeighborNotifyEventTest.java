@@ -38,7 +38,7 @@ public class NeighborNotifyEventTest
     @SubscribeEvent
     public static void onNeighborNotify(NeighborNotifyEvent event)
     {
-        if (event.getState().getBlock() == Blocks.COMPARATOR) {
+        if (event.getState().getBlock() == Blocks.field_10377) {
             logger.info("{} with face information: {}", event.getPos().toString(), event.getNotifiedSides());
             event.setCanceled(true);
         }

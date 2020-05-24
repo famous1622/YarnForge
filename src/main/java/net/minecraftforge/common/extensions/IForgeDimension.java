@@ -20,21 +20,20 @@
 package net.minecraftforge.common.extensions;
 
 import javax.annotation.Nullable;
-
-import net.minecraft.client.audio.MusicTicker;
-import net.minecraft.client.renderer.Vector3f;
+import net.minecraft.client.sound.MusicTracker;
+import net.minecraft.client.util.math.Vector3f;
 import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.entity.player.ServerPlayerEntity;
+import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
 import net.minecraft.world.biome.Biome;
 import net.minecraft.world.biome.Biomes;
-import net.minecraft.world.chunk.Chunk;
+import net.minecraft.world.chunk.WorldChunk;
 import net.minecraft.world.dimension.Dimension;
 import net.minecraft.world.dimension.DimensionType;
-import net.minecraft.world.dimension.NetherDimension;
-import net.minecraft.world.storage.WorldInfo;
+import net.minecraft.world.dimension.TheNetherDimension;
+import net.minecraft.world.level.LevelProperties;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.client.IRenderHandler;
@@ -76,7 +75,7 @@ public interface IForgeDimension
      */
     default double getMovementFactor()
     {
-        if (getDimension() instanceof NetherDimension)
+        if (getDimension() instanceof TheNetherDimension)
         {
             return 8.0;
         }
@@ -120,12 +119,12 @@ public interface IForgeDimension
 
     void resetRainAndThunder();
 
-    default boolean canDoLightning(Chunk chunk)
+    default boolean canDoLightning(WorldChunk chunk)
     {
         return true;
     }
 
-    default boolean canDoRainSnowIce(Chunk chunk)
+    default boolean canDoRainSnowIce(WorldChunk chunk)
     {
         return true;
     }
@@ -137,7 +136,7 @@ public interface IForgeDimension
      */
     @Nullable
     @OnlyIn(Dist.CLIENT)
-    default MusicTicker.MusicType getMusicType()
+    default MusicTracker.MusicType getMusicType()
     {
         return null;
     }
@@ -151,7 +150,7 @@ public interface IForgeDimension
      */
     default SleepResult canSleepAt(net.minecraft.entity.player.PlayerEntity player, BlockPos pos)
     {
-        return (getDimension().canRespawnHere() && getWorld().getBiome(pos) != Biomes.NETHER) ? SleepResult.ALLOW : SleepResult.BED_EXPLODES;
+        return (getDimension().canPlayersSleep() && getWorld().getBiome(pos) != Biomes.field_9461) ? SleepResult.ALLOW : SleepResult.BED_EXPLODES;
     }
 
     enum SleepResult
@@ -163,7 +162,7 @@ public interface IForgeDimension
 
     default boolean isDaytime()
     {
-        return getDimension().getType() == DimensionType.OVERWORLD && getWorld().getSkylightSubtracted() < 4;
+        return getDimension().getType() == DimensionType.field_13072 && getWorld().getAmbientDarkness() < 4;
     }
 
     /**
@@ -173,7 +172,7 @@ public interface IForgeDimension
      * */
     default float getCurrentMoonPhaseFactor(long time)
     {
-        return Dimension.MOON_PHASE_FACTORS[this.getDimension().getMoonPhase(time)];
+        return Dimension.MOON_PHASE_TO_SIZE[this.getDimension().getMoonPhase(time)];
     }
 
     default void setAllowedSpawnTypes(boolean allowHostile, boolean allowPeaceful) { }
@@ -190,28 +189,28 @@ public interface IForgeDimension
 
     default long getSeed()
     {
-        return getWorld().getWorldInfo().getSeed();
+        return getWorld().getLevelProperties().getSeed();
     }
 
     default long getWorldTime()
     {
-        return getWorld().getWorldInfo().getDayTime();
+        return getWorld().getLevelProperties().getTimeOfDay();
     }
 
     default void setWorldTime(long time)
     {
-        getWorld().getWorldInfo().setDayTime(time);
+        getWorld().getLevelProperties().setTimeOfDay(time);
     }
 
     default BlockPos getSpawnPoint()
     {
-        WorldInfo info = getWorld().getWorldInfo();
+        LevelProperties info = getWorld().getLevelProperties();
         return new BlockPos(info.getSpawnX(), info.getSpawnY(), info.getSpawnZ());
     }
 
     default void setSpawnPoint(BlockPos pos)
     {
-        getWorld().getWorldInfo().setSpawn(pos);
+        getWorld().getLevelProperties().setSpawnPos(pos);
     }
 
     default boolean canMineBlock(PlayerEntity player, BlockPos pos)
@@ -221,7 +220,7 @@ public interface IForgeDimension
 
     default boolean isHighHumidity(BlockPos pos)
     {
-        return getWorld().getBiome(pos).isHighHumidity();
+        return getWorld().getBiome(pos).hasHighHumidity();
     }
 
     default int getHeight()
@@ -250,7 +249,7 @@ public interface IForgeDimension
      */
     default boolean shouldMapSpin(String entity, double x, double z, double rotation)
     {
-        return getDimension().getType() == DimensionType.THE_NETHER;
+        return getDimension().getType() == DimensionType.field_13076;
     }
 
     /**

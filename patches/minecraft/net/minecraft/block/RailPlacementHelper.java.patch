@@ -1,0 +1,57 @@
+--- a/net\minecraft\block\RailPlacementHelper.java
++++ b/net\minecraft\block\RailPlacementHelper.java
+@@ -15,14 +15,16 @@
+    private BlockState state;
+    private final boolean allowCurves;
+    private final List<BlockPos> neighbors = Lists.newArrayList();
++   private final boolean canMakeSlopes;
+ 
+    public RailPlacementHelper(World worldIn, BlockPos p_i47755_2_, BlockState p_i47755_3_) {
+       this.world = worldIn;
+       this.pos = p_i47755_2_;
+       this.state = p_i47755_3_;
+       this.block = (AbstractRailBlock)p_i47755_3_.getBlock();
+-      RailShape railshape = p_i47755_3_.get(this.block.getShapeProperty());
+-      this.allowCurves = this.block.canMakeCurves();
++      RailShape railshape = this.block.getRailDirection(state, worldIn, p_i47755_2_, null);
++      this.allowCurves = !this.block.isFlexibleRail(state, worldIn, p_i47755_2_);
++      this.canMakeSlopes = this.block.canMakeSlopes(state, worldIn, p_i47755_2_);
+       this.computeNeighbors(railshape);
+    }
+ 
+@@ -178,7 +180,7 @@
+          }
+       }
+ 
+-      if (railshape == RailShape.field_12665) {
++      if (railshape == RailShape.field_12665 && canMakeSlopes) {
+          if (AbstractRailBlock.isRail(this.world, blockpos.up())) {
+             railshape = RailShape.field_12670;
+          }
+@@ -188,7 +190,7 @@
+          }
+       }
+ 
+-      if (railshape == RailShape.field_12674) {
++      if (railshape == RailShape.field_12674 && canMakeSlopes) {
+          if (AbstractRailBlock.isRail(this.world, blockpos3.up())) {
+             railshape = RailShape.field_12667;
+          }
+@@ -304,7 +306,7 @@
+          }
+       }
+ 
+-      if (railshape == RailShape.field_12665) {
++      if (railshape == RailShape.field_12665 && canMakeSlopes) {
+          if (AbstractRailBlock.isRail(this.world, blockpos.up())) {
+             railshape = RailShape.field_12670;
+          }
+@@ -314,7 +316,7 @@
+          }
+       }
+ 
+-      if (railshape == RailShape.field_12674) {
++      if (railshape == RailShape.field_12674 && canMakeSlopes) {
+          if (AbstractRailBlock.isRail(this.world, blockpos3.up())) {
+             railshape = RailShape.field_12667;
+          }

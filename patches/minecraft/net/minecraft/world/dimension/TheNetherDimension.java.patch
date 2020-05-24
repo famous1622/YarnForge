@@ -1,0 +1,11 @@
+--- a/net\minecraft\world\dimension\TheNetherDimension.java
++++ b/net\minecraft\world\dimension\TheNetherDimension.java
+@@ -74,8 +74,4 @@
+          }
+       };
+    }
+-
+-   public DimensionType getType() {
+-      return DimensionType.field_13076;
+-   }
+ }

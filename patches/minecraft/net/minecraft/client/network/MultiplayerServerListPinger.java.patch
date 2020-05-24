@@ -1,0 +1,11 @@
+--- a/net\minecraft\client\network\MultiplayerServerListPinger.java
++++ b/net\minecraft\client\network\MultiplayerServerListPinger.java
+@@ -119,6 +119,8 @@
+                   server.setIcon((String)null);
+                }
+ 
++               net.minecraftforge.fml.client.ClientHooks.processForgeListPingData(serverstatusresponse, server);
++
+                this.startTime = Util.getMeasuringTimeMs();
+                networkmanager.send(new QueryPingC2SPacket(this.startTime));
+                this.sentQuery = true;

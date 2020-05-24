@@ -28,19 +28,19 @@ import com.google.common.collect.ImmutableList;
 
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
-import net.minecraft.block.material.Material;
-import net.minecraft.client.renderer.Quaternion;
-import net.minecraft.client.renderer.TransformationMatrix;
-import net.minecraft.client.renderer.Vector3f;
-import net.minecraft.client.renderer.model.BakedQuad;
-import net.minecraft.client.renderer.model.IBakedModel;
-import net.minecraft.client.renderer.model.ItemOverrideList;
-import net.minecraft.client.renderer.texture.TextureAtlasSprite;
+import net.minecraft.block.Material;
+import net.minecraft.client.render.model.BakedModel;
+import net.minecraft.client.render.model.BakedQuad;
+import net.minecraft.client.render.model.json.ModelItemPropertyOverrideList;
+import net.minecraft.client.texture.Sprite;
+import net.minecraft.client.util.math.Rotation3;
+import net.minecraft.client.util.math.Vector3f;
 import net.minecraft.item.BlockItem;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemGroup;
-import net.minecraft.util.Direction;
-import net.minecraft.util.ResourceLocation;
+import net.minecraft.util.Identifier;
+import net.minecraft.util.math.Direction;
+import net.minecraft.util.math.Quaternion;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.client.event.ModelBakeEvent;
 import net.minecraftforge.client.model.data.IDynamicBakedModel;
@@ -62,9 +62,9 @@ public class TRSRTransformerTest {
     private static final DeferredRegister<Block> BLOCKS = new DeferredRegister<>(ForgeRegistries.BLOCKS, MODID);
     private static final DeferredRegister<Item> ITEMS = new DeferredRegister<>(ForgeRegistries.ITEMS, MODID);
 
-    private static final RegistryObject<Block> TEST_BLOCK = BLOCKS.register("test", () -> new Block(Block.Properties.create(Material.ROCK)));
+    private static final RegistryObject<Block> TEST_BLOCK = BLOCKS.register("test", () -> new Block(Block.Settings.of(Material.STONE)));
     @SuppressWarnings("unused")
-    private static final RegistryObject<Item> TEST_ITEM = ITEMS.register("test", () -> new BlockItem(TEST_BLOCK.get(), new Item.Properties().group(ItemGroup.MISC)));
+    private static final RegistryObject<Item> TEST_ITEM = ITEMS.register("test", () -> new BlockItem(TEST_BLOCK.get(), new Item.Settings().group(ItemGroup.MISC)));
 
     public TRSRTransformerTest() {
         final IEventBus mod = FMLJavaModLoadingContext.get().getModEventBus();
@@ -74,7 +74,7 @@ public class TRSRTransformerTest {
     }
 
     public void onModelBake(ModelBakeEvent e) {
-        for (ResourceLocation id : e.getModelRegistry().keySet()) {
+        for (Identifier id : e.getModelRegistry().keySet()) {
             if (MODID.equals(id.getNamespace()) && "test".equals(id.getPath())) {
                 e.getModelRegistry().put(id, new MyBakedModel(e.getModelRegistry().get(id)));
             }
@@ -82,9 +82,9 @@ public class TRSRTransformerTest {
     }
 
     public class MyBakedModel implements IDynamicBakedModel {
-        private final IBakedModel base;
+        private final BakedModel base;
 
-        public MyBakedModel(IBakedModel base) {
+        public MyBakedModel(BakedModel base) {
             this.base = base;
         }
 
@@ -95,7 +95,7 @@ public class TRSRTransformerTest {
             Quaternion rot = TransformationHelper.quatFromXYZ(new Vector3f(0, 45, 0), true);
             Vector3f translation = new Vector3f(0, 0.33f, 0);
 
-            TransformationMatrix trans = new TransformationMatrix(translation, rot, null, null).blockCenterToCorner();
+            Rotation3 trans = new Rotation3(translation, rot, null, null).blockCenterToCorner();
 
             for (BakedQuad quad : base.getQuads(state, side, rand, data)) {
 
@@ -118,33 +118,33 @@ public class TRSRTransformerTest {
         }
 
         @Override
-        public boolean isAmbientOcclusion() {
-            return base.isAmbientOcclusion();
+        public boolean useAmbientOcclusion() {
+            return base.useAmbientOcclusion();
         }
 
         @Override
-        public boolean isGui3d() {
-            return base.isGui3d();
+        public boolean hasDepth() {
+            return base.hasDepth();
         }
 
         @Override
-        public boolean func_230044_c_() {
-            return base.func_230044_c_();
+        public boolean isSideLit() {
+            return base.isSideLit();
         }
 
         @Override
-        public boolean isBuiltInRenderer() {
-            return base.isBuiltInRenderer();
+        public boolean isBuiltin() {
+            return base.isBuiltin();
         }
 
         @Override
-        public TextureAtlasSprite getParticleTexture() {
-            return base.getParticleTexture();
+        public Sprite getSprite() {
+            return base.getSprite();
         }
 
         @Override
-        public ItemOverrideList getOverrides() {
-            return base.getOverrides();
+        public ModelItemPropertyOverrideList getItemPropertyOverrides() {
+            return base.getItemPropertyOverrides();
         }
     }
 }

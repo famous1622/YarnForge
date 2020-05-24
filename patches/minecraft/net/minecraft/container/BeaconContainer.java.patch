@@ -1,0 +1,34 @@
+--- a/net\minecraft\container\BeaconContainer.java
++++ b/net\minecraft\container\BeaconContainer.java
+@@ -15,7 +15,7 @@
+ public class BeaconContainer extends Container {
+    private final Inventory paymentInv = new BasicInventory(1) {
+       public boolean isValidInvStack(int index, ItemStack stack) {
+-         return stack.getItem() == Items.field_8687 || stack.getItem() == Items.field_8477 || stack.getItem() == Items.field_8695 || stack.getItem() == Items.field_8620;
++         return stack.isBeaconPayment();
+       }
+ 
+       public int getInvMaxStackAmount() {
+@@ -85,10 +85,8 @@
+             }
+ 
+             slot.onStackChanged(itemstack1, itemstack);
+-         } else if (!this.paymentSlot.hasStack() && this.paymentSlot.canInsert(itemstack1) && itemstack1.getCount() == 1) {
+-            if (!this.insertItem(itemstack1, 0, 1, false)) {
+-               return ItemStack.EMPTY;
+-            }
++         } else if (this.insertItem(itemstack1, 0, 1, false)) { //Forge Fix Shift Clicking in beacons with stacks larger then 1.
++            return ItemStack.EMPTY;
+          } else if (index >= 1 && index < 28) {
+             if (!this.insertItem(itemstack1, 28, 37, false)) {
+                return ItemStack.EMPTY;
+@@ -154,8 +152,7 @@
+       }
+ 
+       public boolean canInsert(ItemStack stack) {
+-         Item item = stack.getItem();
+-         return item == Items.field_8687 || item == Items.field_8477 || item == Items.field_8695 || item == Items.field_8620;
++         return stack.isBeaconPayment();
+       }
+ 
+       public int getMaxStackAmount() {

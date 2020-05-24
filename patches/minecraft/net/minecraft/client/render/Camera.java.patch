@@ -1,0 +1,19 @@
+--- a/net\minecraft\client\render\Camera.java
++++ b/net\minecraft\client\render\Camera.java
+@@ -170,4 +170,16 @@
+       this.focusedEntity = null;
+       this.ready = false;
+    }
++
++   public void setAnglesInternal(float yaw, float pitch) {
++      this.yaw = yaw;
++      this.pitch = pitch;
++   }
++
++   public net.minecraft.block.BlockState getBlockAtCamera() {
++      if (!this.ready)
++         return net.minecraft.block.Blocks.field_10124.getDefaultState();
++      else
++         return this.area.getBlockState(this.blockPos).getStateAtViewpoint(this.area, this.blockPos, this.pos);
++   }
+ }

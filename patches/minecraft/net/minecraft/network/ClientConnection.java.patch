@@ -1,0 +1,60 @@
+--- a/net\minecraft\network\ClientConnection.java
++++ b/net\minecraft\network\ClientConnection.java
+@@ -76,6 +76,7 @@
+    private float avgPacketsSent;
+    private int ticks;
+    private boolean errored;
++   private java.util.function.Consumer<ClientConnection> activationHandler;
+ 
+    public ClientConnection(NetworkSide packetDirection) {
+       this.side = packetDirection;
+@@ -85,6 +86,7 @@
+       super.channelActive(p_channelActive_1_);
+       this.channel = p_channelActive_1_.channel();
+       this.address = this.channel.remoteAddress();
++      if (activationHandler != null) activationHandler.accept(this);
+ 
+       try {
+          this.setState(NetworkState.field_20590);
+@@ -175,7 +177,7 @@
+       ++this.packetsSentCounter;
+       if (protocoltype1 != protocoltype) {
+          LOGGER.debug("Disabled auto read");
+-         this.channel.config().setAutoRead(false);
++         this.channel.eventLoop().execute(()->this.channel.config().setAutoRead(false));
+       }
+ 
+       if (this.channel.eventLoop().inEventLoop()) {
+@@ -259,7 +261,9 @@
+ 
+    @OnlyIn(Dist.CLIENT)
+    public static ClientConnection connect(InetAddress address, int serverPort, boolean useNativeTransport) {
++      if (address instanceof java.net.Inet6Address) System.setProperty("java.net.preferIPv4Stack", "false");
+       final ClientConnection networkmanager = new ClientConnection(NetworkSide.field_11942);
++      networkmanager.activationHandler = net.minecraftforge.fml.network.NetworkHooks::registerClientLoginChannel;
+       Class<? extends SocketChannel> oclass;
+       Lazy<? extends EventLoopGroup> lazyvalue;
+       if (Epoll.isAvailable() && useNativeTransport) {
+@@ -287,6 +291,7 @@
+    @OnlyIn(Dist.CLIENT)
+    public static ClientConnection connectLocal(SocketAddress address) {
+       final ClientConnection networkmanager = new ClientConnection(NetworkSide.field_11942);
++      networkmanager.activationHandler = net.minecraftforge.fml.network.NetworkHooks::registerClientLoginChannel;
+       (new Bootstrap()).group(CLIENT_IO_GROUP_LOCAL.get()).handler(new ChannelInitializer<Channel>() {
+          protected void initChannel(Channel p_initChannel_1_) throws Exception {
+             p_initChannel_1_.pipeline().addLast("packet_handler", networkmanager);
+@@ -378,6 +383,14 @@
+       return this.avgPacketsSent;
+    }
+ 
++   public Channel channel() {
++      return channel;
++   }
++
++   public NetworkSide getDirection() {
++      return this.side;
++   }
++
+    static class PacketWrapper {
+       private final Packet<?> packet;
+       @Nullable

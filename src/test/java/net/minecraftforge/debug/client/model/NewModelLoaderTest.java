@@ -25,31 +25,33 @@ import com.google.gson.JsonObject;
 import com.mojang.datafixers.util.Pair;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
-import net.minecraft.block.material.Material;
-import net.minecraft.client.renderer.model.IModelTransform;
-import net.minecraft.client.renderer.model.IUnbakedModel;
-import net.minecraft.client.renderer.model.ModelBakery;
-import net.minecraft.client.renderer.texture.TextureAtlasSprite;
-import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
-import net.minecraft.client.renderer.vertex.VertexFormatElement;
+import net.minecraft.block.Material;
+import net.minecraft.client.render.VertexFormatElement;
+import net.minecraft.client.render.VertexFormats;
+import net.minecraft.client.render.model.ModelBakeSettings;
+import net.minecraft.client.render.model.ModelLoader;
+import net.minecraft.client.render.model.UnbakedModel;
+import net.minecraft.client.texture.Sprite;
 import net.minecraft.entity.Entity;
-import net.minecraft.inventory.EquipmentSlotType;
+import net.minecraft.entity.EntityContext;
+import net.minecraft.entity.EquipmentSlot;
 import net.minecraft.item.*;
-import net.minecraft.resources.IResourceManager;
-import net.minecraft.state.StateContainer;
-import net.minecraft.state.properties.BlockStateProperties;
-import net.minecraft.util.Direction;
-import net.minecraft.util.ResourceLocation;
+import net.minecraft.resource.ResourceManager;
+import net.minecraft.state.StateManager;
+import net.minecraft.state.property.Properties;
+import net.minecraft.util.Identifier;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.shapes.ISelectionContext;
-import net.minecraft.util.math.shapes.VoxelShape;
-import net.minecraft.world.IBlockReader;
+import net.minecraft.util.math.Direction;
+import net.minecraft.util.shape.VoxelShape;
+import net.minecraft.world.BlockView;
 import net.minecraftforge.client.model.IModelBuilder;
 import net.minecraftforge.client.model.IModelConfiguration;
 import net.minecraftforge.client.model.IModelLoader;
 import net.minecraftforge.client.model.ModelLoaderRegistry;
 import net.minecraftforge.client.model.geometry.ISimpleModelGeometry;
 import net.minecraftforge.client.model.pipeline.BakedQuadBuilder;
+import net.minecraftforge.debug.client.model.NewModelLoaderTest.TestLoader;
+import net.minecraftforge.debug.client.model.NewModelLoaderTest.TestModel;
 import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.fml.RegistryObject;
 import net.minecraftforge.fml.common.Mod;
@@ -72,50 +74,50 @@ public class NewModelLoaderTest
     public static final DeferredRegister<Item> ITEMS = new DeferredRegister<>(ForgeRegistries.ITEMS, MODID);
 
     public static RegistryObject<Block> obj_block = BLOCKS.register("obj_block", () ->
-            new Block(Block.Properties.create(Material.WOOD).hardnessAndResistance(10)) {
+            new Block(Block.Settings.of(Material.WOOD).strength(10)) {
                 @Override
-                protected void fillStateContainer(StateContainer.Builder<Block, BlockState> builder)
+                protected void appendProperties(StateManager.Builder<Block, BlockState> builder)
                 {
-                    builder.add(BlockStateProperties.HORIZONTAL_FACING);
+                    builder.add(Properties.HORIZONTAL_FACING);
                 }
 
                 @Nullable
                 @Override
-                public BlockState getStateForPlacement(BlockItemUseContext context)
+                public BlockState getPlacementState(ItemPlacementContext context)
                 {
                     return getDefaultState().with(
-                            BlockStateProperties.HORIZONTAL_FACING, context.getPlacementHorizontalFacing()
+                            Properties.HORIZONTAL_FACING, context.getPlayerFacing()
                     );
                 }
 
                 @Override
-                public VoxelShape getShape(BlockState state, IBlockReader worldIn, BlockPos pos, ISelectionContext context)
+                public VoxelShape getOutlineShape(BlockState state, BlockView worldIn, BlockPos pos, EntityContext context)
                 {
-                    return Block.makeCuboidShape(2,2,2,14,14,14);
+                    return Block.createCuboidShape(2,2,2,14,14,14);
                 }
             }
     );
 
     public static RegistryObject<Item> obj_item = ITEMS.register("obj_block", () ->
-            new BlockItem(obj_block.get(), new Item.Properties().group(ItemGroup.MISC)) {
+            new BlockItem(obj_block.get(), new Item.Settings().group(ItemGroup.MISC)) {
                 @Override
-                public boolean canEquip(ItemStack stack, EquipmentSlotType armorType, Entity entity)
+                public boolean canEquip(ItemStack stack, EquipmentSlot armorType, Entity entity)
                 {
-                    return armorType == EquipmentSlotType.HEAD;
+                    return armorType == EquipmentSlot.field_6169;
                 }
             }
     );
 
     public static RegistryObject<Item> custom_transforms = ITEMS.register("custom_transforms", () ->
-            new Item(new Item.Properties().group(ItemGroup.MISC))
+            new Item(new Item.Settings().group(ItemGroup.MISC))
     );
 
     public static RegistryObject<Item> custom_vanilla_loader = ITEMS.register("custom_vanilla_loader", () ->
-            new Item(new Item.Properties().group(ItemGroup.MISC))
+            new Item(new Item.Settings().group(ItemGroup.MISC))
     );
 
     public static RegistryObject<Item> custom_loader = ITEMS.register("custom_loader", () ->
-            new Item(new Item.Properties().group(ItemGroup.MISC))
+            new Item(new Item.Settings().group(ItemGroup.MISC))
     );
 
     public NewModelLoaderTest()
@@ -130,13 +132,13 @@ public class NewModelLoaderTest
 
     public void clientSetup(FMLClientSetupEvent event)
     {
-        ModelLoaderRegistry.registerLoader(new ResourceLocation(MODID, "custom_loader"), new TestLoader());
+        ModelLoaderRegistry.registerLoader(new Identifier(MODID, "custom_loader"), new TestLoader());
     }
 
     static class TestLoader implements IModelLoader<TestModel>
     {
         @Override
-        public void onResourceManagerReload(IResourceManager resourceManager)
+        public void apply(ResourceManager resourceManager)
         {
         }
 
@@ -150,40 +152,40 @@ public class NewModelLoaderTest
     static class TestModel implements ISimpleModelGeometry<TestModel>
     {
         @Override
-        public void addQuads(IModelConfiguration owner, IModelBuilder<?> modelBuilder, ModelBakery bakery, Function<net.minecraft.client.renderer.model.Material, TextureAtlasSprite> spriteGetter, IModelTransform modelTransform, ResourceLocation modelLocation)
+        public void addQuads(IModelConfiguration owner, IModelBuilder<?> modelBuilder, ModelLoader bakery, Function<net.minecraft.client.util.SpriteIdentifier, Sprite> spriteGetter, ModelBakeSettings modelTransform, Identifier modelLocation)
         {
-            TextureAtlasSprite texture = spriteGetter.apply(owner.resolveTexture("particle"));
+            Sprite texture = spriteGetter.apply(owner.resolveTexture("particle"));
 
             BakedQuadBuilder builder = new BakedQuadBuilder();
 
             builder.setTexture(texture);
-            builder.setQuadOrientation(Direction.UP);
+            builder.setQuadOrientation(Direction.field_11036);
 
-            putVertex(builder, 0,1,0.5f, texture.getInterpolatedU(0), texture.getInterpolatedV(0), 1, 1, 1);
-            putVertex(builder, 0,0,0.5f, texture.getInterpolatedU(0), texture.getInterpolatedV(16), 1, 1, 1);
-            putVertex(builder, 1,0,0.5f, texture.getInterpolatedU(16), texture.getInterpolatedV(16), 1, 1, 1);
-            putVertex(builder, 1,1,0.5f, texture.getInterpolatedU(16), texture.getInterpolatedV(0), 1, 1, 1);
+            putVertex(builder, 0,1,0.5f, texture.getFrameU(0), texture.getFrameV(0), 1, 1, 1);
+            putVertex(builder, 0,0,0.5f, texture.getFrameU(0), texture.getFrameV(16), 1, 1, 1);
+            putVertex(builder, 1,0,0.5f, texture.getFrameU(16), texture.getFrameV(16), 1, 1, 1);
+            putVertex(builder, 1,1,0.5f, texture.getFrameU(16), texture.getFrameV(0), 1, 1, 1);
 
             modelBuilder.addGeneralQuad(builder.build());
         }
 
         private void putVertex(BakedQuadBuilder builder, int x, float y, float z, float u, float v, float red, float green, float blue)
         {
-            ImmutableList<VertexFormatElement> elements = DefaultVertexFormats.BLOCK.getElements();
+            ImmutableList<VertexFormatElement> elements = VertexFormats.POSITION_COLOR_TEXTURE_LIGHT_NORMAL.getElements();
             for(int i=0;i<elements.size();i++)
             {
-                switch(elements.get(i).getUsage())
+                switch(elements.get(i).getType())
                 {
-                    case POSITION:
+                    case field_1633:
                         builder.put(i, x, y, z);
                         break;
-                    case UV:
+                    case field_1636:
                         if (elements.get(i).getIndex() == 0)
                             builder.put(i, u, v);
                         else
                             builder.put(i);
                         break;
-                    case COLOR:
+                    case field_1632:
                         builder.put(i, red, green, blue, 1.0f);
                         break;
                     default:
@@ -194,7 +196,7 @@ public class NewModelLoaderTest
         }
 
         @Override
-        public Collection<net.minecraft.client.renderer.model.Material> getTextures(IModelConfiguration owner, Function<ResourceLocation, IUnbakedModel> modelGetter, Set<Pair<String, String>> missingTextureErrors)
+        public Collection<net.minecraft.client.util.SpriteIdentifier> getTextures(IModelConfiguration owner, Function<Identifier, UnbakedModel> modelGetter, Set<Pair<String, String>> missingTextureErrors)
         {
             return Collections.singleton(owner.resolveTexture("particle"));
         }

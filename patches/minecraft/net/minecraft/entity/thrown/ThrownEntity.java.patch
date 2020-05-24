@@ -1,0 +1,11 @@
+--- a/net\minecraft\entity\thrown\ThrownEntity.java
++++ b/net\minecraft\entity\thrown\ThrownEntity.java
+@@ -131,7 +131,7 @@
+       if (raytraceresult.getType() != HitResult.Type.field_1333) {
+          if (raytraceresult.getType() == HitResult.Type.field_1332 && this.world.getBlockState(((BlockHitResult)raytraceresult).getBlockPos()).getBlock() == Blocks.field_10316) {
+             this.setInNetherPortal(((BlockHitResult)raytraceresult).getBlockPos());
+-         } else {
++         } else if (!net.minecraftforge.event.ForgeEventFactory.onProjectileImpact(this, raytraceresult)){
+             this.onCollision(raytraceresult);
+          }
+       }

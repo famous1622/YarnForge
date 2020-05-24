@@ -19,15 +19,15 @@
 
 package net.minecraftforge.client.model.pipeline;
 
-import net.minecraft.client.renderer.TransformationMatrix;
-import net.minecraft.client.renderer.Vector3f;
-import net.minecraft.client.renderer.Vector4f;
+import net.minecraft.client.util.math.Rotation3;
+import net.minecraft.client.util.math.Vector3f;
+import net.minecraft.client.util.math.Vector4f;
 
 public class TRSRTransformer extends VertexTransformer
 {
-    private final TransformationMatrix transform;
+    private final Rotation3 transform;
 
-    public TRSRTransformer(IVertexConsumer parent, TransformationMatrix transform)
+    public TRSRTransformer(IVertexConsumer parent, Rotation3 transform)
     {
         super(parent);
         this.transform = transform;
@@ -36,9 +36,9 @@ public class TRSRTransformer extends VertexTransformer
     @Override
     public void put(int element, float... data)
     {
-        switch (getVertexFormat().getElements().get(element).getUsage())
+        switch (getVertexFormat().getElements().get(element).getType())
         {
-            case POSITION:
+            case field_1633:
                 Vector4f pos = new Vector4f(data[0], data[1], data[2], data[3]);
                 transform.transformPosition(pos);
                 data[0] = pos.getX();
@@ -46,7 +46,7 @@ public class TRSRTransformer extends VertexTransformer
                 data[2] = pos.getZ();
                 data[3] = pos.getW();
                 break;
-            case NORMAL:
+            case field_1635:
                 Vector3f normal = new Vector3f(data);
                 transform.transformNormal(normal);
                 data[0] = normal.getX();

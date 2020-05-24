@@ -1,0 +1,35 @@
+--- a/net\minecraft\entity\ai\pathing\LandPathNodeMaker.java
++++ b/net\minecraft\entity\ai\pathing\LandPathNodeMaker.java
+@@ -384,16 +384,9 @@
+             for(int j = -1; j <= 1; ++j) {
+                for(int k = -1; k <= 1; ++k) {
+                   if (i != 0 || k != 0) {
+-                     Block block = p_193578_0_.getBlockState(blockpos$pooledmutable.set(i + blockaccessIn, j + x, k + y)).getBlock();
+-                     if (block == Blocks.field_10029) {
+-                        z = PathNodeType.field_20;
+-                     } else if (block != Blocks.field_10036 && block != Blocks.field_10164) {
+-                        if (block == Blocks.field_16999) {
+-                           z = PathNodeType.field_5;
+-                        }
+-                     } else {
+-                        z = PathNodeType.field_9;
+-                     }
++                     PathNodeType type = getBasicPathNodeType(p_193578_0_, blockaccessIn, x, y);
++                     if (type == PathNodeType.field_20 || type == PathNodeType.field_9 || type == PathNodeType.field_5)
++                        z = type;
+                   }
+                }
+             }
+@@ -406,9 +399,11 @@
+    protected static PathNodeType getBasicPathNodeType(BlockView p_189553_0_, int blockaccessIn, int x, int y) {
+       BlockPos blockpos = new BlockPos(blockaccessIn, x, y);
+       BlockState blockstate = p_189553_0_.getBlockState(blockpos);
++      PathNodeType type = blockstate.getAiPathNodeType(p_189553_0_, blockpos);
++      if (type != null) return type;
+       Block block = blockstate.getBlock();
+       Material material = blockstate.getMaterial();
+-      if (blockstate.isAir()) {
++      if (blockstate.isAir(p_189553_0_, blockpos)) {
+          return PathNodeType.field_7;
+       } else if (!block.matches(BlockTags.field_15487) && block != Blocks.field_10588) {
+          if (block == Blocks.field_10036) {

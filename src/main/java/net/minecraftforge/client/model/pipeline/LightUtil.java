@@ -21,14 +21,12 @@ package net.minecraftforge.client.model.pipeline;
 
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-
+import net.minecraft.client.render.VertexFormat;
+import net.minecraft.client.render.VertexFormatElement;
+import net.minecraft.client.render.VertexFormats;
+import net.minecraft.client.render.model.BakedQuad;
+import net.minecraft.util.math.Direction;
 import org.apache.commons.lang3.tuple.Pair;
-
-import net.minecraft.client.renderer.model.BakedQuad;
-import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
-import net.minecraft.client.renderer.vertex.VertexFormat;
-import net.minecraft.client.renderer.vertex.VertexFormatElement;
-import net.minecraft.util.Direction;
 
 public class LightUtil
 {
@@ -41,12 +39,12 @@ public class LightUtil
     {
         switch(side)
         {
-            case DOWN:
+            case field_11033:
                 return .5f;
-            case UP:
+            case field_11036:
                 return 1f;
-            case NORTH:
-            case SOUTH:
+            case field_11043:
+            case field_11035:
                 return .8f;
             default:
                 return .6f;
@@ -59,26 +57,26 @@ public class LightUtil
         {
             if(Math.abs(x) > Math.abs(z))
             {
-                if(x < 0) return Direction.WEST;
-                return Direction.EAST;
+                if(x < 0) return Direction.field_11039;
+                return Direction.field_11034;
             }
             else
             {
-                if(z < 0) return Direction.NORTH;
-                return Direction.SOUTH;
+                if(z < 0) return Direction.field_11043;
+                return Direction.field_11035;
             }
         }
         else
         {
             if(Math.abs(y) > Math.abs(z))
             {
-                if(y < 0) return Direction.DOWN;
-                return Direction.UP;
+                if(y < 0) return Direction.field_11033;
+                return Direction.field_11036;
             }
             else
             {
-                if(z < 0) return Direction.NORTH;
-                return Direction.SOUTH;
+                if(z < 0) return Direction.field_11043;
+                return Direction.field_11035;
             }
         }
     }
@@ -89,14 +87,14 @@ public class LightUtil
     {
         consumer.setTexture(quad.func_187508_a());
         consumer.setQuadOrientation(quad.getFace());
-        if(quad.hasTintIndex())
+        if(quad.hasColor())
         {
-            consumer.setQuadTint(quad.getTintIndex());
+            consumer.setQuadTint(quad.getColorIndex());
         }
         consumer.setApplyDiffuseLighting(quad.shouldApplyDiffuseLighting());
         float[] data = new float[4];
         VertexFormat formatFrom = consumer.getVertexFormat();
-        VertexFormat formatTo = DefaultVertexFormats.BLOCK;
+        VertexFormat formatTo = VertexFormats.POSITION_COLOR_TEXTURE_LIGHT_NORMAL;
         int countFrom = formatFrom.getElements().size();
         int countTo = formatTo.getElements().size();
         int[] eMap = mapFormats(formatFrom, formatTo);
@@ -118,8 +116,8 @@ public class LightUtil
     }
 
     // TODO: probably useless now, remove?
-    private static final VertexFormat DEFAULT_FROM = VertexLighterFlat.withNormal(DefaultVertexFormats.BLOCK);
-    private static final VertexFormat DEFAULT_TO = DefaultVertexFormats.BLOCK;
+    private static final VertexFormat DEFAULT_FROM = VertexLighterFlat.withNormal(VertexFormats.POSITION_COLOR_TEXTURE_LIGHT_NORMAL);
+    private static final VertexFormat DEFAULT_TO = VertexFormats.POSITION_COLOR_TEXTURE_LIGHT_NORMAL;
     private static final int[] DEFAULT_MAPPING = generateMapping(DEFAULT_FROM, DEFAULT_TO);
     public static int[] mapFormats(VertexFormat from, VertexFormat to)
     {
@@ -142,7 +140,7 @@ public class LightUtil
             for(e2 = 0; e2 < toCount; e2++)
             {
                 VertexFormatElement current = to.getElements().get(e2);
-                if(expected.getUsage() == current.getUsage() && expected.getIndex() == current.getIndex())
+                if(expected.getType() == current.getType() && expected.getIndex() == current.getIndex())
                 {
                     break;
                 }
@@ -156,10 +154,10 @@ public class LightUtil
     {
         int length = 4 < to.length ? 4 : to.length;
         VertexFormatElement element = formatFrom.getElements().get(e);
-        int vertexStart = v * formatFrom.getSize() + formatFrom.getOffset(e);
-        int count = element.getElementCount();
-        VertexFormatElement.Type type = element.getType();
-        VertexFormatElement.Usage usage = element.getUsage();
+        int vertexStart = v * formatFrom.getVertexSize() + formatFrom.getOffset(e);
+        int count = element.getCount();
+        VertexFormatElement.Format type = element.getFormat();
+        VertexFormatElement.Type usage = element.getType();
         int size = type.getSize();
         int mask = (256 << (8 * (size - 1))) - 1;
         for(int i = 0; i < length; i++)
@@ -176,34 +174,34 @@ public class LightUtil
                     bits |= from[index + 1] << ((4 - offset) * 8);
                 }
                 bits &= mask;
-                if(type == VertexFormatElement.Type.FLOAT)
+                if(type == VertexFormatElement.Format.field_1623)
                 {
                     to[i] = Float.intBitsToFloat(bits);
                 }
-                else if(type == VertexFormatElement.Type.UBYTE || type == VertexFormatElement.Type.USHORT)
+                else if(type == VertexFormatElement.Format.field_1624 || type == VertexFormatElement.Format.field_1622)
                 {
                     to[i] = (float)bits / mask;
                 }
-                else if(type == VertexFormatElement.Type.UINT)
+                else if(type == VertexFormatElement.Format.field_1619)
                 {
                     to[i] = (float)((double)(bits & 0xFFFFFFFFL) / 0xFFFFFFFFL);
                 }
-                else if(type == VertexFormatElement.Type.BYTE)
+                else if(type == VertexFormatElement.Format.field_1621)
                 {
                     to[i] = ((float)(byte)bits) / (mask >> 1);
                 }
-                else if(type == VertexFormatElement.Type.SHORT)
+                else if(type == VertexFormatElement.Format.field_1625)
                 {
                     to[i] = ((float)(short)bits) / (mask >> 1);
                 }
-                else if(type == VertexFormatElement.Type.INT)
+                else if(type == VertexFormatElement.Format.field_1617)
                 {
                     to[i] = (float)((double)(bits & 0xFFFFFFFFL) / (0xFFFFFFFFL >> 1));
                 }
             }
             else
             {
-                to[i] = (i == 3 && usage == VertexFormatElement.Usage.POSITION) ? 1 : 0;
+                to[i] = (i == 3 && usage == VertexFormatElement.Type.field_1633) ? 1 : 0;
             }
         }
     }
@@ -211,9 +209,9 @@ public class LightUtil
     public static void pack(float[] from, int[] to, VertexFormat formatTo, int v, int e)
     {
         VertexFormatElement element = formatTo.getElements().get(e);
-        int vertexStart = v * formatTo.getSize() + formatTo.getOffset(e);
-        int count = element.getElementCount();
-        VertexFormatElement.Type type = element.getType();
+        int vertexStart = v * formatTo.getVertexSize() + formatTo.getOffset(e);
+        int count = element.getCount();
+        VertexFormatElement.Format type = element.getFormat();
         int size = type.getSize();
         int mask = (256 << (8 * (size - 1))) - 1;
         for(int i = 0; i < 4; i++)
@@ -225,14 +223,14 @@ public class LightUtil
                 int offset = pos & 3;
                 int bits = 0;
                 float f = i < from.length ? from[i] : 0;
-                if(type == VertexFormatElement.Type.FLOAT)
+                if(type == VertexFormatElement.Format.field_1623)
                 {
                     bits = Float.floatToRawIntBits(f);
                 }
                 else if(
-                    type == VertexFormatElement.Type.UBYTE ||
-                    type == VertexFormatElement.Type.USHORT ||
-                    type == VertexFormatElement.Type.UINT
+                    type == VertexFormatElement.Format.field_1624 ||
+                    type == VertexFormatElement.Format.field_1622 ||
+                    type == VertexFormatElement.Format.field_1619
                 )
                 {
                     bits = Math.round(f * mask);
@@ -319,7 +317,7 @@ public class LightUtil
         @Override
         public void put(int element, float... data)
         {
-            if(getVertexFormat().getElements().get(element).getUsage() == VertexFormatElement.Usage.COLOR)
+            if(getVertexFormat().getElements().get(element).getType() == VertexFormatElement.Type.field_1632)
             {
                 System.arraycopy(auxColor, 0, buf, 0, buf.length);
                 int n = Math.min(4, data.length);

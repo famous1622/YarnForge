@@ -20,22 +20,19 @@
 package net.minecraftforge.debug.fluid;
 
 import net.minecraft.block.*;
-import net.minecraft.block.material.Material;
-import net.minecraft.fluid.IFluidState;
 import net.minecraft.item.*;
-import net.minecraft.state.BooleanProperty;
-import net.minecraft.state.StateContainer;
-import net.minecraft.state.properties.BlockStateProperties;
+import net.minecraft.state.StateManager;
+import net.minecraft.state.property.BooleanProperty;
+import net.minecraft.util.Identifier;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.IBlockReader;
+import net.minecraft.world.BlockView;
 import net.minecraft.world.IWorld;
 import net.minecraftforge.common.util.Lazy;
 import org.apache.commons.lang3.Validate;
-
-import net.minecraft.fluid.FlowingFluid;
+import net.minecraft.fluid.BaseFluid;
 import net.minecraft.fluid.Fluid;
+import net.minecraft.fluid.FluidState;
 import net.minecraft.fluid.Fluids;
-import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.fluids.FluidAttributes;
 import net.minecraftforge.fluids.FluidStack;
@@ -52,9 +49,9 @@ public class NewFluidTest
 {
     public static final String MODID = "new_fluid_test";
 
-    public static final ResourceLocation FLUID_STILL = new ResourceLocation("minecraft:block/brown_mushroom_block");
-    public static final ResourceLocation FLUID_FLOWING = new ResourceLocation("minecraft:block/mushroom_stem");
-    public static final ResourceLocation FLUID_OVERLAY = new ResourceLocation("minecraft:block/obsidian");
+    public static final Identifier FLUID_STILL = new Identifier("minecraft:block/brown_mushroom_block");
+    public static final Identifier FLUID_FLOWING = new Identifier("minecraft:block/mushroom_stem");
+    public static final Identifier FLUID_OVERLAY = new Identifier("minecraft:block/obsidian");
 
     public static final DeferredRegister<Block> BLOCKS = new DeferredRegister<>(ForgeRegistries.BLOCKS, MODID);
     public static final DeferredRegister<Item> ITEMS = new DeferredRegister<>(ForgeRegistries.ITEMS, MODID);
@@ -67,26 +64,26 @@ public class NewFluidTest
                 .bucket(test_fluid_bucket).block(test_fluid_block);
     }
 
-    public static RegistryObject<FlowingFluid> test_fluid = FLUIDS.register("test_fluid", () ->
+    public static RegistryObject<BaseFluid> test_fluid = FLUIDS.register("test_fluid", () ->
             new ForgeFlowingFluid.Source(makeProperties())
     );
-    public static RegistryObject<FlowingFluid> test_fluid_flowing = FLUIDS.register("test_fluid_flowing", () ->
+    public static RegistryObject<BaseFluid> test_fluid_flowing = FLUIDS.register("test_fluid_flowing", () ->
             new ForgeFlowingFluid.Flowing(makeProperties())
     );
 
-    public static RegistryObject<FlowingFluidBlock> test_fluid_block = BLOCKS.register("test_fluid_block", () ->
-            new FlowingFluidBlock(test_fluid, Block.Properties.create(net.minecraft.block.material.Material.WATER).doesNotBlockMovement().hardnessAndResistance(100.0F).noDrops())
+    public static RegistryObject<FluidBlock> test_fluid_block = BLOCKS.register("test_fluid_block", () ->
+            new FluidBlock(test_fluid, Block.Settings.of(net.minecraft.block.Material.WATER).noCollision().strength(100.0F).dropsNothing())
     );
     public static RegistryObject<Item> test_fluid_bucket = ITEMS.register("test_fluid_bucket", () ->
-            new BucketItem(test_fluid, new Item.Properties().containerItem(Items.BUCKET).maxStackSize(1).group(ItemGroup.MISC))
+            new BucketItem(test_fluid, new Item.Settings().recipeRemainder(Items.field_8550).maxCount(1).group(ItemGroup.MISC))
     );
 
     // WARNING: this doesn't allow "any fluid", only the fluid from this test mod!
     public static RegistryObject<Block> fluidloggable_block = BLOCKS.register("fluidloggable_block", () ->
-            new FluidloggableBlock(Block.Properties.create(Material.WOOD).doesNotBlockMovement().hardnessAndResistance(100.0F).noDrops())
+            new FluidloggableBlock(Block.Settings.of(Material.WOOD).noCollision().strength(100.0F).dropsNothing())
     );
     public static RegistryObject<Item> fluidloggable_blockitem = ITEMS.register("fluidloggable_block", () ->
-            new BlockItem(fluidloggable_block.get(), new Item.Properties().group(ItemGroup.MISC))
+            new BlockItem(fluidloggable_block.get(), new Item.Settings().group(ItemGroup.MISC))
     );
 
     public NewFluidTest()
@@ -105,39 +102,39 @@ public class NewFluidTest
         // some sanity checks
         BlockState state = Fluids.WATER.getDefaultState().getBlockState();
         BlockState state2 = Fluids.WATER.getAttributes().getBlock(null,null,Fluids.WATER.getDefaultState());
-        Validate.isTrue(state.getBlock() == Blocks.WATER && state2 == state);
+        Validate.isTrue(state.getBlock() == Blocks.field_10382 && state2 == state);
         ItemStack stack = Fluids.WATER.getAttributes().getBucket(new FluidStack(Fluids.WATER, 1));
-        Validate.isTrue(stack.getItem() == Fluids.WATER.getFilledBucket());
+        Validate.isTrue(stack.getItem() == Fluids.WATER.getBucketItem());
     }
 
     // WARNING: this doesn't allow "any fluid", only the fluid from this test mod!
-    private static class FluidloggableBlock extends Block implements IWaterLoggable
+    private static class FluidloggableBlock extends Block implements Waterloggable
     {
-        public static final BooleanProperty FLUIDLOGGED = BooleanProperty.create("fluidlogged");
+        public static final BooleanProperty FLUIDLOGGED = BooleanProperty.of("fluidlogged");
 
-        public FluidloggableBlock(Properties properties)
+        public FluidloggableBlock(Settings properties)
         {
             super(properties);
-            setDefaultState(getStateContainer().getBaseState().with(FLUIDLOGGED, false));
+            setDefaultState(getStateManager().getDefaultState().with(FLUIDLOGGED, false));
         }
 
         @Override
-        protected void fillStateContainer(StateContainer.Builder<Block, BlockState> builder)
+        protected void appendProperties(StateManager.Builder<Block, BlockState> builder)
         {
             builder.add(FLUIDLOGGED);
         }
 
         @Override
-        public boolean canContainFluid(IBlockReader worldIn, BlockPos pos, BlockState state, Fluid fluidIn) {
+        public boolean canFillWithFluid(BlockView worldIn, BlockPos pos, BlockState state, Fluid fluidIn) {
             return !state.get(FLUIDLOGGED) && fluidIn == test_fluid.get();
         }
 
         @Override
-        public boolean receiveFluid(IWorld worldIn, BlockPos pos, BlockState state, IFluidState fluidStateIn) {
-            if (canContainFluid(worldIn, pos, state, fluidStateIn.getFluid())) {
-                if (!worldIn.isRemote()) {
+        public boolean tryFillWithFluid(IWorld worldIn, BlockPos pos, BlockState state, FluidState fluidStateIn) {
+            if (canFillWithFluid(worldIn, pos, state, fluidStateIn.getFluid())) {
+                if (!worldIn.isClient()) {
                     worldIn.setBlockState(pos, state.with(FLUIDLOGGED, true), 3);
-                    worldIn.getPendingFluidTicks().scheduleTick(pos, fluidStateIn.getFluid(), fluidStateIn.getFluid().getTickRate(worldIn));
+                    worldIn.getFluidTickScheduler().schedule(pos, fluidStateIn.getFluid(), fluidStateIn.getFluid().getTickRate(worldIn));
                 }
 
                 return true;
@@ -147,19 +144,19 @@ public class NewFluidTest
         }
 
         @Override
-        public Fluid pickupFluid(IWorld worldIn, BlockPos pos, BlockState state) {
+        public Fluid tryDrainFluid(IWorld worldIn, BlockPos pos, BlockState state) {
             if (state.get(FLUIDLOGGED)) {
                 worldIn.setBlockState(pos, state.with(FLUIDLOGGED, false), 3);
                 return test_fluid.get();
             } else {
-                return Fluids.EMPTY;
+                return Fluids.field_15906;
             }
         }
 
         @Override
-        public IFluidState getFluidState(BlockState state)
+        public FluidState getFluidState(BlockState state)
         {
-            return state.get(FLUIDLOGGED) ? test_fluid.get().getDefaultState() : Fluids.EMPTY.getDefaultState();
+            return state.get(FLUIDLOGGED) ? test_fluid.get().getDefaultState() : Fluids.field_15906.getDefaultState();
         }
     }
 }

@@ -27,55 +27,54 @@ import java.util.function.Predicate;
 import javax.annotation.Nullable;
 
 import net.minecraft.block.Block;
+import net.minecraft.block.BlockEntityProvider;
 import net.minecraft.block.BedBlock;
 import net.minecraft.block.FarmlandBlock;
 import net.minecraft.block.FenceGateBlock;
 import net.minecraft.block.FireBlock;
-import net.minecraft.block.HorizontalBlock;
-import net.minecraft.block.IBeaconBeamColorProvider;
-import net.minecraft.block.ITileEntityProvider;
-import net.minecraft.block.SoundType;
+import net.minecraft.block.HorizontalFacingBlock;
+import net.minecraft.block.Material;
+import net.minecraft.block.Stainable;
 import net.minecraft.block.StainedGlassBlock;
-import net.minecraft.block.material.Material;
+import net.minecraft.block.entity.BlockEntity;
+import net.minecraft.block.enums.BedPart;
 import net.minecraft.block.BlockState;
 import net.minecraft.client.particle.ParticleManager;
-import net.minecraft.client.renderer.ActiveRenderInfo;
 import net.minecraft.enchantment.EnchantmentHelper;
 import net.minecraft.entity.Entity;
-import net.minecraft.entity.MobEntity;
 import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.EntitySpawnPlacementRegistry;
+import net.minecraft.entity.SpawnRestriction;
+import net.minecraft.entity.ai.pathing.PathNodeType;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.boss.dragon.EnderDragonEntity;
+import net.minecraft.entity.effect.StatusEffects;
+import net.minecraft.entity.mob.MobEntity;
 import net.minecraft.entity.boss.WitherEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.projectile.WitherSkullEntity;
-import net.minecraft.fluid.IFluidState;
+import net.minecraft.fluid.FluidState;
 import net.minecraft.block.Blocks;
-import net.minecraft.potion.Effects;
-import net.minecraft.item.DyeColor;
 import net.minecraft.item.ItemStack;
-import net.minecraft.pathfinding.PathNodeType;
-import net.minecraft.state.IProperty;
-import net.minecraft.state.properties.BedPart;
-import net.minecraft.tags.BlockTags;
-import net.minecraft.tileentity.TileEntity;
-import net.minecraft.util.Direction;
+import net.minecraft.server.world.ServerWorld;
+import net.minecraft.sound.BlockSoundGroup;
+import net.minecraft.state.property.Property;
+import net.minecraft.tag.BlockTags;
+import net.minecraft.util.BlockRotation;
+import net.minecraft.util.DyeColor;
 import net.minecraft.util.Hand;
-import net.minecraft.util.ResourceLocation;
-import net.minecraft.util.Rotation;
+import net.minecraft.util.Identifier;
+import net.minecraft.util.hit.HitResult;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.RayTraceResult;
+import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.Vec3d;
-import net.minecraft.world.Explosion;
-import net.minecraft.world.IBlockReader;
-import net.minecraft.world.ILightReader;
+import net.minecraft.world.BlockRenderView;
+import net.minecraft.world.BlockView;
 import net.minecraft.world.IWorld;
-import net.minecraft.world.IWorldReader;
-import net.minecraft.world.IWorldWriter;
+import net.minecraft.world.ModifiableWorld;
 import net.minecraft.world.World;
-import net.minecraft.world.server.ServerWorld;
-import net.minecraft.world.dimension.EndDimension;
+import net.minecraft.world.WorldView;
+import net.minecraft.world.dimension.TheEndDimension;
+import net.minecraft.world.explosion.Explosion;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.common.ForgeHooks;
@@ -105,7 +104,7 @@ public interface IForgeBlock
      * @param entity the entity in question
      * @return the factor by which the entity's motion should be multiplied
      */
-    float getSlipperiness(BlockState state, IWorldReader world, BlockPos pos, @Nullable Entity entity);
+    float getSlipperiness(BlockState state, WorldView world, BlockPos pos, @Nullable Entity entity);
 
     /**
      * Get a light value for this block, taking into account the given state and coordinates, normal ranges are between 0 and 15
@@ -115,9 +114,9 @@ public interface IForgeBlock
      * @param pos
      * @return The light value
      */
-    default int getLightValue(BlockState state, IBlockReader world, BlockPos pos)
+    default int getLightValue(BlockState state, BlockView world, BlockPos pos)
     {
-        return state.getLightValue();
+        return state.getLuminance();
     }
 
     /**
@@ -129,7 +128,7 @@ public interface IForgeBlock
      * @param entity The entity trying to use the ladder, CAN be null.
      * @return True if the block should act like a ladder
      */
-    default boolean isLadder(BlockState state, IWorldReader world, BlockPos pos, LivingEntity entity)
+    default boolean isLadder(BlockState state, WorldView world, BlockPos pos, LivingEntity entity)
     {
         return false;
     }
@@ -142,9 +141,9 @@ public interface IForgeBlock
      * @param pos Block position in world
      * @return True if the block should deal damage
      */
-    default boolean isBurning(BlockState state, IBlockReader world, BlockPos pos)
+    default boolean isBurning(BlockState state, BlockView world, BlockPos pos)
     {
-        return this == Blocks.FIRE || this == Blocks.LAVA;
+        return this == Blocks.field_10036 || this == Blocks.field_10164;
     }
 
     /**
@@ -159,7 +158,7 @@ public interface IForgeBlock
      */
     default boolean hasTileEntity(BlockState state)
     {
-        return this instanceof ITileEntityProvider;
+        return this instanceof BlockEntityProvider;
     }
 
     /**
@@ -172,10 +171,10 @@ public interface IForgeBlock
      * @return A instance of a class extending TileEntity
      */
     @Nullable
-    default TileEntity createTileEntity(BlockState state, IBlockReader world)
+    default BlockEntity createTileEntity(BlockState state, BlockView world)
     {
-        if (getBlock() instanceof ITileEntityProvider)
-            return ((ITileEntityProvider)getBlock()).createNewTileEntity(world);
+        if (getBlock() instanceof BlockEntityProvider)
+            return ((BlockEntityProvider)getBlock()).createBlockEntity(world);
         return null;
     }
 
@@ -187,7 +186,7 @@ public interface IForgeBlock
      * @param player The player damaging the block
      * @return True to spawn the drops
      */
-    default public boolean canHarvestBlock(BlockState state, IBlockReader world, BlockPos pos, PlayerEntity player)
+    default public boolean canHarvestBlock(BlockState state, BlockView world, BlockPos pos, PlayerEntity player)
     {
         return ForgeHooks.canHarvestBlock(state, player, world, pos);
     }
@@ -212,10 +211,10 @@ public interface IForgeBlock
      * @param fluid The current fluid state at current position
      * @return True if the block is actually destroyed.
      */
-    default boolean removedByPlayer(BlockState state, World world, BlockPos pos, PlayerEntity player, boolean willHarvest, IFluidState fluid)
+    default boolean removedByPlayer(BlockState state, World world, BlockPos pos, PlayerEntity player, boolean willHarvest, FluidState fluid)
     {
-        getBlock().onBlockHarvested(world, pos, state, player);
-        return world.setBlockState(pos, fluid.getBlockState(), world.isRemote ? 11 : 3);
+        getBlock().onBreak(world, pos, state, player);
+        return world.setBlockState(pos, fluid.getBlockState(), world.isClient ? 11 : 3);
     }
 
     /**
@@ -229,7 +228,7 @@ public interface IForgeBlock
      * @param player The player or camera entity, null in some cases.
      * @return True to treat this as a bed
      */
-    default boolean isBed(BlockState state, IBlockReader world, BlockPos pos, @Nullable Entity player)
+    default boolean isBed(BlockState state, BlockView world, BlockPos pos, @Nullable Entity player)
     {
         return this.getBlock() instanceof BedBlock; //TODO: Forge: Keep isBed function?
     }
@@ -244,9 +243,9 @@ public interface IForgeBlock
      * @param type The Mob Category Type
      * @return True to allow a mob of the specified category to spawn, false to prevent it.
      */
-    default boolean canCreatureSpawn(BlockState state, IBlockReader world, BlockPos pos, EntitySpawnPlacementRegistry.PlacementType type, @Nullable EntityType<?> entityType)
+    default boolean canCreatureSpawn(BlockState state, BlockView world, BlockPos pos, SpawnRestriction.Location type, @Nullable EntityType<?> entityType)
     {
-        return state.canEntitySpawn(world, pos, entityType);
+        return state.allowsSpawning(world, pos, entityType);
     }
 
     /**
@@ -259,11 +258,11 @@ public interface IForgeBlock
      * @param sleeper The sleeper or camera entity, null in some cases.
      * @return The spawn position
      */
-    default Optional<Vec3d> getBedSpawnPosition(EntityType<?> entityType, BlockState state, IWorldReader world, BlockPos pos, @Nullable LivingEntity sleeper)
+    default Optional<Vec3d> getBedSpawnPosition(EntityType<?> entityType, BlockState state, WorldView world, BlockPos pos, @Nullable LivingEntity sleeper)
     {
         if (world instanceof World)
         {
-            return BedBlock.func_220172_a(entityType, world,pos,0);
+            return BedBlock.findWakeUpPosition(entityType, world,pos,0);
         }
 
         return Optional.empty();
@@ -278,11 +277,11 @@ public interface IForgeBlock
      * @param sleeper The sleeper or camera entity, null in some cases.
      * @param occupied True if we are occupying the bed, or false if they are stopping use of the bed
      */
-    default void setBedOccupied(BlockState state, IWorldReader world, BlockPos pos, LivingEntity sleeper, boolean occupied)
+    default void setBedOccupied(BlockState state, WorldView world, BlockPos pos, LivingEntity sleeper, boolean occupied)
     {
-        if (world instanceof IWorldWriter)
+        if (world instanceof ModifiableWorld)
         {
-            ((IWorldWriter)world).setBlockState(pos, state.with(BedBlock.OCCUPIED,occupied), 4);
+            ((ModifiableWorld)world).setBlockState(pos, state.with(BedBlock.OCCUPIED,occupied), 4);
         }
     }
 
@@ -295,9 +294,9 @@ public interface IForgeBlock
     * @param pos Block position in world
     * @return Bed direction
     */
-    default Direction getBedDirection(BlockState state, IWorldReader world, BlockPos pos)
+    default Direction getBedDirection(BlockState state, WorldView world, BlockPos pos)
     {
-        return state.get(HorizontalBlock.HORIZONTAL_FACING);
+        return state.get(HorizontalFacingBlock.FACING);
     }
 
     /**
@@ -307,9 +306,9 @@ public interface IForgeBlock
      * @param pos Block position in world
      * @return True if the current block is the foot side of a bed.
      */
-    default boolean isBedFoot(BlockState state, IWorldReader world, BlockPos pos)
+    default boolean isBedFoot(BlockState state, WorldView world, BlockPos pos)
     {
-        return state.get(BedBlock.PART) == BedPart.FOOT;
+        return state.get(BedBlock.PART) == BedPart.field_12557;
     }
 
     /**
@@ -319,7 +318,7 @@ public interface IForgeBlock
      * @param world The current world
      * @param pos Block position in world
      */
-    default void beginLeaveDecay(BlockState state, IWorldReader world, BlockPos pos) {}
+    default void beginLeaveDecay(BlockState state, WorldView world, BlockPos pos) {}
 
     /**
      * Determines this block should be treated as an air block
@@ -332,7 +331,7 @@ public interface IForgeBlock
      * @param pos Block position in world
      * @return True if the block considered air
      */
-    default boolean isAir(BlockState state, IBlockReader world, BlockPos pos)
+    default boolean isAir(BlockState state, BlockView world, BlockPos pos)
     {
         return state.getMaterial() == Material.AIR;
     }
@@ -345,9 +344,9 @@ public interface IForgeBlock
      * @param pos Block position in world
      * @return true if this block can be replaced by growing leaves.
      */
-    default boolean canBeReplacedByLeaves(BlockState state, IWorldReader world, BlockPos pos)
+    default boolean canBeReplacedByLeaves(BlockState state, WorldView world, BlockPos pos)
     {
-        return isAir(state, world, pos) || state.isIn(BlockTags.LEAVES);
+        return isAir(state, world, pos) || state.matches(BlockTags.field_15503);
     }
 
     /**
@@ -358,10 +357,10 @@ public interface IForgeBlock
      * @param pos Block position in world
      * @return true if this block can be replaced by growing leaves.
      */
-    default boolean canBeReplacedByLogs(BlockState state, IWorldReader world, BlockPos pos)
+    default boolean canBeReplacedByLogs(BlockState state, WorldView world, BlockPos pos)
     {
-        return (isAir(state, world, pos) || state.isIn(BlockTags.LEAVES)) || this == Blocks.GRASS_BLOCK || state.isIn(net.minecraftforge.common.Tags.Blocks.DIRT)
-            || getBlock().isIn(BlockTags.LOGS) || getBlock().isIn(BlockTags.SAPLINGS) || this == Blocks.VINE;
+        return (isAir(state, world, pos) || state.matches(BlockTags.field_15503)) || this == Blocks.field_10219 || state.matches(net.minecraftforge.common.Tags.Blocks.DIRT)
+            || getBlock().matches(BlockTags.field_15475) || getBlock().matches(BlockTags.field_15462) || this == Blocks.field_10597;
     }
 
     /**
@@ -374,7 +373,7 @@ public interface IForgeBlock
      *      for overworld generation, and neatherack for the nether.
      * @return True to allow this block to be replaced by a ore
      */
-    default boolean isReplaceableOreGen(BlockState state, IWorldReader world, BlockPos pos, Predicate<BlockState> target)
+    default boolean isReplaceableOreGen(BlockState state, WorldView world, BlockPos pos, Predicate<BlockState> target)
     {
         return target.test(state);
     }
@@ -388,9 +387,9 @@ public interface IForgeBlock
      * @param explosion The explosion
      * @return The amount of the explosion absorbed.
      */
-    default float getExplosionResistance(BlockState state, IWorldReader world, BlockPos pos, @Nullable Entity exploder, Explosion explosion)
+    default float getExplosionResistance(BlockState state, WorldView world, BlockPos pos, @Nullable Entity exploder, Explosion explosion)
     {
-        return this.getBlock().getExplosionResistance();
+        return this.getBlock().getBlastResistance();
     }
 
     /**
@@ -403,9 +402,9 @@ public interface IForgeBlock
      * @param side The side that is trying to make the connection, CAN BE NULL
      * @return True to make the connection
      */
-    default boolean canConnectRedstone(BlockState state, IBlockReader world, BlockPos pos, @Nullable Direction side)
+    default boolean canConnectRedstone(BlockState state, BlockView world, BlockPos pos, @Nullable Direction side)
     {
-        return state.canProvidePower() && side != null;
+        return state.emitsRedstonePower() && side != null;
     }
 
     /**
@@ -415,9 +414,9 @@ public interface IForgeBlock
      * @param target The full target the player is looking at
      * @return A ItemStack to add to the player's inventory, empty itemstack if nothing should be added.
      */
-    default ItemStack getPickBlock(BlockState state, RayTraceResult target, IBlockReader world, BlockPos pos, PlayerEntity player)
+    default ItemStack getPickBlock(BlockState state, HitResult target, BlockView world, BlockPos pos, PlayerEntity player)
     {
-        return this.getBlock().getItem(world, pos, state);
+        return this.getBlock().getPickStack(world, pos, state);
     }
 
     /**
@@ -426,7 +425,7 @@ public interface IForgeBlock
      *
      * @return False to disallow spawning.
      */
-    default boolean isFoliage(BlockState state, IWorldReader world, BlockPos pos)
+    default boolean isFoliage(BlockState state, WorldView world, BlockPos pos)
     {
         return false;
     }
@@ -478,7 +477,7 @@ public interface IForgeBlock
      * @return True to prevent vanilla digging particles form spawning.
      */
     @OnlyIn(Dist.CLIENT)
-    default boolean addHitEffects(BlockState state, World worldObj, RayTraceResult target, ParticleManager manager)
+    default boolean addHitEffects(BlockState state, World worldObj, HitResult target, ParticleManager manager)
     {
         return false;
     }
@@ -518,7 +517,7 @@ public interface IForgeBlock
     * @param plantable The plant that wants to check
     * @return True to allow the plant to be planted/stay.
     */
-    boolean canSustainPlant(BlockState state, IBlockReader world, BlockPos pos, Direction facing, IPlantable plantable);
+    boolean canSustainPlant(BlockState state, BlockView world, BlockPos pos, Direction facing, IPlantable plantable);
 
     /**
      * Called when a plant grows on this block, only implemented for saplings using the WorldGen*Trees classes right now.
@@ -536,8 +535,8 @@ public interface IForgeBlock
      */
     default void onPlantGrow(BlockState state, IWorld world, BlockPos pos, BlockPos source)
     {
-        if (state.isIn(net.minecraftforge.common.Tags.Blocks.DIRT))
-            world.setBlockState(pos, Blocks.DIRT.getDefaultState(), 2);
+        if (state.matches(net.minecraftforge.common.Tags.Blocks.DIRT))
+            world.setBlockState(pos, Blocks.field_10566.getDefaultState(), 2);
     }
 
    /**
@@ -549,9 +548,9 @@ public interface IForgeBlock
     * @param pos Block position in world
     * @return True if the soil should be considered fertile.
     */
-    default boolean isFertile(BlockState state, IBlockReader world, BlockPos pos)
+    default boolean isFertile(BlockState state, BlockView world, BlockPos pos)
     {
-        if (this.getBlock() == Blocks.FARMLAND)
+        if (this.getBlock() == Blocks.field_10362)
             return state.get(FarmlandBlock.MOISTURE) > 0;
 
         return  false;
@@ -565,12 +564,12 @@ public interface IForgeBlock
     * @param beacon Beacon position in world
     * @return True, to support the beacon, and make it active with this block.
     */
-    default boolean isBeaconBase(BlockState state, IWorldReader world, BlockPos pos, BlockPos beacon)
+    default boolean isBeaconBase(BlockState state, WorldView world, BlockPos pos, BlockPos beacon)
     {
-        return  state.getBlock() == Blocks.IRON_BLOCK ||
-                state.getBlock() == Blocks.GOLD_BLOCK ||
-                state.getBlock() == Blocks.DIAMOND_BLOCK ||
-                state.getBlock() == Blocks.EMERALD_BLOCK;
+        return  state.getBlock() == Blocks.field_10085 ||
+                state.getBlock() == Blocks.field_10205 ||
+                state.getBlock() == Blocks.field_10201 ||
+                state.getBlock() == Blocks.field_10234;
     }
 
     /**
@@ -581,12 +580,12 @@ public interface IForgeBlock
      * @param conduit Conduit position in world
      * @return True, to support the conduit, and make it active with this block.
      */
-    default boolean isConduitFrame(BlockState state, IWorldReader world, BlockPos pos, BlockPos conduit)
+    default boolean isConduitFrame(BlockState state, WorldView world, BlockPos pos, BlockPos conduit)
     {
-        return  state.getBlock() == Blocks.PRISMARINE ||
-                state.getBlock() == Blocks.PRISMARINE_BRICKS ||
-                state.getBlock() == Blocks.SEA_LANTERN ||
-                state.getBlock() == Blocks.DARK_PRISMARINE;
+        return  state.getBlock() == Blocks.field_10135 ||
+                state.getBlock() == Blocks.field_10006 ||
+                state.getBlock() == Blocks.field_10174 ||
+                state.getBlock() == Blocks.field_10297;
     }
 
     /**
@@ -597,9 +596,9 @@ public interface IForgeBlock
      * @param pos Block position in world
      * @return True, to support being part of a nether portal frame, false otherwise.
      */
-    default boolean isPortalFrame(BlockState state, IWorldReader world, BlockPos pos)
+    default boolean isPortalFrame(BlockState state, WorldView world, BlockPos pos)
     {
-        return state.getBlock() == Blocks.OBSIDIAN;
+        return state.getBlock() == Blocks.field_10540;
     }
 
    /**
@@ -611,12 +610,12 @@ public interface IForgeBlock
     * @param fortune
     * @return Amount of XP from breaking this block.
     */
-    default int getExpDrop(BlockState state, IWorldReader world, BlockPos pos, int fortune, int silktouch)
+    default int getExpDrop(BlockState state, WorldView world, BlockPos pos, int fortune, int silktouch)
     {
        return 0;
     }
 
-    default BlockState rotate(BlockState state, IWorld world, BlockPos pos, Rotation direction)
+    default BlockState rotate(BlockState state, IWorld world, BlockPos pos, BlockRotation direction)
     {
         return state.rotate(direction);
     }
@@ -630,14 +629,14 @@ public interface IForgeBlock
      * @return An array of valid axes to rotate around, or null for none or unknown
      */
     @Nullable
-    default Direction[] getValidRotations(BlockState state, IBlockReader world, BlockPos pos)
+    default Direction[] getValidRotations(BlockState state, BlockView world, BlockPos pos)
     {
-        for (IProperty<?> prop : state.getProperties())
+        for (Property<?> prop : state.getProperties())
         {
-            if ((prop.getName().equals("facing") || prop.getName().equals("rotation")) && prop.getValueClass() == Direction.class)
+            if ((prop.getName().equals("facing") || prop.getName().equals("rotation")) && prop.getType() == Direction.class)
             {
                 @SuppressWarnings("unchecked")
-                Collection<Direction> values = ((Collection<Direction>)prop.getAllowedValues());
+                Collection<Direction> values = ((Collection<Direction>)prop.getValues());
                 return values.toArray(new Direction[values.size()]);
             }
         }
@@ -650,9 +649,9 @@ public interface IForgeBlock
     * @param pos Block position in world
     * @return The amount of enchanting power this block produces.
     */
-    default float getEnchantPowerBonus(BlockState state, IWorldReader world, BlockPos pos)
+    default float getEnchantPowerBonus(BlockState state, WorldView world, BlockPos pos)
     {
-        return this.getBlock() == Blocks.BOOKSHELF ? 1: 0;
+        return this.getBlock() == Blocks.field_10504 ? 1: 0;
     }
 
    /**
@@ -668,14 +667,14 @@ public interface IForgeBlock
     @SuppressWarnings("unchecked")
     default boolean recolorBlock(BlockState state, IWorld world, BlockPos pos, Direction facing, DyeColor color)
     {
-        for (IProperty<?> prop : state.getProperties())
+        for (Property<?> prop : state.getProperties())
         {
-            if (prop.getName().equals("color") && prop.getValueClass() == DyeColor.class)
+            if (prop.getName().equals("color") && prop.getType() == DyeColor.class)
             {
                 DyeColor current = (DyeColor)state.get(prop);
-                if (current != color && prop.getAllowedValues().contains(color))
+                if (current != color && prop.getValues().contains(color))
                 {
-                    world.setBlockState(pos, state.with(((IProperty<DyeColor>)prop), color), 3);
+                    world.setBlockState(pos, state.with(((Property<DyeColor>)prop), color), 3);
                     return true;
                 }
             }
@@ -689,7 +688,7 @@ public interface IForgeBlock
     * @param pos Block position in world
     * @param neighbor Block position of neighbor
     */
-    default void onNeighborChange(BlockState state, IWorldReader world, BlockPos pos, BlockPos neighbor){}
+    default void onNeighborChange(BlockState state, WorldView world, BlockPos pos, BlockPos neighbor){}
 
    /**
     * Called on an Observer block whenever an update for an Observer is received.
@@ -709,9 +708,9 @@ public interface IForgeBlock
     * @param side The INPUT side of the block to be powered - ie the opposite of this block's output side
     * @return Whether Block#isProvidingWeakPower should be called when determining indirect power
     */
-    default boolean shouldCheckWeakPower(BlockState state, IWorldReader world, BlockPos pos, Direction side)
+    default boolean shouldCheckWeakPower(BlockState state, WorldView world, BlockPos pos, Direction side)
     {
-        return state.isNormalCube(world, pos);
+        return state.isSimpleFullBlock(world, pos);
     }
 
     /**
@@ -723,7 +722,7 @@ public interface IForgeBlock
      * @param pos Block position in world
      * @return true To be notified of changes
      */
-    default boolean getWeakChanges(BlockState state, IWorldReader world, BlockPos pos)
+    default boolean getWeakChanges(BlockState state, WorldView world, BlockPos pos)
     {
         return false;
     }
@@ -748,7 +747,7 @@ public interface IForgeBlock
      */
     default boolean isToolEffective(BlockState state, ToolType tool)
     {
-        if (tool == ToolType.PICKAXE && (this.getBlock() == Blocks.REDSTONE_ORE || this.getBlock() == Blocks.REDSTONE_LAMP || this.getBlock() == Blocks.OBSIDIAN))
+        if (tool == ToolType.PICKAXE && (this.getBlock() == Blocks.field_10080 || this.getBlock() == Blocks.field_10524 || this.getBlock() == Blocks.field_10540))
             return false;
         return tool == getHarvestTool(state);
     }
@@ -756,7 +755,7 @@ public interface IForgeBlock
     /**
      * Can return IExtendedBlockState
      */
-    default BlockState getExtendedState(BlockState state, IBlockReader world, BlockPos pos)
+    default BlockState getExtendedState(BlockState state, BlockView world, BlockPos pos)
     {
         return state;
     }
@@ -769,9 +768,9 @@ public interface IForgeBlock
      * @param entity The entity that is breaking/stepping on/placing/hitting/falling on this block, or null if no entity is in this context
      * @return A SoundType to use
      */
-    default SoundType getSoundType(BlockState state, IWorldReader world, BlockPos pos, @Nullable Entity entity)
+    default BlockSoundGroup getSoundType(BlockState state, WorldView world, BlockPos pos, @Nullable Entity entity)
     {
-        return this.getBlock().getSoundType(state);
+        return this.getBlock().getSoundGroup(state);
     }
 
     /**
@@ -782,10 +781,10 @@ public interface IForgeBlock
      * @return A float RGB [0.0, 1.0] array to be averaged with a beacon's existing beam color, or null to do nothing to the beam
      */
     @Nullable
-    default float[] getBeaconColorMultiplier(BlockState state, IWorldReader world, BlockPos pos, BlockPos beaconPos)
+    default float[] getBeaconColorMultiplier(BlockState state, WorldView world, BlockPos pos, BlockPos beaconPos)
     {
-        if (getBlock() instanceof IBeaconBeamColorProvider)
-            return ((IBeaconBeamColorProvider)getBlock()).getColor().getColorComponentValues();
+        if (getBlock() instanceof Stainable)
+            return ((Stainable)getBlock()).getColor().getColorComponents();
         return null;
     }
 
@@ -801,7 +800,7 @@ public interface IForgeBlock
      * @return The new fog color.
      */
     @OnlyIn(Dist.CLIENT)
-    default Vec3d getFogColor(BlockState state, IWorldReader world, BlockPos pos, Entity entity, Vec3d originalColor, float partialTicks)
+    default Vec3d getFogColor(BlockState state, WorldView world, BlockPos pos, Entity entity, Vec3d originalColor, float partialTicks)
     {
         if (state.getMaterial() == Material.WATER)
         {
@@ -810,9 +809,9 @@ public interface IForgeBlock
             if (entity instanceof LivingEntity)
             {
                 LivingEntity ent = (LivingEntity)entity;
-                f12 = (float) EnchantmentHelper.getRespirationModifier(ent) * 0.2F;
+                f12 = (float) EnchantmentHelper.getRespiration(ent) * 0.2F;
 
-                if (ent.isPotionActive(Effects.WATER_BREATHING))
+                if (ent.hasStatusEffect(StatusEffects.field_5923))
                 {
                     f12 = f12 * 0.3F + 0.6F;
                 }
@@ -837,7 +836,7 @@ public interface IForgeBlock
      * @param viewpoint the viewpoint
      * @return the block state that should be 'seen'
      */
-    default BlockState getStateAtViewpoint(BlockState state, IBlockReader world, BlockPos pos, Vec3d viewpoint)
+    default BlockState getStateAtViewpoint(BlockState state, BlockView world, BlockPos pos, Vec3d viewpoint)
     {
         return state;
     }
@@ -857,7 +856,7 @@ public interface IForgeBlock
      */
     default BlockState getStateForPlacement(BlockState state, Direction facing, BlockState state2, IWorld world, BlockPos pos1, BlockPos pos2, Hand hand)
     {
-        return this.getBlock().updatePostPlacement(state, facing, state2, world, pos1, pos2);
+        return this.getBlock().getStateForNeighborUpdate(state, facing, state2, world, pos1, pos2);
     }
 
 
@@ -869,7 +868,7 @@ public interface IForgeBlock
      * @param facing The side the connecting block is on
      * @return True to allow another block to connect to this block
      */
-    default boolean canBeConnectedTo(BlockState state, IBlockReader world, BlockPos pos, Direction facing)
+    default boolean canBeConnectedTo(BlockState state, BlockView world, BlockPos pos, Direction facing)
     {
         return false;
     }
@@ -880,9 +879,9 @@ public interface IForgeBlock
      * @return the PathNodeType
      */
     @Nullable
-    default PathNodeType getAiPathNodeType(BlockState state, IBlockReader world, BlockPos pos, @Nullable MobEntity entity)
+    default PathNodeType getAiPathNodeType(BlockState state, BlockView world, BlockPos pos, @Nullable MobEntity entity)
     {
-        return state.isBurning(world, pos) ? PathNodeType.DANGER_FIRE : null;
+        return state.isBurning(world, pos) ? PathNodeType.field_9 : null;
     }
 
     /**
@@ -891,7 +890,7 @@ public interface IForgeBlock
      */
     default boolean isSlimeBlock(BlockState state)
     {
-        return state.getBlock() == Blocks.SLIME_BLOCK;
+        return state.getBlock() == Blocks.field_10030;
     }
 
     /**
@@ -900,7 +899,7 @@ public interface IForgeBlock
      */
     default boolean isStickyBlock(BlockState state)
     {
-        return state.getBlock() == Blocks.SLIME_BLOCK || state.getBlock() == Blocks.HONEY_BLOCK;
+        return state.getBlock() == Blocks.field_10030 || state.getBlock() == Blocks.field_21211;
     }
 
     /**
@@ -911,8 +910,8 @@ public interface IForgeBlock
      */
     default boolean canStickTo(BlockState state, BlockState other)
     {
-        if (state.getBlock() == Blocks.HONEY_BLOCK && other.getBlock() == Blocks.SLIME_BLOCK) return false;
-        if (state.getBlock() == Blocks.SLIME_BLOCK && other.getBlock() == Blocks.HONEY_BLOCK) return false;
+        if (state.getBlock() == Blocks.field_21211 && other.getBlock() == Blocks.field_10030) return false;
+        if (state.getBlock() == Blocks.field_10030 && other.getBlock() == Blocks.field_21211) return false;
         return state.isStickyBlock() || other.isStickyBlock();
     }
 
@@ -926,9 +925,9 @@ public interface IForgeBlock
      * @param face The face that the fire is coming from
      * @return A number ranging from 0 to 300 relating used to determine if the block will be consumed by fire
      */
-    default int getFlammability(BlockState state, IBlockReader world, BlockPos pos, Direction face)
+    default int getFlammability(BlockState state, BlockView world, BlockPos pos, Direction face)
     {
-        return ((FireBlock)Blocks.FIRE).func_220274_q(state);
+        return ((FireBlock)Blocks.field_10036).getSpreadChance(state);
     }
 
     /**
@@ -941,7 +940,7 @@ public interface IForgeBlock
      * @param face The face that the fire is coming from
      * @return True if the face can be on fire, false otherwise.
      */
-    default boolean isFlammable(BlockState state, IBlockReader world, BlockPos pos, Direction face)
+    default boolean isFlammable(BlockState state, BlockView world, BlockPos pos, Direction face)
     {
         return state.getFlammability(world, pos, face) > 0;
     }
@@ -967,9 +966,9 @@ public interface IForgeBlock
      * @param face The face that the fire is coming from
      * @return A number that is used to determine the speed of fire growth around the block
      */
-    default int getFireSpreadSpeed(BlockState state, IBlockReader world, BlockPos pos, Direction face)
+    default int getFireSpreadSpeed(BlockState state, BlockView world, BlockPos pos, Direction face)
     {
-        return ((FireBlock)Blocks.FIRE).func_220275_r(state);
+        return ((FireBlock)Blocks.field_10036).getBurnChance(state);
     }
 
     /**
@@ -983,13 +982,13 @@ public interface IForgeBlock
      * @param side The face that the fire is coming from
      * @return True if this block sustains fire, meaning it will never go out.
      */
-    default boolean isFireSource(BlockState state, IBlockReader world, BlockPos pos, Direction side)
+    default boolean isFireSource(BlockState state, BlockView world, BlockPos pos, Direction side)
     {
-        if (side != Direction.UP)
+        if (side != Direction.field_11036)
             return false;
-        if (getBlock() == Blocks.NETHERRACK || getBlock() == Blocks.MAGMA_BLOCK)
+        if (getBlock() == Blocks.field_10515 || getBlock() == Blocks.field_10092)
             return true;
-        if (world instanceof IWorldReader && ((IWorldReader)world).getDimension() instanceof EndDimension && getBlock() == Blocks.BEDROCK)
+        if (world instanceof WorldView && ((WorldView)world).getDimension() instanceof TheEndDimension && getBlock() == Blocks.field_9987)
             return true;
         return false;
     }
@@ -1002,16 +1001,16 @@ public interface IForgeBlock
      * @param pos Block position in world
      * @return True to allow the ender dragon to destroy this block
      */
-    default boolean canEntityDestroy(BlockState state, IBlockReader world, BlockPos pos, Entity entity)
+    default boolean canEntityDestroy(BlockState state, BlockView world, BlockPos pos, Entity entity)
     {
         if (entity instanceof EnderDragonEntity)
         {
-            return !BlockTags.DRAGON_IMMUNE.contains(this.getBlock());
+            return !BlockTags.field_17753.contains(this.getBlock());
         }
         else if ((entity instanceof WitherEntity) ||
                  (entity instanceof WitherSkullEntity))
         {
-            return state.isAir(world, pos) || WitherEntity.canDestroyBlock(state);
+            return state.isAir(world, pos) || WitherEntity.canDestroy(state);
         }
 
         return true;
@@ -1029,7 +1028,7 @@ public interface IForgeBlock
      * @return A result that suits your block
      */
     @Nullable
-    default RayTraceResult getRayTraceResult(BlockState state, World world, BlockPos pos, Vec3d start, Vec3d end, RayTraceResult original)
+    default HitResult getRayTraceResult(BlockState state, World world, BlockPos pos, Vec3d start, Vec3d end, HitResult original)
     {
         return original;
     }
@@ -1037,16 +1036,16 @@ public interface IForgeBlock
     /**
      * Determines if this block should drop loot when exploded.
      */
-    default boolean canDropFromExplosion(BlockState state, IBlockReader world, BlockPos pos, Explosion explosion)
+    default boolean canDropFromExplosion(BlockState state, BlockView world, BlockPos pos, Explosion explosion)
     {
-        return state.getBlock().canDropFromExplosion(explosion);
+        return state.getBlock().shouldDropItemsOnExplosion(explosion);
     }
 
     /**
      * Retrieves a list of tags names this is known to be associated with.
      * This should be used in favor of TagCollection.getOwningTags, as this caches the result and automatically updates when the TagCollection changes.
      */
-    Set<ResourceLocation> getTags();
+    Set<Identifier> getTags();
 
     /**
      * Called when the block is destroyed by an explosion.
@@ -1059,17 +1058,17 @@ public interface IForgeBlock
      */
     default void onBlockExploded(BlockState state, World world, BlockPos pos, Explosion explosion)
     {
-        world.setBlockState(pos, Blocks.AIR.getDefaultState(), 3);
-        getBlock().onExplosionDestroy(world, pos, explosion);
+        world.setBlockState(pos, Blocks.field_10124.getDefaultState(), 3);
+        getBlock().onDestroyedByExplosion(world, pos, explosion);
     }
 
     /**
      * Determines if this block's collision box should be treated as though it can extend above its block space.
      * Use this to replicate fence and wall behavior.
      */
-    default boolean collisionExtendsVertically(BlockState state, IBlockReader world, BlockPos pos, Entity collidingEntity)
+    default boolean collisionExtendsVertically(BlockState state, BlockView world, BlockPos pos, Entity collidingEntity)
     {
-        return getBlock().isIn(BlockTags.FENCES) || getBlock().isIn(BlockTags.WALLS) || getBlock() instanceof FenceGateBlock;
+        return getBlock().matches(BlockTags.field_16584) || getBlock().matches(BlockTags.field_15504) || getBlock() instanceof FenceGateBlock;
     }
 
     /**
@@ -1081,8 +1080,8 @@ public interface IForgeBlock
      * @param fluidState The state of the fluid
      * @return Whether the fluid overlay texture should be used
      */
-    default boolean shouldDisplayFluidOverlay(BlockState state, ILightReader world, BlockPos pos, IFluidState fluidState)
+    default boolean shouldDisplayFluidOverlay(BlockState state, BlockRenderView world, BlockPos pos, FluidState fluidState)
     {
-        return state.getBlock() == Blocks.GLASS || state.getBlock() instanceof StainedGlassBlock;
+        return state.getBlock() == Blocks.field_10033 || state.getBlock() instanceof StainedGlassBlock;
     }
 }

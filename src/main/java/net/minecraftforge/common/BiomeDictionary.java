@@ -27,9 +27,7 @@ import javax.annotation.Nullable;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-
-import net.minecraft.world.biome.Biomes;
-import net.minecraft.util.ResourceLocation;
+import net.minecraft.util.Identifier;
 import net.minecraft.world.biome.*;
 import static net.minecraftforge.common.BiomeDictionary.Type.*;
 import net.minecraftforge.registries.ForgeRegistries;
@@ -166,7 +164,7 @@ public class BiomeDictionary
         @Nullable
         public static Type fromVanilla(Biome.Category category)
         {
-            if (category == Biome.Category.NONE)
+            if (category == Biome.Category.field_9371)
                 return null;
             if (category == Biome.Category.THEEND)
                 return VOID;
@@ -174,7 +172,7 @@ public class BiomeDictionary
         }
     }
 
-    private static final Map<ResourceLocation, BiomeInfo> biomeInfoMap = new HashMap<ResourceLocation, BiomeInfo>();
+    private static final Map<Identifier, BiomeInfo> biomeInfoMap = new HashMap<Identifier, BiomeInfo>();
 
     private static class BiomeInfo
     {
@@ -281,27 +279,27 @@ public class BiomeDictionary
             BiomeDictionary.addTypes(biome, type);
         }
 
-        if (biome.getDownfall() > 0.85f)
+        if (biome.getRainfall() > 0.85f)
         {
             BiomeDictionary.addTypes(biome, WET);
         }
 
-        if (biome.getDownfall() < 0.15f)
+        if (biome.getRainfall() < 0.15f)
         {
             BiomeDictionary.addTypes(biome, DRY);
         }
 
-        if (biome.getDefaultTemperature() > 0.85f)
+        if (biome.getTemperature() > 0.85f)
         {
             BiomeDictionary.addTypes(biome, HOT);
         }
 
-        if (biome.getDefaultTemperature() < 0.15f)
+        if (biome.getTemperature() < 0.15f)
         {
             BiomeDictionary.addTypes(biome, COLD);
         }
 
-        if (biome.isHighHumidity() && biome.getDepth() < 0.0F && (biome.getScale() <= 0.3F && biome.getScale() >= 0.0F))
+        if (biome.hasHighHumidity() && biome.getDepth() < 0.0F && (biome.getScale() <= 0.3F && biome.getScale() >= 0.0F))
         {
             BiomeDictionary.addTypes(biome, SWAMP);
         }
@@ -369,79 +367,79 @@ public class BiomeDictionary
 
     private static void registerVanillaBiomes()
     {
-        addTypes(Biomes.OCEAN,                            OCEAN, OVERWORLD                                                   );
-        addTypes(Biomes.PLAINS,                           PLAINS, OVERWORLD                                                  );
-        addTypes(Biomes.DESERT,                           HOT,      DRY,        SANDY, OVERWORLD                             );
-        addTypes(Biomes.MOUNTAINS,                    MOUNTAIN, HILLS, OVERWORLD                                         );
-        addTypes(Biomes.FOREST,                           FOREST, OVERWORLD                                                  );
-        addTypes(Biomes.TAIGA,                            COLD,     CONIFEROUS, FOREST, OVERWORLD                            );
-        addTypes(Biomes.SWAMP,                        WET,      SWAMP, OVERWORLD                                         );
-        addTypes(Biomes.RIVER,                            RIVER, OVERWORLD                                                   );
-        addTypes(Biomes.NETHER,                             HOT,      DRY,        NETHER                            );
-        addTypes(Biomes.THE_END,                              COLD,     DRY,        END                               );
-        addTypes(Biomes.FROZEN_OCEAN,                     COLD,     OCEAN,      SNOWY, OVERWORLD                             );
-        addTypes(Biomes.FROZEN_RIVER,                     COLD,     RIVER,      SNOWY, OVERWORLD                             );
-        addTypes(Biomes.SNOWY_TUNDRA,                       COLD,     SNOWY,      WASTELAND, OVERWORLD                         );
-        addTypes(Biomes.SNOWY_MOUNTAINS,                    COLD,     SNOWY,      MOUNTAIN, OVERWORLD                          );
-        addTypes(Biomes.MUSHROOM_FIELDS,                  MUSHROOM, RARE, OVERWORLD                                          );
-        addTypes(Biomes.MUSHROOM_FIELD_SHORE,            MUSHROOM, BEACH,      RARE, OVERWORLD                              );
-        addTypes(Biomes.BEACH,                            BEACH, OVERWORLD                                                   );
-        addTypes(Biomes.DESERT_HILLS,                     HOT,      DRY,        SANDY,    HILLS, OVERWORLD                   );
-        addTypes(Biomes.WOODED_HILLS,                     FOREST,   HILLS, OVERWORLD                                         );
-        addTypes(Biomes.TAIGA_HILLS,                      COLD,     CONIFEROUS, FOREST,   HILLS, OVERWORLD                   );
-        addTypes(Biomes.MOUNTAIN_EDGE,               MOUNTAIN, OVERWORLD                                                );
-        addTypes(Biomes.JUNGLE,                           HOT,      WET,        DENSE,    JUNGLE, OVERWORLD                  );
-        addTypes(Biomes.JUNGLE_HILLS,                     HOT,      WET,        DENSE,    JUNGLE,   HILLS, OVERWORLD         );
-        addTypes(Biomes.JUNGLE_EDGE,                      HOT,      WET,        JUNGLE,   FOREST,   RARE, OVERWORLD          );
-        addTypes(Biomes.DEEP_OCEAN,                       OCEAN, OVERWORLD                                                   );
-        addTypes(Biomes.STONE_SHORE,                      BEACH, OVERWORLD                                                   );
-        addTypes(Biomes.SNOWY_BEACH,                       COLD,     BEACH,      SNOWY, OVERWORLD                             );
-        addTypes(Biomes.BIRCH_FOREST,                     FOREST, OVERWORLD                                                  );
-        addTypes(Biomes.BIRCH_FOREST_HILLS,               FOREST,   HILLS, OVERWORLD                                         );
-        addTypes(Biomes.DARK_FOREST,                    SPOOKY,   DENSE,      FOREST, OVERWORLD                            );
-        addTypes(Biomes.SNOWY_TAIGA,                       COLD,     CONIFEROUS, FOREST,   SNOWY, OVERWORLD                   );
-        addTypes(Biomes.SNOWY_TAIGA_HILLS,                 COLD,     CONIFEROUS, FOREST,   SNOWY,    HILLS, OVERWORLD         );
-        addTypes(Biomes.GIANT_TREE_TAIGA,                    COLD,     CONIFEROUS, FOREST, OVERWORLD                            );
-        addTypes(Biomes.GIANT_TREE_TAIGA_HILLS,              COLD,     CONIFEROUS, FOREST,   HILLS, OVERWORLD                   );
-        addTypes(Biomes.WOODED_MOUNTAINS,         MOUNTAIN, FOREST,     SPARSE, OVERWORLD                            );
-        addTypes(Biomes.SAVANNA,                          HOT,      SAVANNA,    PLAINS,   SPARSE, OVERWORLD                  );
-        addTypes(Biomes.SAVANNA_PLATEAU,                  HOT,      SAVANNA,    PLAINS,   SPARSE,   RARE, OVERWORLD, PLATEAU          );
-        addTypes(Biomes.BADLANDS,                             MESA,     SANDY,  DRY, OVERWORLD                               );
-        addTypes(Biomes.WOODED_BADLANDS_PLATEAU,                        MESA,     SANDY,    DRY,    SPARSE, OVERWORLD, PLATEAU        );
-        addTypes(Biomes.BADLANDS_PLATEAU,                  MESA,     SANDY,     DRY, OVERWORLD, PLATEAU                               );
-        addTypes(Biomes.SMALL_END_ISLANDS,                   END                                                     );
-        addTypes(Biomes.END_MIDLANDS,                   END                                                     );
-        addTypes(Biomes.END_HIGHLANDS,                   END                                                     );
-        addTypes(Biomes.END_BARRENS,                   END                                                     );
-        addTypes(Biomes.WARM_OCEAN,                   OCEAN,   HOT, OVERWORLD                                            );
-        addTypes(Biomes.LUKEWARM_OCEAN,                   OCEAN, OVERWORLD                                                   );
-        addTypes(Biomes.COLD_OCEAN,                   OCEAN,   COLD, OVERWORLD                                           );
-        addTypes(Biomes.DEEP_WARM_OCEAN,                   OCEAN,   HOT, OVERWORLD                                            );
-        addTypes(Biomes.DEEP_LUKEWARM_OCEAN,                   OCEAN, OVERWORLD                                                   );
-        addTypes(Biomes.DEEP_COLD_OCEAN,                   OCEAN,   COLD, OVERWORLD                                           );
-        addTypes(Biomes.DEEP_FROZEN_OCEAN,                   OCEAN,   COLD, OVERWORLD                                           );
-        addTypes(Biomes.THE_VOID,                             VOID                                                    );
-        addTypes(Biomes.SUNFLOWER_PLAINS,                   PLAINS,   RARE, OVERWORLD                                          );
-        addTypes(Biomes.DESERT_LAKES,                   HOT,      DRY,        SANDY,    RARE, OVERWORLD                    );
-        addTypes(Biomes.GRAVELLY_MOUNTAINS,            MOUNTAIN, SPARSE,     RARE, OVERWORLD                              );
-        addTypes(Biomes.FLOWER_FOREST,                   FOREST,   HILLS,      RARE, OVERWORLD                              );
-        addTypes(Biomes.TAIGA_MOUNTAINS,                    COLD,     CONIFEROUS, FOREST,   MOUNTAIN, RARE, OVERWORLD          );
-        addTypes(Biomes.SWAMP_HILLS,                WET,      SWAMP,      HILLS,    RARE, OVERWORLD                    );
-        addTypes(Biomes.ICE_SPIKES,                COLD,     SNOWY,      HILLS,    RARE, OVERWORLD                    );
-        addTypes(Biomes.MODIFIED_JUNGLE,                   HOT,      WET,        DENSE,    JUNGLE,   MOUNTAIN, RARE, OVERWORLD, MODIFIED);
-        addTypes(Biomes.MODIFIED_JUNGLE_EDGE,              HOT,      SPARSE,     JUNGLE,   HILLS,    RARE, OVERWORLD, MODIFIED          );
-        addTypes(Biomes.TALL_BIRCH_FOREST,             FOREST,   DENSE,      HILLS,    RARE, OVERWORLD                    );
-        addTypes(Biomes.TALL_BIRCH_HILLS,       FOREST,   DENSE,      MOUNTAIN, RARE, OVERWORLD                    );
-        addTypes(Biomes.DARK_FOREST_HILLS,            SPOOKY,   DENSE,      FOREST,   MOUNTAIN, RARE, OVERWORLD          );
-        addTypes(Biomes.SNOWY_TAIGA_MOUNTAINS,               COLD,     CONIFEROUS, FOREST,   SNOWY,    MOUNTAIN, RARE, OVERWORLD);
-        addTypes(Biomes.GIANT_SPRUCE_TAIGA,            DENSE,    FOREST,     RARE, OVERWORLD                              );
-        addTypes(Biomes.GIANT_SPRUCE_TAIGA_HILLS,      DENSE,    FOREST,     HILLS,    RARE, OVERWORLD                    );
-        addTypes(Biomes.MODIFIED_GRAVELLY_MOUNTAINS, MOUNTAIN, SPARSE,     RARE, OVERWORLD, MODIFIED                              );
-        addTypes(Biomes.SHATTERED_SAVANNA,                  HOT,      DRY,        SPARSE,   SAVANNA,  MOUNTAIN, RARE, OVERWORLD);
-        addTypes(Biomes.SHATTERED_SAVANNA_PLATEAU,             HOT,      DRY,        SPARSE,   SAVANNA,  HILLS,    RARE, OVERWORLD, PLATEAU);
-        addTypes(Biomes.ERODED_BADLANDS,                     HOT,      DRY,        SPARSE,  MOUNTAIN, RARE, OVERWORLD);
-        addTypes(Biomes.MODIFIED_WOODED_BADLANDS_PLATEAU,                HOT,      DRY,        SPARSE,   HILLS,    RARE, OVERWORLD, PLATEAU, MODIFIED          );
-        addTypes(Biomes.MODIFIED_BADLANDS_PLATEAU,          HOT,      DRY,        SPARSE,  MOUNTAIN, RARE, OVERWORLD, PLATEAU, MODIFIED);
+        addTypes(Biomes.field_9423,                            OCEAN, OVERWORLD                                                   );
+        addTypes(Biomes.field_9451,                           PLAINS, OVERWORLD                                                  );
+        addTypes(Biomes.field_9424,                           HOT,      DRY,        SANDY, OVERWORLD                             );
+        addTypes(Biomes.field_9472,                    MOUNTAIN, HILLS, OVERWORLD                                         );
+        addTypes(Biomes.field_9409,                           FOREST, OVERWORLD                                                  );
+        addTypes(Biomes.field_9420,                            COLD,     CONIFEROUS, FOREST, OVERWORLD                            );
+        addTypes(Biomes.field_9471,                        WET,      SWAMP, OVERWORLD                                         );
+        addTypes(Biomes.field_9438,                            RIVER, OVERWORLD                                                   );
+        addTypes(Biomes.field_9461,                             HOT,      DRY,        NETHER                            );
+        addTypes(Biomes.field_9411,                              COLD,     DRY,        END                               );
+        addTypes(Biomes.field_9435,                     COLD,     OCEAN,      SNOWY, OVERWORLD                             );
+        addTypes(Biomes.field_9463,                     COLD,     RIVER,      SNOWY, OVERWORLD                             );
+        addTypes(Biomes.field_9452,                       COLD,     SNOWY,      WASTELAND, OVERWORLD                         );
+        addTypes(Biomes.field_9444,                    COLD,     SNOWY,      MOUNTAIN, OVERWORLD                          );
+        addTypes(Biomes.field_9462,                  MUSHROOM, RARE, OVERWORLD                                          );
+        addTypes(Biomes.field_9407,            MUSHROOM, BEACH,      RARE, OVERWORLD                              );
+        addTypes(Biomes.field_9434,                            BEACH, OVERWORLD                                                   );
+        addTypes(Biomes.field_9466,                     HOT,      DRY,        SANDY,    HILLS, OVERWORLD                   );
+        addTypes(Biomes.field_9459,                     FOREST,   HILLS, OVERWORLD                                         );
+        addTypes(Biomes.field_9428,                      COLD,     CONIFEROUS, FOREST,   HILLS, OVERWORLD                   );
+        addTypes(Biomes.field_9464,               MOUNTAIN, OVERWORLD                                                );
+        addTypes(Biomes.field_9417,                           HOT,      WET,        DENSE,    JUNGLE, OVERWORLD                  );
+        addTypes(Biomes.field_9432,                     HOT,      WET,        DENSE,    JUNGLE,   HILLS, OVERWORLD         );
+        addTypes(Biomes.field_9474,                      HOT,      WET,        JUNGLE,   FOREST,   RARE, OVERWORLD          );
+        addTypes(Biomes.field_9446,                       OCEAN, OVERWORLD                                                   );
+        addTypes(Biomes.field_9419,                      BEACH, OVERWORLD                                                   );
+        addTypes(Biomes.field_9478,                       COLD,     BEACH,      SNOWY, OVERWORLD                             );
+        addTypes(Biomes.field_9412,                     FOREST, OVERWORLD                                                  );
+        addTypes(Biomes.field_9421,               FOREST,   HILLS, OVERWORLD                                         );
+        addTypes(Biomes.field_9475,                    SPOOKY,   DENSE,      FOREST, OVERWORLD                            );
+        addTypes(Biomes.field_9454,                       COLD,     CONIFEROUS, FOREST,   SNOWY, OVERWORLD                   );
+        addTypes(Biomes.field_9425,                 COLD,     CONIFEROUS, FOREST,   SNOWY,    HILLS, OVERWORLD         );
+        addTypes(Biomes.field_9477,                    COLD,     CONIFEROUS, FOREST, OVERWORLD                            );
+        addTypes(Biomes.field_9429,              COLD,     CONIFEROUS, FOREST,   HILLS, OVERWORLD                   );
+        addTypes(Biomes.field_9460,         MOUNTAIN, FOREST,     SPARSE, OVERWORLD                            );
+        addTypes(Biomes.field_9449,                          HOT,      SAVANNA,    PLAINS,   SPARSE, OVERWORLD                  );
+        addTypes(Biomes.field_9430,                  HOT,      SAVANNA,    PLAINS,   SPARSE,   RARE, OVERWORLD, PLATEAU          );
+        addTypes(Biomes.field_9415,                             MESA,     SANDY,  DRY, OVERWORLD                               );
+        addTypes(Biomes.field_9410,                        MESA,     SANDY,    DRY,    SPARSE, OVERWORLD, PLATEAU        );
+        addTypes(Biomes.field_9433,                  MESA,     SANDY,     DRY, OVERWORLD, PLATEAU                               );
+        addTypes(Biomes.field_9457,                   END                                                     );
+        addTypes(Biomes.field_9447,                   END                                                     );
+        addTypes(Biomes.field_9442,                   END                                                     );
+        addTypes(Biomes.field_9465,                   END                                                     );
+        addTypes(Biomes.field_9408,                   OCEAN,   HOT, OVERWORLD                                            );
+        addTypes(Biomes.field_9441,                   OCEAN, OVERWORLD                                                   );
+        addTypes(Biomes.field_9467,                   OCEAN,   COLD, OVERWORLD                                           );
+        addTypes(Biomes.field_9448,                   OCEAN,   HOT, OVERWORLD                                            );
+        addTypes(Biomes.field_9439,                   OCEAN, OVERWORLD                                                   );
+        addTypes(Biomes.field_9470,                   OCEAN,   COLD, OVERWORLD                                           );
+        addTypes(Biomes.field_9418,                   OCEAN,   COLD, OVERWORLD                                           );
+        addTypes(Biomes.field_9473,                             VOID                                                    );
+        addTypes(Biomes.field_9455,                   PLAINS,   RARE, OVERWORLD                                          );
+        addTypes(Biomes.field_9427,                   HOT,      DRY,        SANDY,    RARE, OVERWORLD                    );
+        addTypes(Biomes.field_9476,            MOUNTAIN, SPARSE,     RARE, OVERWORLD                              );
+        addTypes(Biomes.field_9414,                   FOREST,   HILLS,      RARE, OVERWORLD                              );
+        addTypes(Biomes.field_9422,                    COLD,     CONIFEROUS, FOREST,   MOUNTAIN, RARE, OVERWORLD          );
+        addTypes(Biomes.field_9479,                WET,      SWAMP,      HILLS,    RARE, OVERWORLD                    );
+        addTypes(Biomes.field_9453,                COLD,     SNOWY,      HILLS,    RARE, OVERWORLD                    );
+        addTypes(Biomes.field_9426,                   HOT,      WET,        DENSE,    JUNGLE,   MOUNTAIN, RARE, OVERWORLD, MODIFIED);
+        addTypes(Biomes.field_9405,              HOT,      SPARSE,     JUNGLE,   HILLS,    RARE, OVERWORLD, MODIFIED          );
+        addTypes(Biomes.field_9431,             FOREST,   DENSE,      HILLS,    RARE, OVERWORLD                    );
+        addTypes(Biomes.field_9458,       FOREST,   DENSE,      MOUNTAIN, RARE, OVERWORLD                    );
+        addTypes(Biomes.field_9450,            SPOOKY,   DENSE,      FOREST,   MOUNTAIN, RARE, OVERWORLD          );
+        addTypes(Biomes.field_9437,               COLD,     CONIFEROUS, FOREST,   SNOWY,    MOUNTAIN, RARE, OVERWORLD);
+        addTypes(Biomes.field_9416,            DENSE,    FOREST,     RARE, OVERWORLD                              );
+        addTypes(Biomes.field_9404,      DENSE,    FOREST,     HILLS,    RARE, OVERWORLD                    );
+        addTypes(Biomes.field_9436, MOUNTAIN, SPARSE,     RARE, OVERWORLD, MODIFIED                              );
+        addTypes(Biomes.field_9456,                  HOT,      DRY,        SPARSE,   SAVANNA,  MOUNTAIN, RARE, OVERWORLD);
+        addTypes(Biomes.field_9445,             HOT,      DRY,        SPARSE,   SAVANNA,  HILLS,    RARE, OVERWORLD, PLATEAU);
+        addTypes(Biomes.field_9443,                     HOT,      DRY,        SPARSE,  MOUNTAIN, RARE, OVERWORLD);
+        addTypes(Biomes.field_9413,                HOT,      DRY,        SPARSE,   HILLS,    RARE, OVERWORLD, PLATEAU, MODIFIED          );
+        addTypes(Biomes.field_9406,          HOT,      DRY,        SPARSE,  MOUNTAIN, RARE, OVERWORLD, PLATEAU, MODIFIED);
 
 
         if (DEBUG)

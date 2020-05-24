@@ -1,0 +1,21 @@
+--- a/net\minecraft\world\MobSpawnerLogic.java
++++ b/net\minecraft\world\MobSpawnerLogic.java
+@@ -127,7 +127,7 @@
+                   entity.refreshPositionAndAngles(entity.getX(), entity.getY(), entity.getZ(), world.random.nextFloat() * 360.0F, 0.0F);
+                   if (entity instanceof MobEntity) {
+                      MobEntity mobentity = (MobEntity)entity;
+-                     if (!mobentity.canSpawn(world, SpawnType.field_16469) || !mobentity.canSpawn(world)) {
++                     if (!net.minecraftforge.event.ForgeEventFactory.canEntitySpawnSpawner(mobentity, world, (float)entity.getX(), (float)entity.getY(), (float)entity.getZ(), this)) {
+                         continue;
+                      }
+ 
+@@ -284,4 +284,9 @@
+    public double method_8279() {
+       return this.field_9159;
+    }
++
++   @Nullable
++   public Entity getSpawnerEntity() {
++      return null;
++   }
+ }

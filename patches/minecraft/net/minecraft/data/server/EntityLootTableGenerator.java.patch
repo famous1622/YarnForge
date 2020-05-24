@@ -1,0 +1,49 @@
+--- a/net\minecraft\data\server\EntityLootTableGenerator.java
++++ b/net\minecraft\data\server\EntityLootTableGenerator.java
+@@ -51,7 +51,7 @@
+       return LootTable.builder().withPool(LootPool.builder().withRolls(ConstantLootTableRange.create(1)).withEntry(ItemEntry.builder(p_218583_0_))).withPool(LootPool.builder().withRolls(ConstantLootTableRange.create(1)).withEntry(LootTableEntry.builder(EntityType.field_6115.getLootTableId())));
+    }
+ 
+-   public void accept(BiConsumer<Identifier, LootTable.Builder> p_accept_1_) {
++   protected void addTables() {
+       this.register(EntityType.field_6131, LootTable.builder());
+       this.register(EntityType.field_6108, LootTable.builder());
+       this.register(EntityType.field_20346, LootTable.builder());
+@@ -137,8 +137,12 @@
+       this.register(EntityType.field_6048, LootTable.builder().withPool(LootPool.builder().withRolls(ConstantLootTableRange.create(1)).withEntry(ItemEntry.builder(Items.field_8511).withFunction(SetCountLootFunction.builder(UniformLootTableRange.between(0.0F, 2.0F))).withFunction(LootingEnchantLootFunction.builder(UniformLootTableRange.between(0.0F, 1.0F))))));
+       this.register(EntityType.field_6050, LootTable.builder().withPool(LootPool.builder().withRolls(ConstantLootTableRange.create(1)).withEntry(ItemEntry.builder(Items.field_8511).withFunction(SetCountLootFunction.builder(UniformLootTableRange.between(0.0F, 1.0F))).withFunction(LootingEnchantLootFunction.builder(UniformLootTableRange.between(0.0F, 1.0F))))).withPool(LootPool.builder().withRolls(ConstantLootTableRange.create(1)).withEntry(ItemEntry.builder(Items.field_8397).withFunction(SetCountLootFunction.builder(UniformLootTableRange.between(0.0F, 1.0F))).withFunction(LootingEnchantLootFunction.builder(UniformLootTableRange.between(0.0F, 1.0F))))).withPool(LootPool.builder().withRolls(ConstantLootTableRange.create(1)).withEntry(ItemEntry.builder(Items.field_8695)).withCondition(KilledByPlayerLootCondition.builder()).withCondition(RandomChanceWithLootingLootCondition.builder(0.025F, 0.01F))));
+       this.register(EntityType.field_6054, LootTable.builder().withPool(LootPool.builder().withRolls(ConstantLootTableRange.create(1)).withEntry(ItemEntry.builder(Items.field_8511).withFunction(SetCountLootFunction.builder(UniformLootTableRange.between(0.0F, 2.0F))).withFunction(LootingEnchantLootFunction.builder(UniformLootTableRange.between(0.0F, 1.0F))))).withPool(LootPool.builder().withRolls(ConstantLootTableRange.create(1)).withEntry(ItemEntry.builder(Items.field_8620)).withEntry(ItemEntry.builder(Items.field_8179)).withEntry(ItemEntry.builder(Items.field_8567)).withCondition(KilledByPlayerLootCondition.builder()).withCondition(RandomChanceWithLootingLootCondition.builder(0.025F, 0.01F))));
++   }
++
++   public void accept(BiConsumer<Identifier, LootTable.Builder> p_accept_1_) {
++      this.addTables();
+       Set<Identifier> set = Sets.newHashSet();
+-      Iterator iterator = Registry.field_11145.iterator();
++      Iterator iterator = getKnownEntities().iterator();
+ 
+       EntityType<?> entitytype;
+       Identifier resourcelocation;
+@@ -150,7 +154,7 @@
+ 
+          entitytype = (EntityType)iterator.next();
+          resourcelocation = entitytype.getLootTableId();
+-         if (!ENTITY_TYPES_IN_MISC_CATEGORY_TO_CHECK.contains(entitytype) && entitytype.getCategory() == EntityCategory.field_17715) {
++         if (isNonLiving(entitytype)) {
+             if (resourcelocation != LootTables.EMPTY && this.lootTables.remove(resourcelocation) != null) {
+                break;
+             }
+@@ -167,6 +171,14 @@
+       throw new IllegalStateException(String.format("Weird loottable '%s' for '%s', not a LivingEntity so should not have loot", resourcelocation, Registry.field_11145.getId(entitytype)));
+    }
+ 
++   protected Iterable<EntityType<?>> getKnownEntities() {
++      return Registry.field_11145;
++   }
++
++   protected boolean isNonLiving(EntityType<?> entitytype) {
++      return !ENTITY_TYPES_IN_MISC_CATEGORY_TO_CHECK.contains(entitytype) && entitytype.getCategory() == EntityCategory.field_17715; 
++   }
++
+    protected void register(EntityType<?> type, LootTable.Builder table) {
+       this.register(type.getLootTableId(), table);
+    }

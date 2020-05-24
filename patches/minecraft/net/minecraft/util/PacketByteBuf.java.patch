@@ -1,0 +1,45 @@
+--- a/net\minecraft\util\PacketByteBuf.java
++++ b/net\minecraft\util\PacketByteBuf.java
+@@ -34,7 +34,7 @@
+ import net.minecraftforge.api.distmarker.Dist;
+ import net.minecraftforge.api.distmarker.OnlyIn;
+ 
+-public class PacketByteBuf extends ByteBuf {
++public class PacketByteBuf extends ByteBuf implements net.minecraftforge.common.extensions.IForgePacketBuffer {
+    private final ByteBuf parent;
+ 
+    public PacketByteBuf(ByteBuf wrapped) {
+@@ -264,6 +264,15 @@
+    }
+ 
+    public PacketByteBuf writeItemStack(ItemStack stack) {
++      return writeItemStack(stack, true);
++   }
++
++   /**
++    * Most ItemStack serialization is Server to Client,and doesn't need to know the FULL tag details.
++    * One exception is items from the creative menu, which must be sent from Client to Server with their full NBT.
++    * If you want to send the FULL tag set limitedTag to false
++    */
++   public PacketByteBuf writeItemStack(ItemStack stack, boolean limitedTag) {
+       if (stack.isEmpty()) {
+          this.writeBoolean(false);
+       } else {
+@@ -273,7 +282,7 @@
+          this.writeByte(stack.getCount());
+          CompoundTag compoundnbt = null;
+          if (item.isDamageable() || item.shouldSyncTagToClient()) {
+-            compoundnbt = stack.getTag();
++            compoundnbt = limitedTag ? stack.getShareTag() : stack.getTag();
+          }
+ 
+          this.writeCompoundTag(compoundnbt);
+@@ -289,7 +298,7 @@
+          int i = this.readVarInt();
+          int j = this.readByte();
+          ItemStack itemstack = new ItemStack(Item.byRawId(i), j);
+-         itemstack.setTag(this.readCompoundTag());
++         itemstack.readShareTag(this.readCompoundTag());
+          return itemstack;
+       }
+    }

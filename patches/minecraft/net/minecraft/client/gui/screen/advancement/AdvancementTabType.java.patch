@@ -1,0 +1,10 @@
+--- a/net\minecraft\client\gui\screen\advancement\AdvancementTabType.java
++++ b/net\minecraft\client\gui\screen\advancement\AdvancementTabType.java
+@@ -14,6 +14,7 @@
+    field_2675(0, 64, 32, 28, 5),
+    field_2677(96, 64, 32, 28, 5);
+ 
++   public static final int MAX_TABS = java.util.Arrays.stream(values()).mapToInt(e -> e.tabCount).sum();
+    private final int u;
+    private final int v;
+    private final int width;

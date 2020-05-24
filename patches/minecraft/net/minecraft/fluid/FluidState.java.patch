@@ -1,0 +1,19 @@
+--- a/net\minecraft\fluid\FluidState.java
++++ b/net\minecraft\fluid\FluidState.java
+@@ -26,7 +26,7 @@
+ import net.minecraftforge.api.distmarker.Dist;
+ import net.minecraftforge.api.distmarker.OnlyIn;
+ 
+-public interface FluidState extends State<FluidState> {
++public interface FluidState extends State<FluidState>, net.minecraftforge.common.extensions.IForgeFluidState {
+    Fluid getFluid();
+ 
+    default boolean isStill() {
+@@ -99,6 +99,7 @@
+       return this.getFluid().matches(tagIn);
+    }
+ 
++   @Deprecated //Forge: Use more sensitive version.
+    default float getBlastResistance() {
+       return this.getFluid().getBlastResistance();
+    }
